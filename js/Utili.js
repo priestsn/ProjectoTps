@@ -36,6 +36,10 @@ function decreaseTimer() {
 
     if (timer === 0) {
         document.querySelector('#displayText').style.display = 'flex';
-        determineWinner({ Player, Enemy, timerId });
+        try {
+            determineWinner({ Player, Enemy, timerId });
+        } catch (error) {
+            console.error('Errore durante la determinazione del vincitore:', error);
+        }
     }
 }
