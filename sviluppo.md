@@ -22,12 +22,12 @@ Piano delle funzionalità da implementare.
 | Area | Stato |
 |---|---|
 | Combattimento locale 2 giocatori | `[OK]` disponibile (attacco, parata, vita, stamina, timer, fine partita) |
-| Canvas + game loop | `[OK]` 1500x850, `requestAnimationFrame` |
+| Canvas + game loop | `[OK]` a misura di finestra, `requestAnimationFrame` |
 | Schermata di caricamento | `[OK]` disponibile |
 | Morte + schermata vincitore | `[OK]` disponibile |
 | Stili | `[OK]` tutti in `css/style.css` |
 | Menu principale / Play / Settings | `[OK]` (keybinds ancora `WIP`) |
-| Selezione personaggio | `WIP` |
+| Selezione personaggio | `[OK]` 9 personaggi con statistiche proprie |
 | vs CPU | `WIP` |
 | vs online | `WIP` |
 | Perfect block / ultimate / attacco caricato | `WIP` |
@@ -60,10 +60,10 @@ All'apertura non si gioca più subito: compare un menu a schermo intero con il n
 - `[OK]` navigazione da tastiera (frecce + Invio) con evidenziazione della voce attiva
 - `[OK]` le voci non disponibili mostrate con etichetta **WIP**, non selezionabili
 
-> Il titolo è ancora testo: l'inserimento del logo `img/UVSF7-logo.png` è rimandato.
+> Il logo `assets/UVSF7-logo.png` è usato nel titolo del menu e nella schermata di caricamento.
 
 ### F3 — Menu Play  ·  `[OK]` la struttura (Fase 1)
-- `[OK]` **vs locale** — 2 giocatori sulla stessa tastiera: la voce avvia la partita
+- `[OK]` **vs locale** — 2 giocatori sulla stessa tastiera: la voce apre la selezione del personaggio
 - `WIP` **vs CPU** — contro l'IA: *facile*, *difficile*, *guissè* (molto difficile) — Fase 4
 - `WIP` **vs online** — server su VPS con creazione/ingresso in stanze — Fase 5
 
@@ -71,11 +71,13 @@ All'apertura non si gioca più subito: compare un menu a schermo intero con il n
 - `[OK]` **fullscreen** — attiva/disattiva schermo intero sull'**intera pagina**
 - `WIP` **keybinds** — rimappatura dei tasti per entrambi i giocatori, con variabili affiancate a `keys`/`lastKey`
 
-### F5 — Selezione personaggio  ·  `WIP` (Fase 2)
-- `WIP` schermata di selezione (per P1 e P2) prima della partita
-- `WIP` almeno **6 personaggi**, ognuno con **statistiche proprie** e **ultimate unica**
-- `WIP` per ora si riusano gli sprite di Player/Enemy cambiando o invertendo i colori
-- `WIP` configurazione dei personaggi in un file dati dedicato (non a mano nel game loop)
+### F5 — Selezione personaggio  ·  `[OK]` (Fase 2)
+- `[OK]` schermata di selezione (per P1 e P2) prima della partita
+- `[OK]` **9 personaggi**, ognuno con **statistiche proprie** (l'ultimate unica arriva con la Fase 3)
+- `[OK]` sprite dedicati in `assets/Personaggi/<Nome>/`, rinominati con nomi africani
+- `[OK]` configurazione dei personaggi in un file dati dedicato (`js/Personaggi.js`)
+- `WIP` animazioni di parata: `parry.png` è ancora un segnaposto (copia di idle)
+- `WIP` salto e caduta di **Bakari Traore** (assenti nel pacchetto originale)
 
 ### F6 — Nuove meccaniche di combattimento  ·  `WIP` (Fase 3)
 - `WIP` **perfect block** — parando **nell'esatto frame d'impatto** dell'attacco, l'avversario resta **stunnato 1 s** (controllo sui frame, non sul tempo)
@@ -91,7 +93,7 @@ Ordine concordato: **si parte dal menu**.
 | Fase | Contenuto | Stato | Prerequisiti |
 |---|---|---|---|
 | **1. Menu** | CSS esterno (F1), `js/Stato.js`, menu principale, sottomenu Play, Settings, fullscreen | `COMPLETATA` | — |
-| **2. Selezione personaggio** | F5: 6 personaggi (riuso sprite + variazione colori), statistiche, ultimate | `WIP` | Fase 1 |
+| **2. Selezione personaggio** | F5: 9 personaggi con sprite dedicati, statistiche, scelta di P1 e P2 | `COMPLETATA` | Fase 1 |
 | **3. Meccaniche** | F6: perfect block (per frame), ultimate e barra, attacco caricato | `WIP` | Fase 2 |
 | **4. CPU** | F3 vs CPU: facile, difficile, guissè | `WIP` | Fase 3 |
 | **5. Online** | F3 vs online: server su VPS, stanze | `WIP` | Fase 4 |
@@ -129,7 +131,7 @@ Ordine concordato: **si parte dal menu**.
 
 | # | Domanda | Decisione |
 |---|---|---|
-| D1 | Sprite dei 6 personaggi | **Riuso degli sprite esistenti** (Player/Enemy), cambiando o invertendo i colori. Niente nuovi asset per ora |
+| D1 | Sprite dei personaggi | **Cambiata**: niente riuso, ma sprite dedicati dai pacchetti `luizmelo`, rinominati con nomi africani in `assets/Personaggi/` |
 | D2 | Dove vive lo stato di gioco | **Nuovo `js/Stato.js`**: si preferisce dividere il codice in più file |
 | D3 | Keybinds rimappati | **Si affiancano** a `keys`/`lastKey`, tramite variabili dedicate |
 | D4 | Server online | Gira su una **VPS**; sviluppato **per ultimo** (Fase 5) |
