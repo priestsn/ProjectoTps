@@ -98,6 +98,22 @@ let gameOver = false;
 let hitboxVisibili = false;
 
 // ========================================
+// Combattimento
+// ==========================================
+/**
+ * Chiude l'attacco quando la sua animazione ha finito i frame.
+ * Unica fonte di verita': prima c'erano anche due timeout, che con
+ * animazioni di lunghezza diversa tagliavano l'attacco a meta'.
+ */
+function aggiornaFineAttacco(lottatore) {
+    const attacco = lottatore.sprites.Attack1;
+
+    if (lottatore.image === attacco.image && lottatore.framesCurrent === attacco.framesMax - 1) {
+        lottatore.isAttacking = false;
+    }
+}
+
+// ========================================
 // Loop Principale del Gioco
 // ==========================================
 function animate() {
@@ -166,13 +182,10 @@ function animate() {
         Enemy.cambiaSprite('Fall');
     }
 
-    // Resetta i flag di attacco ai frame appropriati
-    if (Player.image === Player.sprites.Attack1.image && Player.framesCurrent === 4) {
-        Player.isAttacking = false;
-    }
-    if (Enemy.image === Enemy.sprites.Attack1.image && Enemy.framesCurrent === 3) {
-        Enemy.isAttacking = false;
-    }
+    // L'attacco finisce quando la sua animazione arriva all'ultimo frame.
+    // Il numero di frame cambia da personaggio a personaggio.
+    aggiornaFineAttacco(Player);
+    aggiornaFineAttacco(Enemy);
 
     // Aggiorna e disegna
     background.update();
@@ -188,14 +201,15 @@ function animate() {
         disegnaPannelloDebug();
     }
 
-    // Rilevamento collisione attacco del giocatore
+    // Rilevamento collisione attacco del giocatore.
+    // Le misure sono quelle del personaggio: ogni lottatore ha il suo riquadro.
     if (Player.isAttacking &&
-        Player.AttackBox.position.x < Enemy.position.x + 50 &&
-        Player.AttackBox.position.x + 200 > Enemy.position.x &&
+        Player.AttackBox.position.x < Enemy.position.x + Enemy.width &&
+        Player.AttackBox.position.x + Player.AttackBox.width > Enemy.position.x &&
         Player.AttackBox.position.y + Player.AttackBox.height >= Enemy.position.y &&
         Player.AttackBox.position.y <= Enemy.position.y + Enemy.height &&
         !Enemy.isParata &&
-        Player.framesCurrent === 3) {
+        Player.framesCurrent === Player.attacco.frame) {
 
         if (Enemy.image !== Enemy.sprites.TakeHit.image) {
             Enemy.isTakingDmg = true;
@@ -208,12 +222,12 @@ function animate() {
 
     // Rilevamento collisione attacco del nemico
     if (Enemy.isAttacking &&
-        Enemy.AttackBox.position.x < Player.position.x + 50 &&
-        Enemy.AttackBox.position.x + 200 > Player.position.x &&
+        Enemy.AttackBox.position.x < Player.position.x + Player.width &&
+        Enemy.AttackBox.position.x + Enemy.AttackBox.width > Player.position.x &&
         Enemy.AttackBox.position.y + Enemy.AttackBox.height >= Player.position.y &&
         Enemy.AttackBox.position.y <= Player.position.y + Player.height &&
         !Player.isParata &&
-        Enemy.framesCurrent === 2) {
+        Enemy.framesCurrent === Enemy.attacco.frame) {
 
         if (Player.image !== Player.sprites.TakeHit.image) {
             Player.isTakingDmg = true;
@@ -241,10 +255,16 @@ function animate() {
 // ========================================
 // Event Listener
 // ==========================================
-window.addEventListener('keydown', async (event) => {
+window.addEventListener('keydown', (event) => {
     // Debug: il tasto U mostra o nasconde le hitbox (funziona in ogni schermata)
     if (!event.repeat && (event.key === 'u' || event.key === 'U')) {
         hitboxVisibili = !hitboxVisibili;
+        return;
+    }
+
+    // La pressione prolungata non deve generare comandi a raffica:
+    // i tasti tenuti premuti restano attivi tramite i flag in `keys`.
+    if (event.repeat) {
         return;
     }
 
@@ -293,11 +313,7 @@ window.addEventListener('keydown', async (event) => {
             if (!Player.isParata && !Player.isAttacking && Player.stamina >= 20 && !Player.isDead) {
                 Player.cambiaSprite('Attack1');
                 Player.stamina -= 20;
-                keys.h.pressed = true;
                 Player.isAttacking = true;
-                await new Promise(resolve => setTimeout(resolve, 550));
-                Player.isAttacking = false;
-                keys.h.pressed = false;
             }
             break;
 
@@ -340,11 +356,7 @@ window.addEventListener('keydown', async (event) => {
             if (!Enemy.isParata && !Enemy.isAttacking && Enemy.stamina >= 20 && !Enemy.isDead) {
                 Enemy.cambiaSprite('Attack1');
                 Enemy.stamina -= 20;
-                keys.ù.pressed = true;
                 Enemy.isAttacking = true;
-                await new Promise(resolve => setTimeout(resolve, 400));
-                Enemy.isAttacking = false;
-                keys.ù.pressed = false;
             }
             break;
 

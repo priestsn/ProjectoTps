@@ -89,13 +89,13 @@ All'apertura non si gioca più subito: compare un menu a schermo intero con il n
 - `WIP` **ultimate** — una per personaggio, con **barra dedicata nella HUD**; si carica **col tempo** e con le **parate perfette**, e si **perde carica** quando si viene stunnati
 - `WIP` **attacco caricato** — rompe la parata e stunna l'avversario per **1 s**
 
-### F7 — Hitbox e frame d'attacco per personaggio  ·  `WIP` (Fase 3)
-Ogni personaggio ha sprite di attacco diversi: l'area di attacco e il momento in cui il colpo va a segno non possono essere uguali per tutti.
-- `WIP` **area di attacco propria** per personaggio (larghezza, altezza, spostamento rispetto al corpo)
-- `WIP` **frame d'impatto** proprio per personaggio (oggi è fisso: `framesCurrent === 3` per P1 e `=== 2` per P2)
-- `WIP` togliere i valori fissi dalle collisioni in `index.js` (`Enemy.position.x + 50`, `+ 200`)
-- `WIP` taratura usando il tasto **U** per vedere le hitbox e il frame corrente
-- `WIP` i dati vanno in `js/Personaggi.js`, accanto a `scale` e `offset`
+### F7 — Hitbox e frame d'attacco per personaggio  ·  `[OK]` (Fase 3)
+- `[OK]` **area di attacco propria** per personaggio (larghezza, altezza, spostamento dal centro del corpo)
+- `[OK]` **frame d'impatto** proprio per personaggio, ricavato dal frame in cui il colpo arriva più lontano
+- `[OK]` **riquadro del corpo** proprio per personaggio (dai pixel reali dello sprite)
+- `[OK]` rimossi i valori fissi dalle collisioni in `index.js`
+- `[OK]` durata dell'attacco normalizzata (da 4 a 13 frame: tutti circa mezzo secondo)
+- `[OK]` risolto il disallineamento dei personaggi girati a sinistra (ribaltamento attorno al centro del corpo)
 
 ---f7 efetti sonori, musica in lobby suoni per attacco danno ricevuto ecc
 

@@ -16,6 +16,11 @@ class Sprite {
         this.framesElapsed = 0;
         this.framesHold = 30; // Controlla la velocità dell'animazione
         this.offset = offset || { x: 0, y: 0 };
+
+        // Asse di ribaltamento orizzontale, rispetto a position.x.
+        // I lottatori lo impostano al centro del corpo (vedi Lottatore);
+        // per gli sprite senza corpo, come lo sfondo, resta 0.
+        this.centroCorpo = 0;
     }
 
     draw() {
@@ -23,7 +28,10 @@ class Sprite {
         // Se cambia sprite, .loaded segue automaticamente la nuova immagine.
         if (this.image.loaded) {
             c.save();
-            c.translate(this.position.x, this.position.y);
+            // Il ribaltamento avviene attorno al centro del corpo e non
+            // all'angolo: così chi guarda a sinistra resta allineato alla sua
+            // hitbox invece di risultare spostato di mezza larghezza.
+            c.translate(this.position.x + this.centroCorpo, this.position.y);
             c.scale(this.facing, 1); // Ribalta orizzontalmente se facing = -1
             c.drawImage(
                 this.image,
@@ -63,7 +71,7 @@ class Sprite {
  */
 class Lottatore extends Sprite {
     constructor(options = {}) {
-        const { position = { x: 0, y: 0 }, velocity = { x: 0, y: 0 }, imageSrc, scale = 1, framesMax = 1, offset = { x: 0, y: 0 }, sprites, statistiche } = options;
+        const { position = { x: 0, y: 0 }, velocity = { x: 0, y: 0 }, imageSrc, scale = 1, framesMax = 1, offset = { x: 0, y: 0 }, sprites, statistiche, corpo, attacco } = options;
         super({ position }, imageSrc, scale, framesMax, offset);
 
         // Statistiche del personaggio. Se non vengono passate si usano i valori
@@ -74,13 +82,23 @@ class Lottatore extends Sprite {
         );
 
         this.facing = 1; // 1 per destra, -1 per sinistra
-        this.width = 50;
-        this.height = 150;
+
+        // Riquadro di collisione del corpo: dipende dal personaggio, perché
+        // ogni sprite ha proporzioni proprie
+        this.width = corpo ? corpo.larghezza : 50;
+        this.height = corpo ? corpo.altezza : 150;
+
+        // Asse di ribaltamento dello sprite: il centro del corpo
+        this.centroCorpo = this.width / 2;
+
+        // Dati dell'attacco: frame d'impatto e area del colpo
+        this.attacco = attacco || { frame: 3, dx: 100, dy: 0, larghezza: 200, altezza: 200 };
+
         this.lastKey = null; // Traccia l'ultimo input direzionale
         this.AttackBox = {
             position: { x: this.position.x, y: this.position.y },
-            width: 200,
-            height: 200
+            width: this.attacco.larghezza,
+            height: this.attacco.altezza
         };
         this.velocity = velocity;
         this.isParata = false; // Stato di parata
@@ -92,6 +110,9 @@ class Lottatore extends Sprite {
         this.framesCurrent = 0;
         this.framesElapsed = 0;
         this.framesHold = 10;
+        // Velocità standard delle animazioni, usata quando uno stato non ne
+        // dichiara una propria
+        this.framesHoldBase = 10;
         this.sprites = sprites;
 
         // Carica tutti gli sprite delle animazioni (ognuno tracciato per il caricamento)
@@ -118,15 +139,15 @@ class Lottatore extends Sprite {
      * Calcola dove si trova l'area di attacco, in base alla direzione del lottatore
      */
     aggiornaAttackBox() {
-        const tastoDirezione = (this.lastKey !== null && this.lastKey !== undefined)
-            ? this.lastKey
-            : (this === Player ? lastKey : null);
-        const versoSnistra = tastoDirezione === 'ArrowLeft' || tastoDirezione === 'a';
+        const attacco = this.attacco;
 
-        this.AttackBox.position.x = versoSnistra
-            ? this.position.x - this.AttackBox.width
-            : this.position.x;
-        this.AttackBox.position.y = this.position.y;
+        // L'area parte dal bordo anteriore del corpo e si specchia insieme al
+        // personaggio: guardando a sinistra finisce a sinistra.
+        this.AttackBox.position.x = (this.facing >= 0)
+            ? this.position.x + this.centroCorpo + attacco.dx
+            : this.position.x + this.centroCorpo - attacco.dx - attacco.larghezza;
+
+        this.AttackBox.position.y = this.position.y + attacco.dy;
     }
 
     /**
@@ -218,6 +239,9 @@ class Lottatore extends Sprite {
         if (spriteData && this.image !== spriteData.image) {
             this.image = spriteData.image;
             this.framesMax = spriteData.framesMax;
+            // Alcune animazioni dichiarano una velocità propria: il numero di
+            // frame cambia molto da personaggio a personaggio
+            this.framesHold = spriteData.framesHold || this.framesHoldBase;
             this.framesCurrent = 0;
         }
     }

@@ -12,14 +12,14 @@ Verifiche eseguite: lettura completa del codice, confronto percorsi asset ↔ fi
 | BUG-01 | Risolto | `index.js` (`case 'w'` / `case 'ArrowUp'`), `js/Classi.js:129-133` | Salto legato a un numero fisso invece che al suolo: rotto dopo il resize del canvas |
 | BUG-02 | Risolto | `js/Utili.js:4` + chiamate in `index.js` e `js/Utili.js` | `determineWinner` lanciava `TypeError`: il vincitore non veniva mai mostrato |
 | BUG-03 | Risolto | `index.js:21` | Lo sfondo era diviso in 5 frame e animato (`framesMax: 5`) |
-| BUG-04 | Alto | `index.js:243`, `index.js:289` | `isAttacking` gestito con `await` + timeout fisso, in conflitto col reset a frame (`index.js:141-146`) |
+| BUG-04 | Risolto | `index.js`, `js/Classi.js` | `isAttacking` aveva due fonti di verità: ora conta solo l'animazione |
 | BUG-05 | Alto | `index.js:108,130,169,187,240,286`, `js/Utili.js:29,33` | Vita/stamina fuori range: `width` CSS non valido, barre non aggiornate |
 | BUG-06 | Alto | `index.js:249`, `index.js:295` | Si può parare da morti (manca il controllo `isDead`) |
 | BUG-07 | Alto | `index.js:96-130` | Drenaggio stamina della parata dipendente dal frame rate e solo da fermi |
 | BUG-08 | Risolto | `index.js` (blocco "Condizione di fine gioco") | `determineWinner` richiamato a ogni frame dopo la morte |
 | BUG-09 | Risolto | `js/Utili.js` (`decreaseTimer`) | Timer off-by-one: partiva da 59 e la prima iterazione era istantanea |
 | BUG-10 | Medio | `js/Classi.js:27`, `js/Classi.js:69` | `this.facing` usato in `Sprite` ma definito solo in `Lottatore` |
-| BUG-11 | Medio | `index.js:159-162,177-180` | Magic number duplicati (50, 200) nelle hitbox di collisione: si rompono in silenzio |
+| BUG-11 | Risolto | `js/Personaggi.js`, `index.js` | Magic number (50, 200) nelle hitbox: ora ogni personaggio ha le sue misure |
 | BUG-12 | Medio | `js/Classi.js:135` + `index.js:16` | `gravity` definita in `index.js` ma usata in `Classi.js` (dipendenza nascosta) |
 | BUG-13 | Medio | `index.js:111-117`, `124-130`, `237-262` | La parata è "invisibile": sovrascritta da Jump/Fall o bloccata da un attacco in corso |
 | BUG-14 | Medio | `index.js:104,127`, `js/Classi.js:105` | `facing` di Enemy invertito e AttackBox legata a un `lastKey` mai aggiornato dai tasti attacco/parata |
