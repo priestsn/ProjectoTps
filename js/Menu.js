@@ -22,7 +22,7 @@ const VOCI_MENU = {
 };
 
 const TITOLI_MENU = {
-    principale: 'GiocoTps',
+    principale: 'Ultra Verdello Street Fight 7',
     play: 'PLAY',
     settings: 'SETTINGS'
 };

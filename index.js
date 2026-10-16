@@ -24,43 +24,43 @@ const ground = canvas.height - 40;
 // Inizializzazione Sfondo e Personaggi
 // ==========================================
 // framesMax: 1 -> sfondo statico. Con 5 l'immagine veniva tagliata in 5 colonne e animata
-const background = new Sprite({ x: 0, y: 0 }, './img/Background.png', 4, 1, { x: 0, y: 0 });
+const background = new Sprite({ x: 0, y: 0 }, './assets/Background.png', 4, 1, { x: 0, y: 0 });
 
 const Player = new Lottatore({
     position: { x: 0, y: 0 },
     velocity: { x: 0, y: 5 },
-    imageSrc: './img/Player/idle.png',
+    imageSrc: './assets/Player/idle.png',
     scale: 5,
     framesMax: 8,
     offset: { x: 350, y: 320 },
     sprites: {
-        idle: { imageSrc: './img/Player/idle.png', framesMax: 8 },
-        Run: { imageSrc: './img/Player/Run.png', framesMax: 8 },
-        Jump: { imageSrc: './img/Player/Jump.png', framesMax: 2 },
-        Fall: { imageSrc: './img/Player/Fall.png', framesMax: 2 },
-        Attack1: { imageSrc: './img/Player/Attack1.png', framesMax: 5 },
-        TakeHit: { imageSrc: './img/Player/Take hit.png', framesMax: 3 },
-        Death: { imageSrc: './img/Player/Death.png', framesMax: 8 },
-        ParataIdle: { imageSrc: './img/Player/IdleBlock.png', framesMax: 8 }
+        idle: { imageSrc: './assets/Player/idle.png', framesMax: 8 },
+        Run: { imageSrc: './assets/Player/Run.png', framesMax: 8 },
+        Jump: { imageSrc: './assets/Player/Jump.png', framesMax: 2 },
+        Fall: { imageSrc: './assets/Player/Fall.png', framesMax: 2 },
+        Attack1: { imageSrc: './assets/Player/Attack1.png', framesMax: 5 },
+        TakeHit: { imageSrc: './assets/Player/Take hit.png', framesMax: 3 },
+        Death: { imageSrc: './assets/Player/Death.png', framesMax: 8 },
+        ParataIdle: { imageSrc: './assets/Player/IdleBlock.png', framesMax: 8 }
     }
 });
 
 const Enemy = new Lottatore({
     position: { x: 1500, y: 0 },
     velocity: { x: 0, y: 5 },
-    imageSrc: './img/Enemy/Idle.png',
+    imageSrc: './assets/Enemy/Idle.png',
     scale: 4.2,
     framesMax: 4,
     offset: { x: 370, y: 370 },
     sprites: {
-        idle: { imageSrc: './img/Enemy/Idle.png', framesMax: 4 },
-        Run: { imageSrc: './img/Enemy/Run.png', framesMax: 8 },
-        Jump: { imageSrc: './img/Enemy/Jump.png', framesMax: 2 },
-        Fall: { imageSrc: './img/Enemy/Fall.png', framesMax: 2 },
-        Attack1: { imageSrc: './img/Enemy/Attack1.png', framesMax: 4 },
-        TakeHit: { imageSrc: './img/Enemy/Take hit.png', framesMax: 3 },
-        Death: { imageSrc: './img/Enemy/Death.png', framesMax: 7 },
-        ParataIdle: { imageSrc: './img/Enemy/IdleBlock.png', framesMax: 4 }
+        idle: { imageSrc: './assets/Enemy/Idle.png', framesMax: 4 },
+        Run: { imageSrc: './assets/Enemy/Run.png', framesMax: 8 },
+        Jump: { imageSrc: './assets/Enemy/Jump.png', framesMax: 2 },
+        Fall: { imageSrc: './assets/Enemy/Fall.png', framesMax: 2 },
+        Attack1: { imageSrc: './assets/Enemy/Attack1.png', framesMax: 4 },
+        TakeHit: { imageSrc: './assets/Enemy/Take hit.png', framesMax: 3 },
+        Death: { imageSrc: './assets/Enemy/Death.png', framesMax: 7 },
+        ParataIdle: { imageSrc: './assets/Enemy/IdleBlock.png', framesMax: 4 }
     }
 });
 
