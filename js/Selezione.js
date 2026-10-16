@@ -86,9 +86,12 @@ function stileRitratto(personaggio) {
     const fattore = lato / ritaglio.altezza;             // il personaggio riempie in altezza
     const scostamentoX = -ritaglio.x * fattore + (lato - ritaglio.larghezza * fattore) / 2;
 
+    // Il foglio è una striscia: larghezza = frame x fotogrammi, altezza = frame.
+    // Le due misure vanno scalate con lo stesso fattore, altrimenti il
+    // personaggio risulta schiacciato in orizzontale.
     return {
         backgroundImage: 'url(' + sprite.cartella + 'idle.png)',
-        backgroundSize: (frame * fattore) + 'px ' + (frame * fattore) + 'px',
+        backgroundSize: (frame * sprite.frames.idle * fattore) + 'px ' + (frame * fattore) + 'px',
         backgroundPosition: scostamentoX + 'px ' + (-ritaglio.y * fattore) + 'px'
     };
 }
