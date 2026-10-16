@@ -52,14 +52,30 @@
             <div id="menuTitolo">Ultra Verdello Street Fight 7</div>
             <div id="menuVoci"></div>
         </div>
+
+        <!-- Selezione del personaggio (la griglia la crea js/Selezione.js) -->
+        <div id="selezione" class="schermata">
+            <div id="selezioneTitolo">SCEGLI IL PERSONAGGIO</div>
+            <div id="selezioneInfo">
+                <div class="info-lato" id="infoP1"></div>
+                <div class="info-lato" id="infoP2"></div>
+            </div>
+            <div id="selezioneGriglia"></div>
+            <div id="selezioneIstruzioni">
+                Giocatore 1: A / D per scegliere, H per confermare &nbsp;&middot;&nbsp;
+                Giocatore 2: frecce per scegliere, ù per confermare &nbsp;&middot;&nbsp;
+                Esc per tornare indietro
+            </div>
+        </div>
     </div>
 
-    <!-- Script: l'ordine conta (Utili -> Stato -> Menu -> Classi -> Personaggi -> index) -->
+    <!-- Script: l'ordine conta (Utili -> Stato -> Menu -> Classi -> Personaggi -> Selezione -> index) -->
     <script src="js/Utili.js"></script>
     <script src="js/Stato.js"></script>
     <script src="js/Menu.js"></script>
     <script src="js/Classi.js"></script>
     <script src="js/Personaggi.js"></script>
+    <script src="js/Selezione.js"></script>
     <script src="index.js"></script>
 </body>
 </html>

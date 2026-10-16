@@ -11,6 +11,10 @@
 // al centro della hitbox, così i piedi poggiano sempre a terra anche con frame
 // di dimensioni diverse.
 //
+// `frame` è il lato di un singolo fotogramma (i fogli hanno frame quadrati) e
+// `ritaglio` è il riquadro esatto del personaggio dentro il frame: serve a
+// ritagliare i ritratti nella schermata di selezione.
+//
 // NOTA: `parry.png` al momento è una copia di `idle.png` (segnaposto).
 // Va sostituito con l'animazione di parata definitiva di ogni personaggio.
 //
@@ -26,6 +30,8 @@ const PERSONAGGI = [
             cartella: './assets/Personaggi/OusmaneDiouf/',
             scale: 4.12,
             offset: { x: 373, y: 320 },
+            frame: 180,
+            ritaglio: { x: 73, y: 63, larghezza: 47, altezza: 51 },
             frames: { idle: 11, run: 8, jump: 3, fall: 3, attack: 7, takehit: 4, death: 11, parry: 11 }
         }
     },
@@ -38,6 +44,8 @@ const PERSONAGGI = [
             cartella: './assets/Personaggi/KwameMensah/',
             scale: 5.38,
             offset: { x: 352, y: 297 },
+            frame: 140,
+            ritaglio: { x: 54, y: 44, larghezza: 32, altezza: 39 },
             frames: { idle: 11, run: 8, jump: 4, fall: 4, attack: 6, takehit: 4, death: 9, parry: 11 }
         }
     },
@@ -50,6 +58,8 @@ const PERSONAGGI = [
             cartella: './assets/Personaggi/ChidiOkonkwo/',
             scale: 4.04,
             offset: { x: 357, y: 343 },
+            frame: 200,
+            ritaglio: { x: 76, y: 70, larghezza: 37, altezza: 52 },
             frames: { idle: 8, run: 8, jump: 2, fall: 2, attack: 6, takehit: 4, death: 6, parry: 8 }
         }
     },
@@ -62,6 +72,8 @@ const PERSONAGGI = [
             cartella: './assets/Personaggi/AmaraDiallo/',
             scale: 3.75,
             offset: { x: 341, y: 330 },
+            frame: 200,
+            ritaglio: { x: 81, y: 72, larghezza: 33, altezza: 56 },
             frames: { idle: 4, run: 8, jump: 2, fall: 2, attack: 4, takehit: 3, death: 7, parry: 4 }
         }
     },
@@ -74,6 +86,8 @@ const PERSONAGGI = [
             cartella: './assets/Personaggi/TarisaiMoyo/',
             scale: 5.38,
             offset: { x: 341, y: 291 },
+            frame: 126,
+            ritaglio: { x: 46, y: 43, larghezza: 44, altezza: 39 },
             frames: { idle: 10, run: 8, jump: 3, fall: 3, attack: 7, takehit: 3, death: 11, parry: 10 }
         }
     },
@@ -86,6 +100,8 @@ const PERSONAGGI = [
             cartella: './assets/Personaggi/ZuriNkosi/',
             scale: 5,
             offset: { x: 360, y: 335 },
+            frame: 150,
+            ritaglio: { x: 61, y: 55, larghezza: 32, altezza: 42 },
             frames: { idle: 8, run: 8, jump: 2, fall: 2, attack: 5, takehit: 3, death: 8, parry: 8 }
         }
     },
@@ -98,6 +114,8 @@ const PERSONAGGI = [
             cartella: './assets/Personaggi/BakariTraore/',
             scale: 3.82,
             offset: { x: 254, y: 232 },
+            frame: 150,
+            ritaglio: { x: 57, y: 45, larghezza: 32, altezza: 55 },
             frames: { idle: 8, run: 8, jump: 8, fall: 8, attack: 8, takehit: 4, death: 5, parry: 8 }
         }
     },
@@ -110,6 +128,8 @@ const PERSONAGGI = [
             cartella: './assets/Personaggi/SekouCamara/',
             scale: 2.21,
             offset: { x: 277, y: 219 },
+            frame: 250,
+            ritaglio: { x: 108, y: 72, larghezza: 57, altezza: 95 },
             frames: { idle: 8, run: 8, jump: 2, fall: 2, attack: 8, takehit: 3, death: 7, parry: 8 }
         }
     },
@@ -122,6 +142,8 @@ const PERSONAGGI = [
             cartella: './assets/Personaggi/AyoAdebayo/',
             scale: 3.96,
             offset: { x: 266, y: 234 },
+            frame: 140,
+            ritaglio: { x: 57, y: 44, larghezza: 33, altezza: 53 },
             frames: { idle: 10, run: 8, jump: 3, fall: 3, attack: 13, takehit: 3, death: 18, parry: 10 }
         }
     }
@@ -177,4 +199,18 @@ function creaLottatore(personaggio, x, facing) {
 
     lottatore.facing = facing;
     return lottatore;
+}
+
+/**
+ * Registra le immagini di tutti i personaggi tra gli asset da attendere.
+ * Cosi' la schermata di caricamento le scarica tutte e in partita non ci sono
+ * ritardi quando si sceglie un personaggio.
+ */
+function precaricaPersonaggi() {
+    for (const personaggio of PERSONAGGI) {
+        const sprites = spriteDelPersonaggio(personaggio);
+        for (const chiave in sprites) {
+            creaImmagine(sprites[chiave].imageSrc);
+        }
+    }
 }

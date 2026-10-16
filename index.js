@@ -55,11 +55,8 @@ function adattaAllaFinestra() {
     adattaSfondo();
 }
 
-// Chi combatte in questa partita: due id presi da js/Personaggi.js.
-// Finché non esiste la schermata di selezione si usano questi due.
-const SCELTA_P1 = 'OusmaneDiouf';
-const SCELTA_P2 = 'SekouCamara';
-
+// Chi combatte: i due personaggi scelti nella schermata di selezione.
+// Vengono creati da preparaPartita() all'avvio della partita.
 let Player;
 let Enemy;
 
@@ -76,8 +73,6 @@ function preparaPartita(idP1, idP2) {
     Enemy = creaLottatore(trovaPersonaggio(idP2), canvas.width - margine, -1);
     Enemy.lastKey = 'ArrowLeft';
 }
-
-preparaPartita(SCELTA_P1, SCELTA_P2);
 
 // ========================================
 // Gestione Input
@@ -239,7 +234,12 @@ function animate() {
 // Event Listener
 // ==========================================
 window.addEventListener('keydown', async (event) => {
-    // Fuori dalla partita gli input servono a navigare i menu
+    // Fuori dalla partita gli input servono alla selezione o ai menu
+    if (statoCorrente === STATI.SELEZIONE) {
+        gestisciInputSelezione(event);
+        return;
+    }
+
     if (statoCorrente !== STATI.PARTITA) {
         gestisciInputMenu(event);
         return;
@@ -390,7 +390,10 @@ window.addEventListener('keyup', (event) => {
 /**
  * Avvia una partita: chiude il menu e fa partire timer e game loop
  */
-function avviaPartita() {
+function avviaPartita(idP1, idP2) {
+    // Crea i lottatori con i personaggi scelti nella selezione
+    preparaPartita(idP1, idP2);
+
     // Le barre ripartono piene: la vita massima dipende dal personaggio
     document.querySelector('#player-health').style.width = '100%';
     document.querySelector('#enemy-health').style.width = '100%';
@@ -407,6 +410,10 @@ function avviaPartita() {
 // Si parte dalla schermata di caricamento. Quando TUTTI gli asset sono pronti
 // si passa al menu: la partita parte solo da li' (voce PLAY -> VS LOCALE).
 aggiornaVisibilita();
+
+// Le immagini di tutti i personaggi entrano nel caricamento iniziale, cosi'
+// scegliere un personaggio non provoca ritardi
+precaricaPersonaggi();
 
 // Se la finestra cambia dimensione, canvas, suolo e sfondo si adattano
 window.addEventListener('resize', adattaAllaFinestra);

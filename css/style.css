@@ -235,3 +235,126 @@ canvas {
     margin-left: 14px;
     vertical-align: middle;
 }
+
+/* ========================================
+   Selezione del personaggio
+   ========================================== */
+#selezione {
+    gap: 14px;
+    padding: 20px;
+    overflow: hidden;
+}
+
+#selezioneTitolo {
+    font-size: 34px;
+    color: white;
+    letter-spacing: 3px;
+}
+
+/* Schede dei due giocatori, a sinistra e a destra */
+#selezioneInfo {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.info-lato {
+    flex: 1;
+    min-height: 78px;
+    padding: 8px 12px;
+    border: 3px solid transparent;
+}
+
+#infoP1 {
+    border-color: #4a7dff;
+}
+
+#infoP2 {
+    border-color: #ff7a4a;
+    text-align: right;
+}
+
+.info-nome {
+    font-size: 26px;
+    color: white;
+}
+
+.info-ok {
+    font-size: 16px;
+    color: #7dff7d;
+    margin-left: 12px;
+    vertical-align: middle;
+}
+
+.info-archetipo {
+    font-size: 18px;
+    color: #999999;
+}
+
+.info-stat {
+    font-size: 16px;
+    color: #cccccc;
+}
+
+/* Griglia dei personaggi */
+#selezioneGriglia {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    max-width: 1400px;
+}
+
+.cella {
+    width: 132px;
+    padding: 6px;
+    border: 3px solid #333333;
+    background-color: #0d0d0d;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Cursore del giocatore 1 */
+.cella.p1 {
+    border-color: #4a7dff;
+    background-color: #101a33;
+}
+
+/* Cursore del giocatore 2 */
+.cella.p2 {
+    border-color: #ff7a4a;
+    background-color: #331a10;
+}
+
+/* Entrambi i cursori sulla stessa cella */
+.cella.p1.p2 {
+    border-color: #b06aff;
+    background-color: #1f1033;
+}
+
+/* Scelta confermata */
+.cella.confermato {
+    box-shadow: inset 0 0 14px rgba(255, 255, 255, 0.75);
+}
+
+/* Ritratto: mostra solo il personaggio, ritagliato dal foglio di idle */
+.ritratto {
+    width: 110px;
+    height: 110px;
+    background-repeat: no-repeat;
+}
+
+.cella-nome {
+    font-size: 14px;
+    color: #dddddd;
+    text-align: center;
+}
+
+#selezioneIstruzioni {
+    font-size: 16px;
+    color: #888888;
+    text-align: center;
+}

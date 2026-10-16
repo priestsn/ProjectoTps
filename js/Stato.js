@@ -7,6 +7,7 @@
 const STATI = {
     CARICAMENTO: 'caricamento',
     MENU: 'menu',
+    SELEZIONE: 'selezione',
     PARTITA: 'partita'
 };
 
@@ -24,11 +25,13 @@ function cambiaStato(nuovoStato) {
  * Mostra solo la schermata legata allo stato corrente:
  * - caricamento -> schermata di caricamento
  * - menu        -> menu
+ * - selezione   -> scelta del personaggio
  * - partita     -> nessuna schermata (si vedono canvas e HUD)
  */
 function aggiornaVisibilita() {
     impostaVisibilita('#loadingScreen', statoCorrente === STATI.CARICAMENTO);
     impostaVisibilita('#menu', statoCorrente === STATI.MENU);
+    impostaVisibilita('#selezione', statoCorrente === STATI.SELEZIONE);
 }
 
 /**

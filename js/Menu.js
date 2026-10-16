@@ -10,7 +10,7 @@ const VOCI_MENU = {
         { testo: 'SETTINGS', azione: () => apriMenu('settings') }
     ],
     play: [
-        { testo: 'VS LOCALE', azione: () => avviaPartita() },
+        { testo: 'VS LOCALE', azione: () => apriSelezione() },
         { testo: 'VS CPU', wip: true },
         { testo: 'VS ONLINE', wip: true }
     ],
