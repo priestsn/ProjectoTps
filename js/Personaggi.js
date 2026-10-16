@@ -15,10 +15,10 @@
 // `ritaglio` è il riquadro esatto del personaggio dentro il frame: serve a
 // ritagliare i ritratti nella schermata di selezione.
 //
-// NOTA: `parry.png` al momento è una copia di `idle.png` (segnaposto).
-// Va sostituito con l'animazione di parata definitiva di ogni personaggio.
+// `parry.png` è l'animazione di parata (blocco) di ogni personaggio.
 //
 // NOTA: i valori dentro `statistiche` sono un primo bilanciamento da confermare.
+// NOTA: salto e caduta di Bakari Traore sono provvisori (assenti nel pacchetto originale).
 
 const PERSONAGGI = [
     {
