@@ -4,8 +4,12 @@
 const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d');
 
-canvas.width = 1500;
-canvas.height = 850;
+// ========================================
+// Dimensioni della finestra
+// ==========================================
+// Il canvas prende le misure della finestra: nessuna dimensione fissa.
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
 c.fillStyle = 'black';
 c.fillRect(0, 0, canvas.width, canvas.height);
@@ -18,13 +22,38 @@ const gravity = 0.25;
 // y della superficie del suolo: i piedi dei lottatori poggiano qui.
 // 40 = margine di terreno lasciato sotto i piedi.
 // I piedi corrispondono a (position.y + height), cioè la base della hitbox.
-const ground = canvas.height - 40;
+// Cambia con le dimensioni della finestra, quindi non è un valore fisso.
+let ground = canvas.height - 40;
 
 // ========================================
 // Inizializzazione Sfondo e Personaggi
 // ==========================================
-// framesMax: 1 -> sfondo statico. Con 5 l'immagine veniva tagliata in 5 colonne e animata
-const background = new Sprite({ x: 0, y: 0 }, './assets/Background.png', 4, 1, { x: 0, y: 0 });
+// framesMax: 1 -> sfondo statico. Il scale lo calcola adattaSfondo(),
+// per coprire tutta l'altezza della finestra.
+const background = new Sprite({ x: 0, y: 0 }, './assets/Background.png', 1, 1, { x: 0, y: 0 });
+
+/**
+ * Scala lo sfondo per coprire tutta l'altezza del canvas.
+ * L'immagine è molto larga e bassa: riempita in altezza prosegue oltre il bordo
+ * destro, quindi il canvas ne mostra la parte sinistra.
+ */
+function adattaSfondo() {
+    if (background.image.loaded && background.image.height > 0) {
+        background.scale = canvas.height / background.image.height;
+    }
+}
+
+/**
+ * Adatta canvas, suolo e sfondo alle dimensioni attuali della finestra
+ */
+function adattaAllaFinestra() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    ground = canvas.height - 40;
+
+    adattaSfondo();
+}
 
 // Chi combatte in questa partita: due id presi da js/Personaggi.js.
 // Finché non esiste la schermata di selezione si usano questi due.
@@ -40,8 +69,11 @@ let Enemy;
  * e con l'AttackBox dal suo lato.
  */
 function preparaPartita(idP1, idP2) {
-    Player = creaLottatore(trovaPersonaggio(idP1), 0, 1);
-    Enemy = creaLottatore(trovaPersonaggio(idP2), 1450, -1);
+    // Posizioni ai lati del campo, calcolate sulla larghezza attuale della finestra
+    const margine = Math.round(canvas.width * 0.05);
+
+    Player = creaLottatore(trovaPersonaggio(idP1), margine, 1);
+    Enemy = creaLottatore(trovaPersonaggio(idP2), canvas.width - margine, -1);
     Enemy.lastKey = 'ArrowLeft';
 }
 
@@ -376,7 +408,12 @@ function avviaPartita() {
 // si passa al menu: la partita parte solo da li' (voce PLAY -> VS LOCALE).
 aggiornaVisibilita();
 
+// Se la finestra cambia dimensione, canvas, suolo e sfondo si adattano
+window.addEventListener('resize', adattaAllaFinestra);
+
 avviaGiocoQuandoPronto(() => {
+    // Gli asset sono pronti: lo sfondo si può scalare in modo definitivo
+    adattaSfondo();
     apriMenu('principale');
     animate();
 });

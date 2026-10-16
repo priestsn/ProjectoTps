@@ -9,13 +9,20 @@ body {
     margin: 0;
     padding: 0;
     background-color: black;
+
+    /* Centra l'area di gioco nella finestra */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    overflow: hidden;
 }
 
 /* Contenitore che racchiude canvas, HUD e schermate sovrapposte.
    `position: relative` serve da riferimento per gli elementi assoluti. */
 #areaGioco {
     position: relative;
-    display: inline-block;
+    line-height: 0;
 }
 
 /* Font del gioco, usato da HUD, menu e testi */
@@ -49,7 +56,8 @@ canvas {
 /* Metà HUD di un giocatore (barre vita + stamina) */
 .hud-lato {
     position: relative;
-    width: 750px;
+    flex: 1;            /* si divide lo spazio disponibile con l'altra metà */
+    min-width: 0;
 }
 
 .hud-lato.sinistra {
