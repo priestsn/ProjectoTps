@@ -25,7 +25,7 @@ Verifiche eseguite: lettura completa del codice, confronto percorsi asset ↔ fi
 | BUG-14 | Medio | `index.js:104,127`, `js/Classi.js:105` | `facing` di Enemy invertito e AttackBox legata a un `lastKey` mai aggiornato dai tasti attacco/parata |
 | BUG-15 | Basso | `index.js:67-78` | Stato `keys.*.pressed` scritto ma mai letto (codice morto) |
 | BUG-16 | Basso | `index.js:259,305,326,340` | `Player.color` / `Enemy.color` non esistono (proprietà fantasma) |
-| BUG-17 | Basso | `js/Classi.js:99-110` | Hitbox di debug disegnata con `fillStyle = 'transparent'` (invisibile) |
+| BUG-17 | Risolto | `js/Classi.js` | Hitbox di debug invisibile: ora si attivano con il tasto U |
 | BUG-18 | Basso | `index.js:210-311` | Nessun `event.repeat` e nessun `preventDefault()`: frecce che scrollano, eventi duplicati |
 | BUG-19 | Basso | `index.js:154-201` | ~10 `document.querySelector` per frame dentro il game loop |
 | BUG-20 | Basso | `index.js:171`, `index.js:189` | `setTimeout` su `isTakingDmg` non tracciati (colpi ravvicinati) |
@@ -297,6 +297,10 @@ c.fillRect(this.AttackBox.position.x, this.AttackBox.position.y - 100, this.Atta
 **Impatto:** il rettangolo viene disegnato **trasparente**, quindi è invisibile: il debug delle hitbox non funziona. In compenso il calcolo della posizione dell'`AttackBox` è corretto e viene riusato dalle collisioni.
 
 **Fix suggerito:** per il debug usare un colore con alpha, es. `c.fillStyle = 'rgba(255,0,0,0.3)'`.
+
+**RISOLTO** — con il tasto **U** si attivano i riquadri di collisione: corpo in blu, area di attacco in rosso, più un pannello con personaggio, frame corrente e stati. Il riquadro dell'attacco ora viene disegnato nella posizione esatta usata dalle collisioni (prima era spostato di -100 px, dettaglio che non si notava perché invisibile).
+
+Il calcolo della posizione dell'`AttackBox` è stato separato dal disegno (`aggiornaAttackBox`): le collisioni continuano a funzionare anche con il debug spento.
 
 ---
 

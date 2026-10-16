@@ -94,6 +94,9 @@ const keys = {
 // Flag di fine partita: impedisce che il risultato venga ricalcolato a ogni frame
 let gameOver = false;
 
+// Debug: con il tasto U si mostrano tutte le hitbox (corpo e area di attacco)
+let hitboxVisibili = false;
+
 // ========================================
 // Loop Principale del Gioco
 // ==========================================
@@ -180,6 +183,11 @@ function animate() {
     document.querySelector('#enemy-stamina').style.width = percentualeBarra(Enemy.stamina, Enemy.statistiche.stamina) + '%';
     document.querySelector('#player-stamina').style.width = percentualeBarra(Player.stamina, Player.statistiche.stamina) + '%';
 
+    // Pannello di debug: attivo con il tasto U
+    if (hitboxVisibili) {
+        disegnaPannelloDebug();
+    }
+
     // Rilevamento collisione attacco del giocatore
     if (Player.isAttacking &&
         Player.AttackBox.position.x < Enemy.position.x + 50 &&
@@ -234,6 +242,12 @@ function animate() {
 // Event Listener
 // ==========================================
 window.addEventListener('keydown', async (event) => {
+    // Debug: il tasto U mostra o nasconde le hitbox (funziona in ogni schermata)
+    if (!event.repeat && (event.key === 'u' || event.key === 'U')) {
+        hitboxVisibili = !hitboxVisibili;
+        return;
+    }
+
     // Fuori dalla partita gli input servono alla selezione o ai menu
     if (statoCorrente === STATI.SELEZIONE) {
         gestisciInputSelezione(event);
@@ -383,6 +397,38 @@ window.addEventListener('keyup', (event) => {
             break;
     }
 });
+
+// ========================================
+// Strumenti di Debug
+// ==========================================
+/**
+ * Mostra i riquadri di collisione e i dati utili per calibrarli.
+ * Si attiva e si disattiva con il tasto U.
+ */
+function disegnaPannelloDebug() {
+    const x = 24;
+    const y = 130;
+
+    c.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    c.fillRect(x - 12, y - 26, 640, 106);
+
+    c.fillStyle = 'white';
+    c.font = '18px monospace';
+    c.fillText('HITBOX VISIBILI  (premi U per nascondere)', x, y);
+    c.fillText(rigaDebug('P1', Player), x, y + 28);
+    c.fillText(rigaDebug('P2', Enemy), x, y + 56);
+}
+
+/**
+ * Riga con i dati di un lottatore: personaggio, frame corrente, stati.
+ * Il frame corrente è quello che serve per decidere quando un attacco colpisce.
+ */
+function rigaDebug(etichetta, lottatore) {
+    return etichetta + '  ' + lottatore.personaggio.nome.padEnd(16) +
+        ' frame ' + lottatore.framesCurrent + '/' + (lottatore.framesMax - 1) +
+        '  attacco ' + (lottatore.isAttacking ? 'si' : 'no') +
+        '  parata ' + (lottatore.isParata ? 'si' : 'no');
+}
 
 // ========================================
 // Avvio della Partita

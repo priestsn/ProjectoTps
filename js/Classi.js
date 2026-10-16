@@ -102,21 +102,54 @@ class Lottatore extends Sprite {
 
     draw() {
         super.draw();
-        c.fillStyle = 'transparent';
 
+        // La posizione dell'AttackBox va aggiornata sempre: la usano le collisioni.
+        // Solo il DISEGNO dei riquadri dipende dal tasto U.
         if (this.isAttacking) {
-            const currentLastKey = (this.lastKey !== null && this.lastKey !== undefined)
-                ? this.lastKey
-                : (this === Player ? lastKey : null);
-            const facingLeft = currentLastKey === 'ArrowLeft' || currentLastKey === 'a';
+            this.aggiornaAttackBox();
+        }
 
-            if (facingLeft) {
-                this.AttackBox.position.x = this.position.x - this.AttackBox.width;
-            } else {
-                this.AttackBox.position.x = this.position.x;
-            }
-            this.AttackBox.position.y = this.position.y;
-            c.fillRect(this.AttackBox.position.x, this.AttackBox.position.y - 100, this.AttackBox.width, this.AttackBox.height);
+        if (hitboxVisibili) {
+            this.disegnaHitbox();
+        }
+    }
+
+    /**
+     * Calcola dove si trova l'area di attacco, in base alla direzione del lottatore
+     */
+    aggiornaAttackBox() {
+        const tastoDirezione = (this.lastKey !== null && this.lastKey !== undefined)
+            ? this.lastKey
+            : (this === Player ? lastKey : null);
+        const versoSnistra = tastoDirezione === 'ArrowLeft' || tastoDirezione === 'a';
+
+        this.AttackBox.position.x = versoSnistra
+            ? this.position.x - this.AttackBox.width
+            : this.position.x;
+        this.AttackBox.position.y = this.position.y;
+    }
+
+    /**
+     * Disegna i riquadri di collisione (debug, tasto U).
+     * I rettangoli sono esattamente quelli usati dai controlli di collisione:
+     * - blu: il corpo del lottatore
+     * - rosso: l'area di attacco, solo mentre sta attaccando
+     */
+    disegnaHitbox() {
+        c.lineWidth = 2;
+
+        // Corpo del lottatore
+        c.fillStyle = 'rgba(0, 200, 255, 0.22)';
+        c.fillRect(this.position.x, this.position.y, this.width, this.height);
+        c.strokeStyle = 'rgba(0, 200, 255, 0.9)';
+        c.strokeRect(this.position.x, this.position.y, this.width, this.height);
+
+        // Area di attacco
+        if (this.isAttacking) {
+            c.fillStyle = 'rgba(255, 40, 40, 0.25)';
+            c.fillRect(this.AttackBox.position.x, this.AttackBox.position.y, this.AttackBox.width, this.AttackBox.height);
+            c.strokeStyle = 'rgba(255, 40, 40, 0.95)';
+            c.strokeRect(this.AttackBox.position.x, this.AttackBox.position.y, this.AttackBox.width, this.AttackBox.height);
         }
     }
 

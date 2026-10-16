@@ -198,6 +198,11 @@ function creaLottatore(personaggio, x, facing) {
     });
 
     lottatore.facing = facing;
+
+    // Il lottatore tiene il riferimento al personaggio: serve per il pannello di
+    // debug e, più avanti, per hitbox e frame d'attacco specifici per personaggio.
+    lottatore.personaggio = personaggio;
+
     return lottatore;
 }
 

@@ -41,6 +41,12 @@ Piano delle funzionalità da implementare.
 | **BUG-05** vita/stamina mai clampate | **Fase 3**, prima della barra ultimate |
 | **BUG-06** parata da morti, **BUG-07** stamina per-frame | **Fase 3**, bilanciamento combattimento |
 
+**Strumenti disponibili**
+
+| Strumento | Come si usa |
+|---|---|
+| Hitbox visibili | Tasto **U** in partita: mostra corpo (blu), area di attacco (rossa) e un pannello con frame corrente e stati di ogni lottatore |
+
 ---
 
 ## 2. Funzionalità richieste
@@ -79,10 +85,17 @@ All'apertura non si gioca più subito: compare un menu a schermo intero con il n
 - `WIP` animazioni di parata: `parry.png` è ancora un segnaposto (copia di idle)
 - `WIP` salto e caduta di **Bakari Traore** (assenti nel pacchetto originale)
 
-### F6 — Nuove meccaniche di combattimento  ·  `WIP` (Fase 3)
-- `WIP` **perfect block** — parando **nell'esatto frame d'impatto** dell'attacco, l'avversario resta **stunnato 1 s** (controllo sui frame, non sul tempo)
+### F6 — Nuove meccaniche di combattimento  ·  `WIP` (Fase 3)- `WIP` **perfect block** — parando **nell'esatto frame d'impatto** dell'attacco, l'avversario resta **stunnato 1 s** (controllo sui frame, non sul tempo)
 - `WIP` **ultimate** — una per personaggio, con **barra dedicata nella HUD**; si carica **col tempo** e con le **parate perfette**, e si **perde carica** quando si viene stunnati
 - `WIP` **attacco caricato** — rompe la parata e stunna l'avversario per **1 s**
+
+### F7 — Hitbox e frame d'attacco per personaggio  ·  `WIP` (Fase 3)
+Ogni personaggio ha sprite di attacco diversi: l'area di attacco e il momento in cui il colpo va a segno non possono essere uguali per tutti.
+- `WIP` **area di attacco propria** per personaggio (larghezza, altezza, spostamento rispetto al corpo)
+- `WIP` **frame d'impatto** proprio per personaggio (oggi è fisso: `framesCurrent === 3` per P1 e `=== 2` per P2)
+- `WIP` togliere i valori fissi dalle collisioni in `index.js` (`Enemy.position.x + 50`, `+ 200`)
+- `WIP` taratura usando il tasto **U** per vedere le hitbox e il frame corrente
+- `WIP` i dati vanno in `js/Personaggi.js`, accanto a `scale` e `offset`
 
 ---f7 efetti sonori, musica in lobby suoni per attacco danno ricevuto ecc
 
