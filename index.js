@@ -4,8 +4,8 @@
 const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d');
 
-canvas.width = 1600;
-canvas.height = 900;
+canvas.width = 1500;
+canvas.height = 850;
 
 c.fillStyle = 'black';
 c.fillRect(0, 0, canvas.width, canvas.height);
@@ -15,10 +15,15 @@ c.fillRect(0, 0, canvas.width, canvas.height);
 // ==========================================
 const gravity = 0.25;
 
+// y della superficie del suolo: i piedi dei lottatori poggiano qui.
+// 40 = margine di terreno lasciato sotto i piedi.
+// I piedi corrispondono a (position.y + height), cioè la base della hitbox.
+const ground = canvas.height - 40;
+
 // ========================================
 // Inizializzazione Sfondo e Personaggi
 // ==========================================
-const background = new Sprite({ x: 0, y: 0 }, './img/Background.png', 1, 5, { x: 0, y: 0 }, );
+const background = new Sprite({ x: 0, y: 0 }, './img/Background.png', 4, 5, { x: 0, y: 0 }, );
 
 const Player = new Lottatore({
     position: { x: 0, y: 0 },
@@ -77,7 +82,8 @@ const keys = {
     à: { pressed: false }
 };
 
-decreaseTimer();
+// Flag di fine partita: impedisce che il risultato venga ricalcolato a ogni frame
+let gameOver = false;
 
 // ========================================
 // Loop Principale del Gioco
@@ -93,19 +99,21 @@ function animate() {
     Player.velocity.x = 0;
     Enemy.velocity.x = 0;
 
-    // Movimento del giocatore
-    if (keys.a.pressed && lastKey === 'a') {
-        Player.velocity.x = -5;
-        Player.facing = -1;
-        Player.cambiaSprite('Run');
-    } else if (keys.d.pressed && lastKey === 'd') {
-        Player.velocity.x = 5;
-        Player.facing = 1;
-        Player.cambiaSprite('Run');
-    } else if (!Player.isParata) {
-        Player.cambiaSprite('idle');
-    } else {
-        Player.stamina -= 0.2;
+    // Movimento del giocatore (a partita finita nessuno si muove più)
+    if (!gameOver) {
+        if (keys.a.pressed && lastKey === 'a') {
+            Player.velocity.x = -5;
+            Player.facing = -1;
+            Player.cambiaSprite('Run');
+        } else if (keys.d.pressed && lastKey === 'd') {
+            Player.velocity.x = 5;
+            Player.facing = 1;
+            Player.cambiaSprite('Run');
+        } else if (!Player.isParata) {
+            Player.cambiaSprite('idle');
+        } else {
+            Player.stamina -= 0.2;
+        }
     }
 
     // Movimento verticale del giocatore
@@ -115,19 +123,21 @@ function animate() {
         Player.cambiaSprite('Fall');
     }
 
-    // Movimento del nemico
-    if (keys.ArrowLeft.pressed && Enemy.lastKey === 'ArrowLeft') {
-        Enemy.velocity.x = -5;
-        Enemy.facing = 1;
-        Enemy.cambiaSprite('Run');
-    } else if (keys.ArrowRight.pressed && Enemy.lastKey === 'ArrowRight') {
-        Enemy.velocity.x = 5;
-        Enemy.facing = -1;
-        Enemy.cambiaSprite('Run');
-    } else if (!Enemy.isParata) {
-        Enemy.cambiaSprite('idle');
-    } else {
-        Enemy.stamina -= 0.2;
+    // Movimento del nemico (a partita finita nessuno si muove più)
+    if (!gameOver) {
+        if (keys.ArrowLeft.pressed && Enemy.lastKey === 'ArrowLeft') {
+            Enemy.velocity.x = -5;
+            Enemy.facing = 1;
+            Enemy.cambiaSprite('Run');
+        } else if (keys.ArrowRight.pressed && Enemy.lastKey === 'ArrowRight') {
+            Enemy.velocity.x = 5;
+            Enemy.facing = -1;
+            Enemy.cambiaSprite('Run');
+        } else if (!Enemy.isParata) {
+            Enemy.cambiaSprite('idle');
+        } else {
+            Enemy.stamina -= 0.2;
+        }
     }
 
     // Movimento verticale del nemico
@@ -190,8 +200,9 @@ function animate() {
         }
     }
 
-    // Condizione di fine gioco
-    if (Player.health <= 0 || Enemy.health <= 0) {
+    // Condizione di fine gioco (eseguita una sola volta)
+    if (!gameOver && (Player.health <= 0 || Enemy.health <= 0)) {
+        gameOver = true;
         if (Player.health <= 0) {
             Player.cambiaSprite('Death');
         }
@@ -199,21 +210,24 @@ function animate() {
             Enemy.cambiaSprite('Death');
         }
         document.querySelector('#displayText').style.display = 'flex';
-        determineWinner({ Player, Enemy, timerId });
+        determineWinner(Player, Enemy, timerId);
     }
 }
-
-animate();
 
 // ========================================
 // Event Listener
 // ==========================================
 window.addEventListener('keydown', async (event) => {
+    // A partita finita gli input non hanno più alcun effetto
+    // (l'animazione di morte resta comunque libera di completarsi)
+    if (gameOver) return;
+
     const key = (event.key && event.key.length === 1) ? event.key.toLowerCase() : event.key;
 
     switch (key) {
         case 'w':
-            if (Player.position.y === 710 && !Player.isDead) {
+            // Salta solo se i piedi sono appoggiati al suolo (niente doppio salto)
+            if (Player.position.y + Player.height >= ground && !Player.isDead) {
                 Player.velocity.y = -10;
             }
             break;
@@ -261,7 +275,8 @@ window.addEventListener('keydown', async (event) => {
             break;
 
         case 'ArrowUp':
-            if (Enemy.position.y === 710 && !Enemy.isDead) {
+            // Salta solo se i piedi sono appoggiati al suolo (niente doppio salto)
+            if (Enemy.position.y + Enemy.height >= ground && !Enemy.isDead) {
                 Enemy.velocity.y = -10;
             }
             break;
@@ -340,4 +355,15 @@ window.addEventListener('keyup', (event) => {
             Enemy.color = 'green';
             break;
     }
+});
+
+// ========================================
+// Avvio del Gioco
+// ==========================================
+// Il gioco parte solo quando TUTTI gli asset sono stati caricati: così sfondo
+// e lottatori compaiono insieme, senza l'effetto "uno alla volta".
+// Anche il timer parte qui, altrimenti scorrerebbe durante il caricamento.
+avviaGiocoQuandoPronto(() => {
+    decreaseTimer();
+    animate();
 });

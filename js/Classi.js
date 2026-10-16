@@ -6,12 +6,10 @@ class Sprite {
         this.position = position.position || { x: 0, y: 0 };
         this.height = 150;
         this.width = 50;
-        this.image = new Image();
-        this.loaded = false;
-        this.image.onload = () => {
-            this.loaded = true;
-        };
-        this.image.src = imageSrc;
+        // creaImmagine() (in Utili.js) registra l'asset tra quelli da
+        // attendere prima di avviare il gioco, e ne traccia il caricamento
+        // sulla proprietà .loaded dell'immagine stessa.
+        this.image = creaImmagine(imageSrc);
         this.scale = scale;
         this.framesMax = framesMax;
         this.framesCurrent = 0;
@@ -21,7 +19,9 @@ class Sprite {
     }
 
     draw() {
-        if (this.loaded) {
+        // Si disegna solo quando l'immagine corrente (non quella iniziale) è pronta.
+        // Se cambia sprite, .loaded segue automaticamente la nuova immagine.
+        if (this.image.loaded) {
             c.save();
             c.translate(this.position.x, this.position.y);
             c.scale(this.facing, 1); // Ribalta orizzontalmente se facing = -1
@@ -87,10 +87,9 @@ class Lottatore extends Sprite {
         this.framesHold = 10;
         this.sprites = sprites;
 
-        // Carica tutti gli sprite delle animazioni
+        // Carica tutti gli sprite delle animazioni (ognuno tracciato per il caricamento)
         for (const sprite in this.sprites) {
-            this.sprites[sprite].image = new Image();
-            this.sprites[sprite].image.src = this.sprites[sprite].imageSrc;
+            this.sprites[sprite].image = creaImmagine(this.sprites[sprite].imageSrc);
         }
     }
 
@@ -117,6 +116,12 @@ class Lottatore extends Sprite {
     update() {
         this.draw();
 
+        // La morte si completa da sola: raggiunto l'ultimo frame dell'animazione
+        // il lottatore passa a isDead e l'animazione si ferma sull'ultimo disegno.
+        if (this.image === this.sprites.Death.image && this.framesCurrent === this.sprites.Death.framesMax - 1) {
+            this.isDead = true;
+        }
+
         if (!this.isDead) {
             this.animateFrames();
         }
@@ -124,12 +129,15 @@ class Lottatore extends Sprite {
         this.position.x += this.velocity.x;
         this.position.y += this.velocity.y;
 
-        // Clamp position to stay on screen
+        // Clamp posizione orizzontale: resta dentro il canvas
         this.position.x = Math.max(0, Math.min(canvas.width - this.width, this.position.x));
-        this.position.y = Math.max(0, Math.min(canvas.height - this.height, this.position.y));
 
-        // Applica gravità
-        if (this.position.y + this.height + this.velocity.y >= canvas.height - 40) {
+        // Clamp posizione verticale: i piedi non scendono sotto il suolo.
+        // Ground - altezza è l'esatta posizione di riposo, quindi atterrare è deterministico.
+        this.position.y = Math.max(0, Math.min(ground - this.height, this.position.y));
+
+        // Applica gravità: si azzera quando i piedi raggiungono il suolo
+        if (this.position.y + this.height + this.velocity.y >= ground) {
             this.velocity.y = 0;
         } else {
             this.velocity.y += gravity;
@@ -137,18 +145,22 @@ class Lottatore extends Sprite {
     }
 
     cambiaSprite(sprite) {
-        if (this.image === this.sprites.Attack1.image && !this.isTakingDmg && this.framesCurrent < this.sprites.Attack1.framesMax - 1) {
-            return;
-        }
-        if (this.image === this.sprites.TakeHit.image && this.framesCurrent < this.sprites.TakeHit.framesMax - 1) {
+        // La morte ha priorità su tutto: una volta avviata, lo sprite non cambia più.
+        // L'animazione arriva fino in fondo e isDead viene impostato in update().
+        if (this.image === this.sprites.Death.image) {
             return;
         }
 
-        if (this.image === this.sprites.Death.image) {
-            if (this.framesCurrent === this.sprites.Death.framesMax - 1) {
-                this.isDead = true;
+        // Attacco e colpo subito non si interrompono mai... tranne che per la morte.
+        // Senza questa eccezione l'animazione di morte non partirebbe quando il colpo
+        // mortale lascia il lottatore a metà di "Attack1" o di "TakeHit".
+        if (sprite !== 'Death') {
+            if (this.image === this.sprites.Attack1.image && !this.isTakingDmg && this.framesCurrent < this.sprites.Attack1.framesMax - 1) {
+                return;
             }
-            return;
+            if (this.image === this.sprites.TakeHit.image && this.framesCurrent < this.sprites.TakeHit.framesMax - 1) {
+                return;
+            }
         }
 
         const spriteMap = {

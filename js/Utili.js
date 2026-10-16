@@ -1,7 +1,81 @@
+// ========================================
+// Caricamento degli Asset
+// ==========================================
+const immaginiDaCaricare = [];  // tutte le Image create dal gioco
+let immaginiCaricate = 0;       // quante hanno finito (caricate o fallite)
+
 /**
- * Determina il vincitore e mostra il risultato
+ * Crea una Image e la registra tra gli asset da attendere prima di giocare.
+ * Da usare al posto di "new Image()" così nessun asset viene dimenticato.
  */
-function determineWinner({ player, enemy, timerId }) {
+function creaImmagine(imageSrc) {
+    const img = new Image();
+    img.loaded = false;
+
+    const fine = () => {
+        img.loaded = true;
+        immaginiCaricate++;
+        aggiornaSchermataCaricamento();
+    };
+
+    img.onload = fine;
+    img.onerror = () => {
+        // Un asset mancante non deve bloccare l'avvio: lo segnaliamo e proseguiamo
+        console.error('Asset non caricato:', imageSrc);
+        fine();
+    };
+
+    img.src = imageSrc;
+    immaginiDaCaricare.push(img);
+    return img;
+}
+
+/**
+ * Aggiorna il contatore mostrato nella schermata di caricamento
+ */
+function aggiornaSchermataCaricamento() {
+    const testo = document.querySelector('#loadingTesto');
+    if (testo) {
+        testo.innerHTML = 'Caricamento… ' + immaginiCaricate + '/' + immaginiDaCaricare.length;
+    }
+}
+
+/**
+ * Aspetta che TUTTI gli asset siano pronti, poi nasconde la schermata di
+ * caricamento ed esegue la funzione che avvia il gioco.
+ */
+function avviaGiocoQuandoPronto(avviaIlGioco) {
+    const attese = immaginiDaCaricare.map(img => {
+        // Già pronta (es. presente in cache): nessuna attesa
+        if (img.complete) return Promise.resolve();
+
+        // Si attende sia 'load' sia 'error': se un asset manca il gioco
+        // deve partire comunque, non restare bloccato per sempre.
+        return new Promise(resolve => {
+            img.addEventListener('load', resolve, { once: true });
+            img.addEventListener('error', resolve, { once: true });
+        });
+    });
+
+    Promise.all(attese).then(() => {
+        const schermata = document.querySelector('#loadingScreen');
+        if (schermata) {
+            schermata.style.display = 'none';
+        }
+        avviaIlGioco();
+    });
+}
+
+// ========================================
+// Fine Partita
+// ==========================================
+
+/**
+ * Determina il vincitore e mostra il risultato.
+ * I parametri sono posizionali: così è impossibile confondere "Player" con
+ * "player" (il bug nasceva dal destructuring, che lavora per NOME).
+ */
+function determineWinner(player, enemy, timerId) {
     clearTimeout(timerId);
     if (player.health === enemy.health) {
         document.querySelector('#displayText').innerHTML = 'Pareggio!';
@@ -36,10 +110,6 @@ function decreaseTimer() {
 
     if (timer === 0) {
         document.querySelector('#displayText').style.display = 'flex';
-        try {
-            determineWinner({ Player, Enemy, timerId });
-        } catch (error) {
-            console.error('Errore durante la determinazione del vincitore:', error);
-        }
+        determineWinner(Player, Enemy, timerId);
     }
 }

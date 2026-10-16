@@ -47,6 +47,12 @@
 
         <!-- Canvas -->
         <canvas></canvas>
+
+        <!-- Schermata di Caricamento (copre tutto finché gli asset non sono pronti) -->
+        <div id="loadingScreen" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; background-color: black; z-index: 40;">
+            <div style="font-family: 'Bitcount Prop Double Ink', sans-serif; font-size: 60px; color: white;">GiocoTps</div>
+            <div id="loadingTesto" style="font-family: 'Bitcount Prop Double Ink', sans-serif; font-size: 30px; color: #888888;">Caricamento…</div>
+        </div>
     </div>
 
     <!-- Scripts -->
