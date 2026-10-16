@@ -9,32 +9,32 @@ Verifiche eseguite: lettura completa del codice, confronto percorsi asset ↔ fi
 
 | ID | Severità | Dove | Bug |
 |---|---|---|---|
-| BUG-01 | ✅ Risolto | `index.js` (`case 'w'` / `case 'ArrowUp'`), `js/Classi.js:129-133` | Salto legato a un numero fisso invece che al suolo: rotto dopo il resize del canvas |
-| BUG-02 | ✅ Risolto | `js/Utili.js:4` + chiamate in `index.js` e `js/Utili.js` | `determineWinner` lanciava `TypeError`: il vincitore non veniva mai mostrato |
-| BUG-03 | 🔴 Critico | `index.js:21` | Lo sfondo è diviso in 5 frame e animato (`framesMax: 5`) |
-| BUG-04 | 🟠 Alto | `index.js:243`, `index.js:289` | `isAttacking` gestito con `await` + timeout fisso, in conflitto col reset a frame (`index.js:141-146`) |
-| BUG-05 | 🟠 Alto | `index.js:108,130,169,187,240,286`, `js/Utili.js:29,33` | Vita/stamina fuori range → `width` CSS non valido → barre non aggiornate |
-| BUG-06 | 🟠 Alto | `index.js:249`, `index.js:295` | Si può parare da morti (manca il controllo `isDead`) |
-| BUG-07 | 🟠 Alto | `index.js:96-130` | Drenaggio stamina della parata dipendente dal frame rate e solo da fermi |
-| BUG-08 | ✅ Risolto | `index.js` (blocco "Condizione di fine gioco") | `determineWinner` richiamato a ogni frame dopo la morte |
-| BUG-09 | 🟡 Medio | `js/Utili.js:21-25` | Timer off-by-one: parte da 59 e la prima iterazione è istantanea |
-| BUG-10 | 🟡 Medio | `js/Classi.js:27`, `js/Classi.js:69` | `this.facing` usato in `Sprite` ma definito solo in `Lottatore` |
-| BUG-11 | 🟡 Medio | `index.js:159-162,177-180` | Magic number duplicati (50, 200) nelle hitbox di collisione: si rompono in silenzio |
-| BUG-12 | 🟡 Medio | `js/Classi.js:135` + `index.js:16` | `gravity` definita in `index.js` ma usata in `Classi.js` (dipendenza nascosta) |
-| BUG-13 | 🟡 Medio | `index.js:111-117`, `124-130`, `237-262` | La parata è "invisibile": sovrascritta da Jump/Fall o bloccata da un attacco in corso |
-| BUG-14 | 🟡 Medio | `index.js:104,127`, `js/Classi.js:105` | `facing` di Enemy invertito e AttackBox legata a un `lastKey` mai aggiornato dai tasti attacco/parata |
-| BUG-15 | 🔵 Basso | `index.js:67-78` | Stato `keys.*.pressed` scritto ma mai letto (codice morto) |
-| BUG-16 | 🔵 Basso | `index.js:259,305,326,340` | `Player.color` / `Enemy.color` non esistono (proprietà fantasma) |
-| BUG-17 | 🔵 Basso | `js/Classi.js:99-110` | Hitbox di debug disegnata con `fillStyle = 'transparent'` (invisibile) |
-| BUG-18 | 🔵 Basso | `index.js:210-311` | Nessun `event.repeat` e nessun `preventDefault()`: frecce che scrollano, eventi duplicati |
-| BUG-19 | 🔵 Basso | `index.js:154-201` | ~10 `document.querySelector` per frame dentro il game loop |
-| BUG-20 | 🔵 Basso | `index.js:171`, `index.js:189` | `setTimeout` su `isTakingDmg` non tracciati (colpi ravvicinati) |
-| BUG-21 | ✅ Risolto (UX) | `js/Utili.js`, `js/Classi.js`, `index.html`, `index.js` | Asset caricati uno alla volta: aggiunta la schermata di caricamento |
-| BUG-22 | ✅ Risolto | `js/Classi.js` (`cambiaSprite`/`update`), `index.js` | L'animazione di morte non partiva e il lottatore morto si muoveva ancora |
+| BUG-01 | Risolto | `index.js` (`case 'w'` / `case 'ArrowUp'`), `js/Classi.js:129-133` | Salto legato a un numero fisso invece che al suolo: rotto dopo il resize del canvas |
+| BUG-02 | Risolto | `js/Utili.js:4` + chiamate in `index.js` e `js/Utili.js` | `determineWinner` lanciava `TypeError`: il vincitore non veniva mai mostrato |
+| BUG-03 | Critico | `index.js:21` | Lo sfondo è diviso in 5 frame e animato (`framesMax: 5`) |
+| BUG-04 | Alto | `index.js:243`, `index.js:289` | `isAttacking` gestito con `await` + timeout fisso, in conflitto col reset a frame (`index.js:141-146`) |
+| BUG-05 | Alto | `index.js:108,130,169,187,240,286`, `js/Utili.js:29,33` | Vita/stamina fuori range: `width` CSS non valido, barre non aggiornate |
+| BUG-06 | Alto | `index.js:249`, `index.js:295` | Si può parare da morti (manca il controllo `isDead`) |
+| BUG-07 | Alto | `index.js:96-130` | Drenaggio stamina della parata dipendente dal frame rate e solo da fermi |
+| BUG-08 | Risolto | `index.js` (blocco "Condizione di fine gioco") | `determineWinner` richiamato a ogni frame dopo la morte |
+| BUG-09 | Medio | `js/Utili.js:21-25` | Timer off-by-one: parte da 59 e la prima iterazione è istantanea |
+| BUG-10 | Medio | `js/Classi.js:27`, `js/Classi.js:69` | `this.facing` usato in `Sprite` ma definito solo in `Lottatore` |
+| BUG-11 | Medio | `index.js:159-162,177-180` | Magic number duplicati (50, 200) nelle hitbox di collisione: si rompono in silenzio |
+| BUG-12 | Medio | `js/Classi.js:135` + `index.js:16` | `gravity` definita in `index.js` ma usata in `Classi.js` (dipendenza nascosta) |
+| BUG-13 | Medio | `index.js:111-117`, `124-130`, `237-262` | La parata è "invisibile": sovrascritta da Jump/Fall o bloccata da un attacco in corso |
+| BUG-14 | Medio | `index.js:104,127`, `js/Classi.js:105` | `facing` di Enemy invertito e AttackBox legata a un `lastKey` mai aggiornato dai tasti attacco/parata |
+| BUG-15 | Basso | `index.js:67-78` | Stato `keys.*.pressed` scritto ma mai letto (codice morto) |
+| BUG-16 | Basso | `index.js:259,305,326,340` | `Player.color` / `Enemy.color` non esistono (proprietà fantasma) |
+| BUG-17 | Basso | `js/Classi.js:99-110` | Hitbox di debug disegnata con `fillStyle = 'transparent'` (invisibile) |
+| BUG-18 | Basso | `index.js:210-311` | Nessun `event.repeat` e nessun `preventDefault()`: frecce che scrollano, eventi duplicati |
+| BUG-19 | Basso | `index.js:154-201` | ~10 `document.querySelector` per frame dentro il game loop |
+| BUG-20 | Basso | `index.js:171`, `index.js:189` | `setTimeout` su `isTakingDmg` non tracciati (colpi ravvicinati) |
+| BUG-21 | Risolto (UX) | `js/Utili.js`, `js/Classi.js`, `index.html`, `index.js` | Asset caricati uno alla volta: aggiunta la schermata di caricamento |
+| BUG-22 | Risolto | `js/Classi.js` (`cambiaSprite`/`update`), `index.js` | L'animazione di morte non partiva e il lottatore morto si muoveva ancora |
 
 ---
 
-## BUG-01 — 🔴 Il salto non funziona mai
+## BUG-01 — [Critico] Il salto non funziona mai
 
 **Dove:** `index.js` → `case 'w'` (`if (Player.position.y === 690 …)`) e `case 'ArrowUp'` (identico per `Enemy`).
 
@@ -53,11 +53,11 @@ Il punto chiave: il valore corretto **non è una costante indipendente**, è der
 
 **Impatto:** `W` e `ArrowUp` non fanno saltare i lottatori. Gli stati `Jump` e `Fall` restano di fatto irraggiungibili.
 
-**✅ RISOLTO** — vedi la sezione "Fix applicati" in fondo al file.
+**RISOLTO** — vedi la sezione "Fix applicati" in fondo al file.
 
 ---
 
-## BUG-02 — 🔴 `determineWinner` lancia sempre `TypeError`
+## BUG-02 — [Critico] `determineWinner` lancia sempre `TypeError`
 
 **Dove:** `js/Utili.js:4` `function determineWinner({ player, enemy, timerId })`, chiamata a `index.js:202` con `{ Player, Enemy, timerId }` e a `js/Utili.js:40` con `{ Player, Enemy, timerId }`.
 
@@ -69,7 +69,7 @@ TypeError: Cannot read properties of undefined (reading 'health')
 
 **Impatto:** il messaggio del vincitore (`Giocatore 1 Vince!`, `Pareggio!`…) **non viene mai mostrato**. In `decreaseTimer` l'errore era nascosto dal `try/catch` e finiva solo in console; nella chiamata da `index.js` l'eccezione non era gestita e veniva rilanciata a ogni frame.
 
-**✅ RISOLTO** — adottata la soluzione più robusta: **parametri posizionali** al posto del destructuring, così l'accoppiamento per nome (e il rischio di confondere `Player` con `player`) sparisce del tutto.
+**RISOLTO** — adottata la soluzione più robusta: **parametri posizionali** al posto del destructuring, così l'accoppiamento per nome (e il rischio di confondere `Player` con `player`) sparisce del tutto.
 
 ```js
 // js/Utili.js
@@ -83,7 +83,7 @@ Contestualmente è stato rimosso il `try/catch` che mascherava l'errore e aggiun
 
 ---
 
-## BUG-03 — 🔴 Lo sfondo è tagliato in 5 frame e animato
+## BUG-03 — [Critico] Lo sfondo è tagliato in 5 frame e animato
 
 **Dove:** `index.js:21`
 
@@ -99,7 +99,7 @@ const background = new Sprite({ x: 0, y: 0 }, './img/Background.png', 1, 5, { x:
 
 ---
 
-## BUG-04 — 🟠 `isAttacking` ha due fonti di verità
+## BUG-04 — [Alto] `isAttacking` ha due fonti di verità
 
 **Dove:** `index.js:243` / `index.js:289`
 
@@ -130,7 +130,7 @@ ed eliminare `await`/`setTimeout` dall'handler `keydown`.
 
 ---
 
-## BUG-05 — 🟠 Vita e stamina senza limiti → barre HUD non aggiornate
+## BUG-05 — [Alto] Vita e stamina senza limiti: barre HUD non aggiornate
 
 **Dove:** `index.js:108`, `130` (`stamina -= 0.2`), `169`, `187` (`health -= 10`), `240`, `286` (`stamina -= 20`), `js/Utili.js:29`, `33` (`stamina += 10`).
 
@@ -145,7 +145,7 @@ ed eliminare `await`/`setTimeout` dall'handler `keydown`.
 
 ---
 
-## BUG-06 — 🟠 Si può parare da morti
+## BUG-06 — [Alto] Si può parare da morti
 
 **Dove:** `index.js:249` (`case 'j'`) e `index.js:295` (`case 'à'`).
 
@@ -157,7 +157,7 @@ ed eliminare `await`/`setTimeout` dall'handler `keydown`.
 
 ---
 
-## BUG-07 — 🟠 Drenaggio stamina dipendente dal frame rate
+## BUG-07 — [Alto] Drenaggio stamina dipendente dal frame rate
 
 **Dove:** `index.js:96-108` (Player) e `118-130` (Enemy)
 
@@ -178,7 +178,7 @@ ed eliminare `await`/`setTimeout` dall'handler `keydown`.
 
 ---
 
-## BUG-08 — 🟠 `determineWinner` richiamato a ogni frame
+## BUG-08 — [Alto] `determineWinner` richiamato a ogni frame
 
 **Dove:** `index.js:193-204`
 
@@ -186,11 +186,11 @@ ed eliminare `await`/`setTimeout` dall'handler `keydown`.
 
 **Impatto:** unito a BUG-02, produceva un `TypeError` **non gestito** in console a 60 volte al secondo; il testo finale veniva ricalcolato inutilmente e il timer "fermato" di continuo.
 
-**✅ RISOLTO** — aggiunto il flag `gameOver`, che fa eseguire il blocco di fine partita **una sola volta** (vedi "Fix applicati #2").
+**RISOLTO** — aggiunto il flag `gameOver`, che fa eseguire il blocco di fine partita **una sola volta** (vedi "Fix applicati #2").
 
 ---
 
-## BUG-09 — 🟡 Timer off-by-one
+## BUG-09 — [Medio] Timer off-by-one
 
 **Dove:** `js/Utili.js:21-25`, avviato da `index.js:80` con `decreaseTimer();`
 
@@ -202,7 +202,7 @@ ed eliminare `await`/`setTimeout` dall'handler `keydown`.
 
 ---
 
-## BUG-10 — 🟡 `this.facing` usato in `Sprite` ma definito solo in `Lottatore`
+## BUG-10 — [Medio] `this.facing` usato in `Sprite` ma definito solo in `Lottatore`
 
 **Dove:** `js/Classi.js:27` `c.scale(this.facing, 1);` — `this.facing` è inizializzato solo in `js/Classi.js:69` (dentro `Lottatore`).
 
@@ -212,7 +212,7 @@ ed eliminare `await`/`setTimeout` dall'handler `keydown`.
 
 ---
 
-## BUG-11 — 🟡 Magic number duplicati nelle hitbox
+## BUG-11 — [Medio] Magic number duplicati nelle hitbox
 
 **Dove:** `index.js:159-162` e `index.js:177-180` (`Enemy.position.x + 50`, `+ 200`).
 
@@ -226,7 +226,7 @@ ed eliminare `await`/`setTimeout` dall'handler `keydown`.
 
 ---
 
-## BUG-12 — 🟡 `gravity` definita in `index.js`, usata in `Classi.js`
+## BUG-12 — [Medio] `gravity` definita in `index.js`, usata in `Classi.js`
 
 **Dove:** dichiarata a `index.js:16`, utilizzata a `js/Classi.js:135` (`this.velocity.y += gravity;`).
 
@@ -236,7 +236,7 @@ ed eliminare `await`/`setTimeout` dall'handler `keydown`.
 
 ---
 
-## BUG-13 — 🟡 La parata è "invisibile" in due casi
+## BUG-13 — [Medio] La parata è "invisibile" in due casi
 
 **Dove:** `index.js:111-117` / `124-130` (Jump/Fall), `index.js:237-262` (attacco → parata).
 
@@ -250,7 +250,7 @@ ed eliminare `await`/`setTimeout` dall'handler `keydown`.
 
 ---
 
-## BUG-14 — 🟡 Facing di Enemy invertito e AttackBox non aggiornata
+## BUG-14 — [Medio] Facing di Enemy invertito e AttackBox non aggiornata
 
 **Dove:** `index.js:104` (`Player.facing = 1` → destra) vs `index.js:127` (`Enemy.facing = -1` → destra); `js/Classi.js:105` usa `lastKey`.
 
@@ -262,7 +262,7 @@ ed eliminare `await`/`setTimeout` dall'handler `keydown`.
 
 ---
 
-## BUG-15 — 🔵 Stato `keys` in gran parte codice morto
+## BUG-15 — [Basso] Stato `keys` in gran parte codice morto
 
 **Dove:** `keys.h.pressed`, `keys.j.pressed`, `keys.ù.pressed`, `keys.à.pressed` — scritti a `index.js:241-242`, `251`, `285-286`, `297-298` ma **mai letti** nel game loop (che usa solo `Player.isAttacking` / `isParata`).
 
@@ -272,7 +272,7 @@ ed eliminare `await`/`setTimeout` dall'handler `keydown`.
 
 ---
 
-## BUG-16 — 🔵 Proprietà `color` fantasma
+## BUG-16 — [Basso] Proprietà `color` fantasma
 
 **Dove:** `index.js:259`, `305`, `326`, `340` — `Player.color = 'blue'` / `Enemy.color = 'green'`.
 
@@ -280,7 +280,7 @@ ed eliminare `await`/`setTimeout` dall'handler `keydown`.
 
 ---
 
-## BUG-17 — 🔵 Hitbox di debug invisibile
+## BUG-17 — [Basso] Hitbox di debug invisibile
 
 **Dove:** `js/Classi.js:99-110`
 
@@ -296,7 +296,7 @@ c.fillRect(this.AttackBox.position.x, this.AttackBox.position.y - 100, this.Atta
 
 ---
 
-## BUG-18 — 🔵 Handler tastiera senza `repeat` / `preventDefault`
+## BUG-18 — [Basso] Handler tastiera senza `repeat` / `preventDefault`
 
 **Dove:** `index.js:210` (`keydown`) e `index.js:313` (`keyup`).
 
@@ -306,7 +306,7 @@ c.fillRect(this.AttackBox.position.x, this.AttackBox.position.y - 100, this.Atta
 
 ---
 
-## BUG-19 — 🔵 `querySelector` a ogni frame
+## BUG-19 — [Basso] `querySelector` a ogni frame
 
 **Dove:** `index.js:154-155`, `170`, `188`, `201`, più le query in `js/Utili.js`.
 
@@ -316,7 +316,7 @@ c.fillRect(this.AttackBox.position.x, this.AttackBox.position.y - 100, this.Atta
 
 ---
 
-## BUG-20 — 🔵 `setTimeout` su `isTakingDmg` non tracciati
+## BUG-20 — [Basso] `setTimeout` su `isTakingDmg` non tracciati
 
 **Dove:** `index.js:171` e `index.js:189`
 
@@ -332,9 +332,9 @@ setTimeout(() => { Enemy.isTakingDmg = false; }, 400);
 
 ---
 
-## BUG-21 — 🟠 Alto (UX) — Asset caricati uno alla volta, manca la schermata di caricamento
+## BUG-21 — [Alto] Asset caricati uno alla volta, manca la schermata di caricamento
 
-**✅ RISOLTO** — schermata di caricamento implementata seguendo i 3 passi qui sotto, con una differenza importante: il flag `loaded` ora vive **sull'immagine** (`this.image.loaded`) invece che sullo `Sprite`. Così segue automaticamente lo sprite attivo e risolve anche il bug latente dell'invisibilità descritto sotto. Vedi "Fix applicati #3".
+**RISOLTO** — schermata di caricamento implementata seguendo i 3 passi qui sotto, con una differenza importante: il flag `loaded` ora vive **sull'immagine** (`this.image.loaded`) invece che sullo `Sprite`. Così segue automaticamente lo sprite attivo e risolve anche il bug latente dell'invisibilità descritto sotto. Vedi "Fix applicati #3".
 
 **Dove:** `js/Classi.js:9-15` (`Sprite`), `js/Classi.js:88-92` (`Lottatore`), avvio del gioco a `index.js:85` (`decreaseTimer()`) e `index.js:211` (`animate()`).
 
@@ -424,7 +424,7 @@ Nessuno aspetta: `animate()` viene chiamata immediatamente e `Sprite.draw()` dis
 
 ---
 
-## BUG-22 — 🟠 Alto — L'animazione di morte non partiva e il lottatore morto si muoveva ancora
+## BUG-22 — [Alto] L'animazione di morte non partiva e il lottatore morto si muoveva ancora
 
 **Sintomo osservato:** uccidendo il nemico, l'animazione di morte non partiva (il lottatore restava in piedi) e si poteva continuare a muoverlo.
 
@@ -464,7 +464,7 @@ Conseguenza a catena:
 | `isDead` | **false** |
 | Spostamento con tasto premuto | **60 px** (12 frame × 5) |
 
-**✅ RISOLTO** con tre modifiche coordinate:
+**RISOLTO** con tre modifiche coordinate:
 
 1. **`cambiaSprite` — la morte ha priorità.** Il controllo sullo sprite `Death` è stato spostato in cima (una volta avviata la morte lo sprite non cambia più) e i guard di `Attack1`/`TakeHit` vengono saltati quando la richiesta è proprio `Death`:
    ```js
@@ -488,12 +488,12 @@ Conseguenza a catena:
 
 | Controllo | Dopo il fix |
 |---|---|
-| Animazione di morte avviata | **true** ✔ |
-| Sprite finale | `Death` ✔ |
-| Spostamento nei 30 frame dopo la morte | **0 px** ✔ |
-| Salto tentato durante l'animazione (`velocity.y`) | **0** (input ignorato) ✔ |
-| `isDead` a fine animazione | **true** ✔ |
-| Animazione ferma sull'ultimo frame | 6/6 — nessun loop ✔ |
+| Animazione di morte avviata | **true** |
+| Sprite finale | `Death` |
+| Spostamento nei 30 frame dopo la morte | **0 px** |
+| Salto tentato durante l'animazione (`velocity.y`) | **0** (input ignorato) |
+| `isDead` a fine animazione | **true** |
+| Animazione ferma sull'ultimo frame | 6/6, nessun loop |
 
 **Nota su un residuo impercettibile:** al momento esatto della morte resta **1 solo frame** di movimento (5 px), perché in `animate()` il movimento viene processato prima del rilevamento di fine partita che imposta `gameOver`. Si può azzerare aggiungendo `Player.health > 0` alle condizioni di movimento, ma è impercettibile (0,3% della larghezza del canvas).
 
@@ -566,9 +566,9 @@ Conseguenza a catena:
   |---|---|
   | `ground` | 810 |
   | posizione di riposo `ground - height` | **660** |
-  | dopo 1 salto → riposo | 660 (può risaltare ✔) |
-  | dopo 2 salti → riposo | 660 (può risaltare ✔) |
-  | a mezz'aria (y = 500, piedi a 650 < 810) | non può saltare ✔ |
+  | dopo 1 salto -> riposo | 660 (può risaltare) |
+  | dopo 2 salti -> riposo | 660 (può risaltare) |
+  | a mezz'aria (y = 500, piedi a 650 < 810) | non può saltare |
 
 **Cosa testare a mano nel browser:**
 1. `A`/`D` per muoversi, `W` per saltare — il salto deve partire a ogni pressione quando si è a terra.
@@ -612,9 +612,9 @@ Conseguenza a catena:
 
 | Controllo | Risultato |
 |---|---|
-| `Player.health = 0` → testo mostrato | `"Giocatore 2 Vince!"` ✔ |
-| Frame successivo (con `Enemy.health = 0`) | testo **invariato** ✔ (guard `gameOver` attivo) |
-| Errori a runtime | nessuno ✔ |
+| `Player.health = 0` / testo mostrato | `"Giocatore 2 Vince!"` |
+| Frame successivo (con `Enemy.health = 0`) | testo **invariato** (guard `gameOver` attivo) |
+| Errori a runtime | nessuno |
 
 **Cosa testare a mano nel browser:**
 1. Lasciar scadere il timer a 0: deve comparire `Pareggio!` / `Giocatore X Vince!`.
@@ -655,10 +655,10 @@ Conseguenza a catena:
 | Controllo | Risultato |
 |---|---|
 | Asset registrati | **19** (1 sfondo + 1 base + 8 sprite per Player, 1 base + 8 sprite per Enemy) |
-| Asset caricati | **19** ✔ tutti |
-| `#loadingScreen` dopo il caricamento | `display: "none"` ✔ |
-| Game loop avviato | 6 frame eseguiti ✔ |
-| Errori a runtime | nessuno ✔ |
+| Asset caricati | **19** su 19 |
+| `#loadingScreen` dopo il caricamento | `display: "none"` |
+| Game loop avviato | 6 frame eseguiti |
+| Errori a runtime | nessuno |
 
 **Cosa testare a mano nel browser:**
 1. Ricaricare con DevTools → Network → *Disable cache*: la schermata deve restare finché non compare **tutto insieme**.
@@ -706,12 +706,12 @@ Conseguenza a catena:
 
 | Controllo | Prima | Dopo |
 |---|---|---|
-| Animazione di morte avviata | false | **true** ✔ |
-| Sprite finale | `idle` | **`Death`** ✔ |
-| Spostamento nei 30 frame dopo la morte | 60 px | **0 px** ✔ |
-| Salto tentato durante l'animazione | — | **ignorato** ✔ |
-| `isDead` a fine animazione | false | **true** ✔ |
-| Animazione in loop | sì | **no** (ferma su 6/6) ✔ |
+| Animazione di morte avviata | false | **true** |
+| Sprite finale | `idle` | **`Death`** |
+| Spostamento nei 30 frame dopo la morte | 60 px | **0 px** |
+| Salto tentato durante l'animazione | (nessuno) | **ignorato** |
+| `isDead` a fine animazione | false | **true** |
+| Animazione in loop | sì | **no** (ferma su 6/6) |
 
 Lo smoke test del caricamento e della fine partita è stato rieseguito senza regressioni.
 

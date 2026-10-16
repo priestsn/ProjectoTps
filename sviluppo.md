@@ -3,99 +3,135 @@
 Piano delle funzionalità da implementare.
 
 **Ultimo aggiornamento:** 16/10/2026
+**Fase in corso:** **1 — Menu**
 
-**Legenda:** ✅ fatto · 🔄 in corso · ⬜ da fare · ⛔ bloccato
+**Legenda**
+
+| Marcatore | Significato |
+|---|---|
+| `[OK]` | fatto e disponibile |
+| `WIP` | non ancora disponibile (da fare o in lavorazione) |
+| `BLOCCATO` | in attesa di un prerequisito |
+
+> **Regola WIP:** tutto ciò che non è ancora disponibile va contrassegnato **WIP**, sia in questo piano sia nel menu: le voci non attive si mostrano ma non sono selezionabili, con un'etichetta "WIP" accanto al testo.
 
 ---
 
 ## 1. Stato attuale
 
-| Area | Situazione |
+| Area | Stato |
 |---|---|
-| Combattimento locale 2 giocatori | ✅ funziona (attacco, parata, vita, stamina, timer, fine partita) |
-| Canvas + game loop | ✅ 1500×850, `requestAnimationFrame` |
-| Schermata di caricamento | ✅ implementata |
-| Morte + schermata vincitore | ✅ funzionano |
-| Interfaccia | ⚠️ tutti gli stili sono inline dentro `index.html` |
-| Menu / selezione personaggio | ⬜ non esistono: la partita parte da sola |
-| CPU / online | ⬜ non esistono |
+| Combattimento locale 2 giocatori | `[OK]` disponibile (attacco, parata, vita, stamina, timer, fine partita) |
+| Canvas + game loop | `[OK]` 1500x850, `requestAnimationFrame` |
+| Schermata di caricamento | `[OK]` disponibile |
+| Morte + schermata vincitore | `[OK]` disponibile |
+| Stili | `WIP` — tutti inline in `index.html`, da spostare in `css/style.css` |
+| Menu principale / Play / Settings | `WIP` — non esistono: la partita parte da sola |
+| Selezione personaggio | `WIP` |
+| vs CPU | `WIP` |
+| vs online | `WIP` |
+| Perfect block / ultimate / attacco caricato | `WIP` |
 
-**Bug aperti che impattano il piano** (dettagli in `bugs.md`):
-- **BUG-03** (sfondo diviso in 5 frame) → critico, va chiuso prima di lavorare sulla grafica.
-- **BUG-04 / BUG-07** (game loop basato sui *frame*, non sul *tempo*) → vanno chiusi **prima** delle meccaniche con finestre temporali (perfect block).
+**Debito tecnico da saldare** (dettagli in `bugs.md`):
+
+| Bug | Quando va chiuso |
+|---|---|
+| **BUG-03** sfondo diviso in 5 frame | **Fase 1**, prima di lavorare sulla grafica del menu |
+| **BUG-09** timer off-by-one | **Fase 1** (fix rapido) |
+| **BUG-05** vita/stamina mai clampate | **Fase 3**, prima della barra ultimate |
+| **BUG-06** parata da morti, **BUG-07** stamina per-frame | **Fase 3**, bilanciamento combattimento |
 
 ---
 
 ## 2. Funzionalità richieste
 
-### F1 — CSS esterno
+Ogni voce resta marcata `WIP` finché non è disponibile nel gioco.
+
+### F1 — CSS esterno  ·  `WIP` (Fase 1)
 Spostare gli stili inline di `index.html` in un file dedicato.
-- ⬜ creare `css/style.css` e collegarlo con `<link>`
-- ⬜ rimuovere gli attributi `style="..."` dal markup
-- ⬜ usare classi (`.hud`, `.barra`, `.menu`…) invece di stili ripetuti
+- `WIP` creare `css/style.css` e collegarlo con `<link>`
+- `WIP` rimuovere gli attributi `style="..."` dal markup
+- `WIP` usare classi (`.hud`, `.barra`, `.menu`...) invece di stili ripetuti
 
-### F2 — Menu principale
+### F2 — Menu principale  ·  `WIP` (Fase 1)
 All'apertura non si gioca più subito: compare un menu a schermo intero con il nome del gioco e le voci sotto.
-- ⬜ schermata menu full screen: titolo + voci
-- ⬜ due voci: **Play** e **Settings**
-- ⬜ navigazione da tastiera (frecce + Invio) con evidenziazione della voce attiva
+- `WIP` schermata menu full screen: titolo (logo `img/UVSF7-logo.png`) con le voci sotto
+- `WIP` due voci: **Play** e **Settings**
+- `WIP` navigazione da tastiera (frecce + Invio) con evidenziazione della voce attiva
+- `WIP` le voci non disponibili mostrate con etichetta **WIP**, non selezionabili
 
-### F3 — Menu Play
-- ⬜ **vs locale** — 2 giocatori sulla stessa tastiera (già esistente, va solo collegato)
-- ⬜ **vs CPU** — contro l'IA: *facile*, *difficile*, *guissè* (molto difficile)
-- ⬜ **vs online** — per ultimo: server semplice con creazione/ingresso in stanze
+### F3 — Menu Play  ·  `WIP` (struttura in Fase 1)
+- `WIP` **vs locale** — 2 giocatori sulla stessa tastiera: la partita esiste già, manca solo il collegamento al menu
+- `WIP` **vs CPU** — contro l'IA: *facile*, *difficile*, *guissè* (molto difficile) — Fase 4
+- `WIP` **vs online** — server su VPS con creazione/ingresso in stanze — Fase 5
 
-### F4 — Settings
-- ⬜ **keybinds** — rimappatura dei tasti per entrambi i giocatori
-- ⬜ **fullscreen** — attiva/disattiva schermo intero
+### F4 — Settings  ·  `WIP` (Fase 1)
+- `WIP` **fullscreen** — attiva/disattiva schermo intero sull'**intera pagina**
+- `WIP` **keybinds** — rimappatura dei tasti per entrambi i giocatori, con variabili affiancate a `keys`/`lastKey`
 
-### F5 — Selezione personaggio
-- ⬜ schermata di selezione (per P1 e P2) prima della partita
-- ⬜ almeno **6 personaggi**, ognuno con **statistiche proprie** e **ultimate unica**
-- ⬜ configurazione dei personaggi in un file dati dedicato (non a mano nel game loop)
+### F5 — Selezione personaggio  ·  `WIP` (Fase 2)
+- `WIP` schermata di selezione (per P1 e P2) prima della partita
+- `WIP` almeno **6 personaggi**, ognuno con **statistiche proprie** e **ultimate unica**
+- `WIP` per ora si riusano gli sprite di Player/Enemy cambiando o invertendo i colori
+- `WIP` configurazione dei personaggi in un file dati dedicato (non a mano nel game loop)
 
-### F6 — Nuove meccaniche di combattimento
-- ⬜ **perfect block** — parando entro **100 ms** dall'impatto, l'avversario resta **stunnato 1 s**
-- ⬜ **ultimate** — una per personaggio, con **barra dedicata nella HUD**
-- ⬜ **attacco caricato** — rompe la parata e stunna l'avversario per **1 s**
+### F6 — Nuove meccaniche di combattimento  ·  `WIP` (Fase 3)
+- `WIP` **perfect block** — parando **nell'esatto frame d'impatto** dell'attacco, l'avversario resta **stunnato 1 s** (controllo sui frame, non sul tempo)
+- `WIP` **ultimate** — una per personaggio, con **barra dedicata nella HUD**; si carica **col tempo** e con le **parate perfette**, e si **perde carica** quando si viene stunnati
+- `WIP` **attacco caricato** — rompe la parata e stunna l'avversario per **1 s**
 
 ---
 
 ## 3. Piano a fasi
 
-| Fase | Contenuto | Perché ora | Prerequisiti |
+Ordine concordato: **si parte dal menu**.
+
+| Fase | Contenuto | Stato | Prerequisiti |
 |---|---|---|---|
-| **0. Fondamenta** | Fix BUG-03, BUG-05, BUG-06, BUG-09 + CSS esterno (F1) | Il CSS tocca `index.html`, lo stesso file del menu; i fix rendono l'HUD affidabile prima della barra ultimate | — |
-| **1. Stati di gioco** | Macchina a stati: `caricamento → menu → selezione → partita → fine` | Sblocca tutto: oggi `animate()` parte subito e non esiste un "prima della partita" | Fase 0 |
-| **2. Menu + Settings** | F2, F4 | Il menu è l'ingresso a ogni modalità | Fase 1 |
-| **3. Selezione personaggio** | F5 | Definisce su cosa agiranno ultimate e bilanciamento | Fase 2 |
-| **4. Meccaniche** | F6 (deltaTime, perfect block, ultimate + barra, attacco caricato) | Servono base temporale affidabile e personaggi già definiti | Fase 3 |
-| **5. CPU** | F3 vs CPU, 3 difficoltà | L'IA userà personaggi e meccaniche esistenti | Fase 4 |
-| **6. Online** | F3 vs online: server + stanze | Richiede tutto il resto stabile | Fase 5 |
+| **1. Menu** | CSS esterno (F1), `js/Stato.js`, menu principale, sottomenu Play, Settings, fullscreen | `IN CORSO` | — |
+| **2. Selezione personaggio** | F5: 6 personaggi (riuso sprite + variazione colori), statistiche, ultimate | `WIP` | Fase 1 |
+| **3. Meccaniche** | F6: perfect block (per frame), ultimate e barra, attacco caricato | `WIP` | Fase 2 |
+| **4. CPU** | F3 vs CPU: facile, difficile, guissè | `WIP` | Fase 3 |
+| **5. Online** | F3 vs online: server su VPS, stanze | `WIP` | Fase 4 |
 
-### Criteri di completamento
+### Dettaglio
 
-- **Fase 0** → `index.html` senza stili inline, sfondo corretto, barre HUD che non sballano, timer che parte da 60.
-- **Fase 1** → all'avvio compare il menu; la partita parte solo dopo la selezione.
-- **Fase 2** → si naviga il menu con la tastiera, "vs locale" avvia la partita, i tasti si rimappano, il fullscreen funziona.
-- **Fase 3** → si scelgono 6 personaggi diversi e ognuno entra in partita con le proprie statistiche.
-- **Fase 4** → perfect block entro 100 ms stunna 1 s; l'ultimate si carica e si scarica dalla barra; l'attacco caricato rompe la parata.
-- **Fase 5** → si gioca contro l'IA a 3 difficoltà.
-- **Fase 6** → due giocatori su macchine diverse creano/entrano in una stanza e combattono.
+**Fase 1 — Menu** (in corso)
+
+1. Estrazione del CSS in `css/style.css`: serve per dare uno stile decente al menu.
+2. Fix rapidi: BUG-03 (sfondo) e BUG-09 (timer).
+3. `js/Stato.js`: stato unico del gioco (`caricamento`, `menu`, `play`, `partita`, `fine`). La partita **non parte più da sola**: `animate()` gira solo nello stato `partita`.
+4. Menu principale a schermo intero: titolo, **Play**, **Settings**, navigazione con frecce + Invio.
+5. Sottomenu **Play**: vs locale, vs CPU, vs online. Le voci non disponibili hanno l'etichetta **WIP** e non sono selezionabili.
+6. **Settings**: fullscreen sull'intera pagina; keybinds marcati **WIP**.
+
+*Completata quando:* all'avvio compare il menu, "Play - vs locale" avvia la partita, il fullscreen funziona, le voci non disponibili sono visibili ma non selezionabili.
+
+**Fase 2 — Selezione personaggio**
+*Completata quando:* si scelgono 6 personaggi diversi e ognuno entra in partita con le proprie statistiche.
+
+**Fase 3 — Meccaniche**
+*Completata quando:* il perfect block sull'esatto frame d'impatto stunna 1 s, l'ultimate si carica (tempo + parate perfette) e si scarica dalla barra, l'attacco caricato rompe la parata.
+
+**Fase 4 — CPU**
+*Completata quando:* si gioca contro l'IA a 3 difficoltà.
+
+**Fase 5 — Online**
+*Completata quando:* due giocatori su macchine diverse creano o entrano in una stanza e combattono.
 
 ---
 
-## 4. Decisioni aperte
+## 4. Decisioni prese
 
-| # | Domanda | Fase | Impatto |
-|---|---|---|---|
-| D1 | I 6 personaggi: **nuove sprite** o riuso di Player/Enemy con variazioni? | 3 | Enorme: fino a ~48 file immagine. Determina la durata della fase |
-| D2 | Dove vive lo stato di gioco: nuovo `js/Stato.js` o variabili in `index.js`? | 1 | Architettura: da decidere prima di scrivere il menu |
-| D3 | I keybinds rimappati sostituiscono `keys`/`lastKey` o si affiancano? | 2 | Richiede di rifare il sistema di input |
-| D4 | L'online richiede un **server**: Node? PHP? Dove gira? | 6 | Finora il progetto non ha backend né npm |
-| D5 | Fullscreen su quale elemento: canvas, wrapper o pagina intera? | 2 | Estetica |
-| D6 | Le finestre da 100 ms richiedono un loop basato sul **tempo**: ok rifattorizzare `animate()`? | 4 | Prerequisito tecnico del perfect block |
-| D7 | Ultimate: come si caricano (a tempo? subendo colpi?), quanto durano, quanto danno? | 4 | Bilanciamento |
+| # | Domanda | Decisione |
+|---|---|---|
+| D1 | Sprite dei 6 personaggi | **Riuso degli sprite esistenti** (Player/Enemy), cambiando o invertendo i colori. Niente nuovi asset per ora |
+| D2 | Dove vive lo stato di gioco | **Nuovo `js/Stato.js`**: si preferisce dividere il codice in più file |
+| D3 | Keybinds rimappati | **Si affiancano** a `keys`/`lastKey`, tramite variabili dedicate |
+| D4 | Server online | Gira su una **VPS**; sviluppato **per ultimo** (Fase 5) |
+| D5 | Fullscreen | Sull'**intera pagina** |
+| D6 | Finestra del perfect block: tempo o frame? | **Basata sui frame**: la logica d'attacco è già per-frame, quindi il perfect block è un **controllo sull'esatto frame d'impatto** (nessun refactor con deltaTime) |
+| D7 | Ultimate | Si carica **col tempo** e con le **parate perfette**; quando si viene stunnati si **perde un po' di carica** |
 
 ---
 
@@ -105,4 +141,6 @@ All'apertura non si gioca più subito: compare un menu a schermo intero con il n
 - Nessuna modifica ai valori di bilanciamento (danno, stamina, gravità, velocità, timer) senza concordanza.
 - Niente framework, bundler o npm senza concordanza esplicita.
 - Il gioco deve restare funzionante dopo ogni fase: se una fase lo rompe, si torna indietro.
+- Tutto ciò che non è ancora disponibile va marcato **WIP**, sia nel piano sia nel menu (voce visibile ma non selezionabile).
+- Nessuna emoji, in nessun file e in nessun messaggio: al loro posto si usano marcatori testuali come `[OK]`, `WIP`, `Alto`, `Risolto`.
 
