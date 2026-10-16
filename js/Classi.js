@@ -63,8 +63,15 @@ class Sprite {
  */
 class Lottatore extends Sprite {
     constructor(options = {}) {
-        const { position = { x: 0, y: 0 }, velocity = { x: 0, y: 0 }, imageSrc, scale = 1, framesMax = 1, offset = { x: 0, y: 0 }, sprites } = options;
+        const { position = { x: 0, y: 0 }, velocity = { x: 0, y: 0 }, imageSrc, scale = 1, framesMax = 1, offset = { x: 0, y: 0 }, sprites, statistiche } = options;
         super({ position }, imageSrc, scale, framesMax, offset);
+
+        // Statistiche del personaggio. Se non vengono passate si usano i valori
+        // base, cosi' la classe resta utilizzabile anche senza un personaggio.
+        this.statistiche = Object.assign(
+            { vita: 100, stamina: 100, danno: 10, velocita: 5, salto: -10 },
+            statistiche
+        );
 
         this.facing = 1; // 1 per destra, -1 per sinistra
         this.width = 50;
@@ -79,8 +86,8 @@ class Lottatore extends Sprite {
         this.isParata = false; // Stato di parata
         this.isAttacking = false; // Stato di attacco
         this.isTakingDmg = false; // Stato di danno
-        this.health = 100;
-        this.stamina = 100;
+        this.health = this.statistiche.vita;
+        this.stamina = this.statistiche.stamina;
         this.isDead = false;
         this.framesCurrent = 0;
         this.framesElapsed = 0;

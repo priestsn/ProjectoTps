@@ -26,45 +26,26 @@ const ground = canvas.height - 40;
 // framesMax: 1 -> sfondo statico. Con 5 l'immagine veniva tagliata in 5 colonne e animata
 const background = new Sprite({ x: 0, y: 0 }, './assets/Background.png', 4, 1, { x: 0, y: 0 });
 
-const Player = new Lottatore({
-    position: { x: 0, y: 0 },
-    velocity: { x: 0, y: 5 },
-    imageSrc: './assets/Player/idle.png',
-    scale: 5,
-    framesMax: 8,
-    offset: { x: 350, y: 320 },
-    sprites: {
-        idle: { imageSrc: './assets/Player/idle.png', framesMax: 8 },
-        Run: { imageSrc: './assets/Player/Run.png', framesMax: 8 },
-        Jump: { imageSrc: './assets/Player/Jump.png', framesMax: 2 },
-        Fall: { imageSrc: './assets/Player/Fall.png', framesMax: 2 },
-        Attack1: { imageSrc: './assets/Player/Attack1.png', framesMax: 5 },
-        TakeHit: { imageSrc: './assets/Player/Take hit.png', framesMax: 3 },
-        Death: { imageSrc: './assets/Player/Death.png', framesMax: 8 },
-        ParataIdle: { imageSrc: './assets/Player/IdleBlock.png', framesMax: 8 }
-    }
-});
+// Chi combatte in questa partita: due id presi da js/Personaggi.js.
+// Finché non esiste la schermata di selezione si usano questi due.
+const SCELTA_P1 = 'OusmaneDiouf';
+const SCELTA_P2 = 'SekouCamara';
 
-const Enemy = new Lottatore({
-    position: { x: 1500, y: 0 },
-    velocity: { x: 0, y: 5 },
-    imageSrc: './assets/Enemy/Idle.png',
-    scale: 4.2,
-    framesMax: 4,
-    offset: { x: 370, y: 370 },
-    sprites: {
-        idle: { imageSrc: './assets/Enemy/Idle.png', framesMax: 4 },
-        Run: { imageSrc: './assets/Enemy/Run.png', framesMax: 8 },
-        Jump: { imageSrc: './assets/Enemy/Jump.png', framesMax: 2 },
-        Fall: { imageSrc: './assets/Enemy/Fall.png', framesMax: 2 },
-        Attack1: { imageSrc: './assets/Enemy/Attack1.png', framesMax: 4 },
-        TakeHit: { imageSrc: './assets/Enemy/Take hit.png', framesMax: 3 },
-        Death: { imageSrc: './assets/Enemy/Death.png', framesMax: 7 },
-        ParataIdle: { imageSrc: './assets/Enemy/IdleBlock.png', framesMax: 4 }
-    }
-});
+let Player;
+let Enemy;
 
-Enemy.lastKey = 'ArrowRight';
+/**
+ * Crea i due lottatori a partire dai personaggi scelti.
+ * Il giocatore 2 parte rivolto verso sinistra (le sprite nascono verso destra)
+ * e con l'AttackBox dal suo lato.
+ */
+function preparaPartita(idP1, idP2) {
+    Player = creaLottatore(trovaPersonaggio(idP1), 0, 1);
+    Enemy = creaLottatore(trovaPersonaggio(idP2), 1450, -1);
+    Enemy.lastKey = 'ArrowLeft';
+}
+
+preparaPartita(SCELTA_P1, SCELTA_P2);
 
 // ========================================
 // Gestione Input
@@ -108,11 +89,11 @@ function animate() {
     // Movimento del giocatore (a partita finita nessuno si muove più)
     if (!gameOver) {
         if (keys.a.pressed && lastKey === 'a') {
-            Player.velocity.x = -5;
+            Player.velocity.x = -Player.statistiche.velocita;
             Player.facing = -1;
             Player.cambiaSprite('Run');
         } else if (keys.d.pressed && lastKey === 'd') {
-            Player.velocity.x = 5;
+            Player.velocity.x = Player.statistiche.velocita;
             Player.facing = 1;
             Player.cambiaSprite('Run');
         } else if (!Player.isParata) {
@@ -129,15 +110,17 @@ function animate() {
         Player.cambiaSprite('Fall');
     }
 
-    // Movimento del nemico (a partita finita nessuno si muove più)
+    // Movimento del nemico (a partita finita nessuno si muove più).
+    // Il giocatore 2 usa la stessa convenzione del giocatore 1:
+    // 1 = guarda a destra, -1 = guarda a sinistra.
     if (!gameOver) {
         if (keys.ArrowLeft.pressed && Enemy.lastKey === 'ArrowLeft') {
-            Enemy.velocity.x = -5;
-            Enemy.facing = 1;
+            Enemy.velocity.x = -Enemy.statistiche.velocita;
+            Enemy.facing = -1;
             Enemy.cambiaSprite('Run');
         } else if (keys.ArrowRight.pressed && Enemy.lastKey === 'ArrowRight') {
-            Enemy.velocity.x = 5;
-            Enemy.facing = -1;
+            Enemy.velocity.x = Enemy.statistiche.velocita;
+            Enemy.facing = 1;
             Enemy.cambiaSprite('Run');
         } else if (!Enemy.isParata) {
             Enemy.cambiaSprite('idle');
@@ -167,8 +150,8 @@ function animate() {
     Enemy.update();
 
     // Aggiorna le barre UI
-    document.querySelector('#enemy-stamina').style.width = Enemy.stamina + '%';
-    document.querySelector('#player-stamina').style.width = Player.stamina + '%';
+    document.querySelector('#enemy-stamina').style.width = percentualeBarra(Enemy.stamina, Enemy.statistiche.stamina) + '%';
+    document.querySelector('#player-stamina').style.width = percentualeBarra(Player.stamina, Player.statistiche.stamina) + '%';
 
     // Rilevamento collisione attacco del giocatore
     if (Player.isAttacking &&
@@ -182,8 +165,8 @@ function animate() {
         if (Enemy.image !== Enemy.sprites.TakeHit.image) {
             Enemy.isTakingDmg = true;
             Enemy.cambiaSprite('TakeHit');
-            Enemy.health -= 10;
-            document.querySelector('#enemy-health').style.width = Enemy.health + '%';
+            Enemy.health -= Player.statistiche.danno;
+            document.querySelector('#enemy-health').style.width = percentualeBarra(Enemy.health, Enemy.statistiche.vita) + '%';
             setTimeout(() => { Enemy.isTakingDmg = false; }, 400);
         }
     }
@@ -200,8 +183,8 @@ function animate() {
         if (Player.image !== Player.sprites.TakeHit.image) {
             Player.isTakingDmg = true;
             Player.cambiaSprite('TakeHit');
-            Player.health -= 10;
-            document.querySelector('#player-health').style.width = Player.health + '%';
+            Player.health -= Enemy.statistiche.danno;
+            document.querySelector('#player-health').style.width = percentualeBarra(Player.health, Player.statistiche.vita) + '%';
             setTimeout(() => { Player.isTakingDmg = false; }, 400);
         }
     }
@@ -240,7 +223,7 @@ window.addEventListener('keydown', async (event) => {
         case 'w':
             // Salta solo se i piedi sono appoggiati al suolo (niente doppio salto)
             if (Player.position.y + Player.height >= ground && !Player.isDead) {
-                Player.velocity.y = -10;
+                Player.velocity.y = Player.statistiche.salto;
             }
             break;
 
@@ -289,7 +272,7 @@ window.addEventListener('keydown', async (event) => {
         case 'ArrowUp':
             // Salta solo se i piedi sono appoggiati al suolo (niente doppio salto)
             if (Enemy.position.y + Enemy.height >= ground && !Enemy.isDead) {
-                Enemy.velocity.y = -10;
+                Enemy.velocity.y = Enemy.statistiche.salto;
             }
             break;
 
@@ -376,6 +359,12 @@ window.addEventListener('keyup', (event) => {
  * Avvia una partita: chiude il menu e fa partire timer e game loop
  */
 function avviaPartita() {
+    // Le barre ripartono piene: la vita massima dipende dal personaggio
+    document.querySelector('#player-health').style.width = '100%';
+    document.querySelector('#enemy-health').style.width = '100%';
+    document.querySelector('#player-stamina').style.width = '100%';
+    document.querySelector('#enemy-stamina').style.width = '100%';
+
     cambiaStato(STATI.PARTITA);
     decreaseTimer();
 }

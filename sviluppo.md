@@ -82,7 +82,7 @@ All'apertura non si gioca più subito: compare un menu a schermo intero con il n
 - `WIP` **ultimate** — una per personaggio, con **barra dedicata nella HUD**; si carica **col tempo** e con le **parate perfette**, e si **perde carica** quando si viene stunnati
 - `WIP` **attacco caricato** — rompe la parata e stunna l'avversario per **1 s**
 
----
+---f7 efetti sonori, musica in lobby suoni per attacco danno ricevuto ecc
 
 ## 3. Piano a fasi
 

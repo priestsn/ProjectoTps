@@ -64,6 +64,13 @@ function avviaGiocoQuandoPronto(avviaIlGioco) {
     });
 }
 
+/**
+ * Percentuale da usare nelle barre dell'HUD, sempre tra 0 e 100
+ */
+function percentualeBarra(valore, massimo) {
+    return Math.max(0, Math.min(100, (valore / massimo) * 100));
+}
+
 // ========================================
 // Fine Partita
 // ==========================================
