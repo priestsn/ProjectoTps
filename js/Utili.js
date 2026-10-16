@@ -58,10 +58,8 @@ function avviaGiocoQuandoPronto(avviaIlGioco) {
     });
 
     Promise.all(attese).then(() => {
-        const schermata = document.querySelector('#loadingScreen');
-        if (schermata) {
-            schermata.style.display = 'none';
-        }
+        // La schermata di caricamento viene nascosta dal cambio di stato,
+        // che avviene dentro la funzione di avvio (vedi index.js)
         avviaIlGioco();
     });
 }
@@ -93,23 +91,25 @@ let timerId;
  * Timer di conto alla rovescia che gestisce la rigenerazione della stamina e la fine del gioco
  */
 function decreaseTimer() {
-    if (timer > 0) {
+    // Il primo decremento avviene dopo 1 secondo: cosi' la partita dura davvero 60s
+    // (prima il contatore calava subito all'avvio e partiva da 59)
+    timerId = setTimeout(() => {
         timer--;
-        timerId = setTimeout(decreaseTimer, 1000);
         document.querySelector('#timer').innerHTML = timer;
 
         // Rigenera stamina ogni 2 secondi
         if (Player.stamina < 100 && timer % 2 === 0) {
-             Player.stamina += 10;
-            
+            Player.stamina += 10;
         }
         if (Enemy.stamina < 100 && timer % 2 === 0) {
             Enemy.stamina += 10;
         }
-    }
 
-    if (timer === 0) {
-        document.querySelector('#displayText').style.display = 'flex';
-        determineWinner(Player, Enemy, timerId);
-    }
+        if (timer > 0) {
+            decreaseTimer();
+        } else {
+            document.querySelector('#displayText').style.display = 'flex';
+            determineWinner(Player, Enemy, timerId);
+        }
+    }, 1000);
 }

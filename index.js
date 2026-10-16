@@ -23,7 +23,8 @@ const ground = canvas.height - 40;
 // ========================================
 // Inizializzazione Sfondo e Personaggi
 // ==========================================
-const background = new Sprite({ x: 0, y: 0 }, './img/Background.png', 4, 5, { x: 0, y: 0 }, );
+// framesMax: 1 -> sfondo statico. Con 5 l'immagine veniva tagliata in 5 colonne e animata
+const background = new Sprite({ x: 0, y: 0 }, './img/Background.png', 4, 1, { x: 0, y: 0 });
 
 const Player = new Lottatore({
     position: { x: 0, y: 0 },
@@ -90,6 +91,11 @@ let gameOver = false;
 // ==========================================
 function animate() {
     window.requestAnimationFrame(animate);
+
+    // Fuori dalla partita non si aggiorna nulla: resta visibile il menu
+    if (statoCorrente !== STATI.PARTITA) {
+        return;
+    }
 
     // Pulisci canvas
     c.fillStyle = 'black';
@@ -218,6 +224,12 @@ function animate() {
 // Event Listener
 // ==========================================
 window.addEventListener('keydown', async (event) => {
+    // Fuori dalla partita gli input servono a navigare i menu
+    if (statoCorrente !== STATI.PARTITA) {
+        gestisciInputMenu(event);
+        return;
+    }
+
     // A partita finita gli input non hanno più alcun effetto
     // (l'animazione di morte resta comunque libera di completarsi)
     if (gameOver) return;
@@ -358,12 +370,24 @@ window.addEventListener('keyup', (event) => {
 });
 
 // ========================================
+// Avvio della Partita
+// ==========================================
+/**
+ * Avvia una partita: chiude il menu e fa partire timer e game loop
+ */
+function avviaPartita() {
+    cambiaStato(STATI.PARTITA);
+    decreaseTimer();
+}
+
+// ========================================
 // Avvio del Gioco
 // ==========================================
-// Il gioco parte solo quando TUTTI gli asset sono stati caricati: così sfondo
-// e lottatori compaiono insieme, senza l'effetto "uno alla volta".
-// Anche il timer parte qui, altrimenti scorrerebbe durante il caricamento.
+// Si parte dalla schermata di caricamento. Quando TUTTI gli asset sono pronti
+// si passa al menu: la partita parte solo da li' (voce PLAY -> VS LOCALE).
+aggiornaVisibilita();
+
 avviaGiocoQuandoPronto(() => {
-    decreaseTimer();
+    apriMenu('principale');
     animate();
 });

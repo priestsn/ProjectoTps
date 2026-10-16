@@ -25,8 +25,8 @@ Piano delle funzionalità da implementare.
 | Canvas + game loop | `[OK]` 1500x850, `requestAnimationFrame` |
 | Schermata di caricamento | `[OK]` disponibile |
 | Morte + schermata vincitore | `[OK]` disponibile |
-| Stili | `WIP` — tutti inline in `index.html`, da spostare in `css/style.css` |
-| Menu principale / Play / Settings | `WIP` — non esistono: la partita parte da sola |
+| Stili | `[OK]` tutti in `css/style.css` |
+| Menu principale / Play / Settings | `[OK]` (keybinds ancora `WIP`) |
 | Selezione personaggio | `WIP` |
 | vs CPU | `WIP` |
 | vs online | `WIP` |
@@ -36,8 +36,8 @@ Piano delle funzionalità da implementare.
 
 | Bug | Quando va chiuso |
 |---|---|
-| **BUG-03** sfondo diviso in 5 frame | **Fase 1**, prima di lavorare sulla grafica del menu |
-| **BUG-09** timer off-by-one | **Fase 1** (fix rapido) |
+| **BUG-03** sfondo diviso in 5 frame | `[OK]` risolto in Fase 1 |
+| **BUG-09** timer off-by-one | `[OK]` risolto in Fase 1 |
 | **BUG-05** vita/stamina mai clampate | **Fase 3**, prima della barra ultimate |
 | **BUG-06** parata da morti, **BUG-07** stamina per-frame | **Fase 3**, bilanciamento combattimento |
 
@@ -47,26 +47,28 @@ Piano delle funzionalità da implementare.
 
 Ogni voce resta marcata `WIP` finché non è disponibile nel gioco.
 
-### F1 — CSS esterno  ·  `WIP` (Fase 1)
+### F1 — CSS esterno  ·  `[OK]` (Fase 1)
 Spostare gli stili inline di `index.html` in un file dedicato.
-- `WIP` creare `css/style.css` e collegarlo con `<link>`
-- `WIP` rimuovere gli attributi `style="..."` dal markup
-- `WIP` usare classi (`.hud`, `.barra`, `.menu`...) invece di stili ripetuti
+- `[OK]` creare `css/style.css` e collegarlo con `<link>`
+- `[OK]` rimuovere gli attributi `style="..."` dal markup
+- `[OK]` usare classi (`.hud`, `.barra`, `.menu`...) invece di stili ripetuti
 
-### F2 — Menu principale  ·  `WIP` (Fase 1)
+### F2 — Menu principale  ·  `[OK]` (Fase 1)
 All'apertura non si gioca più subito: compare un menu a schermo intero con il nome del gioco e le voci sotto.
-- `WIP` schermata menu full screen: titolo (logo `img/UVSF7-logo.png`) con le voci sotto
-- `WIP` due voci: **Play** e **Settings**
-- `WIP` navigazione da tastiera (frecce + Invio) con evidenziazione della voce attiva
-- `WIP` le voci non disponibili mostrate con etichetta **WIP**, non selezionabili
+- `[OK]` schermata menu full screen: titolo (logo `img/UVSF7-logo.png`) con le voci sotto
+- `[OK]` due voci: **Play** e **Settings**
+- `[OK]` navigazione da tastiera (frecce + Invio) con evidenziazione della voce attiva
+- `[OK]` le voci non disponibili mostrate con etichetta **WIP**, non selezionabili
 
-### F3 — Menu Play  ·  `WIP` (struttura in Fase 1)
-- `WIP` **vs locale** — 2 giocatori sulla stessa tastiera: la partita esiste già, manca solo il collegamento al menu
+> Il titolo è ancora testo: l'inserimento del logo `img/UVSF7-logo.png` è rimandato.
+
+### F3 — Menu Play  ·  `[OK]` la struttura (Fase 1)
+- `[OK]` **vs locale** — 2 giocatori sulla stessa tastiera: la voce avvia la partita
 - `WIP` **vs CPU** — contro l'IA: *facile*, *difficile*, *guissè* (molto difficile) — Fase 4
 - `WIP` **vs online** — server su VPS con creazione/ingresso in stanze — Fase 5
 
-### F4 — Settings  ·  `WIP` (Fase 1)
-- `WIP` **fullscreen** — attiva/disattiva schermo intero sull'**intera pagina**
+### F4 — Settings  ·  `[OK]` parziale (Fase 1)
+- `[OK]` **fullscreen** — attiva/disattiva schermo intero sull'**intera pagina**
 - `WIP` **keybinds** — rimappatura dei tasti per entrambi i giocatori, con variabili affiancate a `keys`/`lastKey`
 
 ### F5 — Selezione personaggio  ·  `WIP` (Fase 2)
@@ -88,7 +90,7 @@ Ordine concordato: **si parte dal menu**.
 
 | Fase | Contenuto | Stato | Prerequisiti |
 |---|---|---|---|
-| **1. Menu** | CSS esterno (F1), `js/Stato.js`, menu principale, sottomenu Play, Settings, fullscreen | `IN CORSO` | — |
+| **1. Menu** | CSS esterno (F1), `js/Stato.js`, menu principale, sottomenu Play, Settings, fullscreen | `COMPLETATA` | — |
 | **2. Selezione personaggio** | F5: 6 personaggi (riuso sprite + variazione colori), statistiche, ultimate | `WIP` | Fase 1 |
 | **3. Meccaniche** | F6: perfect block (per frame), ultimate e barra, attacco caricato | `WIP` | Fase 2 |
 | **4. CPU** | F3 vs CPU: facile, difficile, guissè | `WIP` | Fase 3 |
@@ -96,14 +98,16 @@ Ordine concordato: **si parte dal menu**.
 
 ### Dettaglio
 
-**Fase 1 — Menu** (in corso)
+**Fase 1 — Menu** (implementata, da verificare nel browser)
 
-1. Estrazione del CSS in `css/style.css`: serve per dare uno stile decente al menu.
-2. Fix rapidi: BUG-03 (sfondo) e BUG-09 (timer).
-3. `js/Stato.js`: stato unico del gioco (`caricamento`, `menu`, `play`, `partita`, `fine`). La partita **non parte più da sola**: `animate()` gira solo nello stato `partita`.
-4. Menu principale a schermo intero: titolo, **Play**, **Settings**, navigazione con frecce + Invio.
-5. Sottomenu **Play**: vs locale, vs CPU, vs online. Le voci non disponibili hanno l'etichetta **WIP** e non sono selezionabili.
-6. **Settings**: fullscreen sull'intera pagina; keybinds marcati **WIP**.
+1. Estrazione del CSS in `css/style.css` e pulizia di `index.html` (nessuno stile inline).
+2. Fix rapidi: BUG-03 (sfondo statico) e BUG-09 (timer da 60).
+3. `js/Stato.js`: stato unico del gioco (`caricamento`, `menu`, `partita`). La partita **non parte più da sola**: `animate()` gira solo nello stato `partita`.
+4. `js/Menu.js`: menu come dati, navigazione con frecce o `W`/`S`, Invio per confermare, Esc per tornare indietro.
+5. Sottomenu **Play**: VS LOCALE attivo; VS CPU e VS ONLINE visibili con etichetta **WIP** e non selezionabili.
+6. **Settings**: fullscreen attivo; keybinds marcati **WIP**.
+
+*Restano da fare:* keybinds, inserimento del logo nel titolo, ritorno al menu a fine partita.
 
 *Completata quando:* all'avvio compare il menu, "Play - vs locale" avvia la partita, il fullscreen funziona, le voci non disponibili sono visibili ma non selezionabili.
 

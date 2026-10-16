@@ -11,13 +11,13 @@ Verifiche eseguite: lettura completa del codice, confronto percorsi asset ↔ fi
 |---|---|---|---|
 | BUG-01 | Risolto | `index.js` (`case 'w'` / `case 'ArrowUp'`), `js/Classi.js:129-133` | Salto legato a un numero fisso invece che al suolo: rotto dopo il resize del canvas |
 | BUG-02 | Risolto | `js/Utili.js:4` + chiamate in `index.js` e `js/Utili.js` | `determineWinner` lanciava `TypeError`: il vincitore non veniva mai mostrato |
-| BUG-03 | Critico | `index.js:21` | Lo sfondo è diviso in 5 frame e animato (`framesMax: 5`) |
+| BUG-03 | Risolto | `index.js:21` | Lo sfondo era diviso in 5 frame e animato (`framesMax: 5`) |
 | BUG-04 | Alto | `index.js:243`, `index.js:289` | `isAttacking` gestito con `await` + timeout fisso, in conflitto col reset a frame (`index.js:141-146`) |
 | BUG-05 | Alto | `index.js:108,130,169,187,240,286`, `js/Utili.js:29,33` | Vita/stamina fuori range: `width` CSS non valido, barre non aggiornate |
 | BUG-06 | Alto | `index.js:249`, `index.js:295` | Si può parare da morti (manca il controllo `isDead`) |
 | BUG-07 | Alto | `index.js:96-130` | Drenaggio stamina della parata dipendente dal frame rate e solo da fermi |
 | BUG-08 | Risolto | `index.js` (blocco "Condizione di fine gioco") | `determineWinner` richiamato a ogni frame dopo la morte |
-| BUG-09 | Medio | `js/Utili.js:21-25` | Timer off-by-one: parte da 59 e la prima iterazione è istantanea |
+| BUG-09 | Risolto | `js/Utili.js` (`decreaseTimer`) | Timer off-by-one: partiva da 59 e la prima iterazione era istantanea |
 | BUG-10 | Medio | `js/Classi.js:27`, `js/Classi.js:69` | `this.facing` usato in `Sprite` ma definito solo in `Lottatore` |
 | BUG-11 | Medio | `index.js:159-162,177-180` | Magic number duplicati (50, 200) nelle hitbox di collisione: si rompono in silenzio |
 | BUG-12 | Medio | `js/Classi.js:135` + `index.js:16` | `gravity` definita in `index.js` ma usata in `Classi.js` (dipendenza nascosta) |
@@ -96,6 +96,8 @@ const background = new Sprite({ x: 0, y: 0 }, './img/Background.png', 1, 5, { x:
 **Impatto:** lo sfondo appare sfarfallato/parziale (o mostra 1/5 dell'immagine alla volta).
 
 **Fix suggerito:** `framesMax: 1` per un'immagine statica. Nota cosmetica: c'è anche una virgola finale dopo l'ultimo argomento (`{ x: 0, y: 0 }, )`), formalmente valida in ES2017+ ma da rimuovere.
+
+**RISOLTO** — `framesMax` portato a `1` e virgola finale rimossa. Lo sfondo ora è un'unica immagine statica, larga 7680px scalata (1920 x 4): il canvas da 1500px ne mostra la parte sinistra, come previsto per uno sfondo scorrevole. Vedi "Fix applicati #5".
 
 ---
 
@@ -199,6 +201,8 @@ ed eliminare `await`/`setTimeout` dall'handler `keydown`.
 **Impatto:** la partita dura 59 secondi e il primo secondo scorre istantaneamente all'avvio.
 
 **Fix suggerito:** usare `timerId = setInterval(...)` oppure spostare il primo decremento dentro un `setTimeout`.
+
+**RISOLTO** — il decremento è stato spostato dentro il `setTimeout`: il primo secondo scorre dopo 1 secondo e il timer parte da 60. Vedi "Fix applicati #5".
 
 ---
 
@@ -720,4 +724,61 @@ Lo smoke test del caricamento e della fine partita è stato rieseguito senza reg
 2. Continuare a tenere premuti `←`/`→` (o `A`/`D`) mentre il nemico muore: non deve più muoversi.
 3. Premere `↑` (o `W`) subito dopo il colpo mortale: nessun salto.
 4. Ripetere con i ruoli invertiti (Player ucciso da Enemy).
+
+---
+
+## Fix #5 — Fase 1: CSS esterno, stati di gioco e menu (BUG-03, BUG-09) — 16/10/2026
+
+**Obiettivo:** chiudere i prerequisiti della Fase 1 (CSS esterno + fix rapidi) e introdurre menu e stati di gioco.
+
+**Nuovi file:**
+
+| File | Contenuto |
+|---|---|
+| `css/style.css` | Tutti gli stili, prima inline in `index.html`: HUD, barre, timer, schermate, menu |
+| `js/Stato.js` | Macchina a stati: `STATI` (caricamento, menu, partita), `statoCorrente`, `cambiaStato()`, `aggiornaVisibilita()` |
+| `js/Menu.js` | Menu come dati (`VOCI_MENU`), navigazione da tastiera, voci `wip`, fullscreen |
+
+**Modifiche:**
+
+1. `index.html` — rimosso ogni attributo `style="..."`: ora usa classi e `<link rel="stylesheet" href="css/style.css">`. Aggiunto il markup del menu (`#menu`, `#menuTitolo`, `#menuVoci`). Ordine script aggiornato: `Utili.js`, `Stato.js`, `Menu.js`, `Classi.js`, `index.js`.
+
+2. `js/Stato.js` — un unico posto dove sapere "a che punto siamo". La visibilità di caricamento e menu è gestita dallo stato, non più a mano.
+
+3. `js/Menu.js` — le voci sono dati; `wip: true` significa visibile ma **non selezionabile** (etichetta WIP, esclusa dalla navigazione e dal click):
+   - PLAY: VS LOCALE (attivo), VS CPU (WIP), VS ONLINE (WIP)
+   - SETTINGS: FULLSCREEN (attivo), KEYBINDS (WIP), INDIETRO
+   Navigazione con frecce o `W`/`S`, Invio per confermare, Esc per tornare indietro. Le pressioni prolungate non fanno scorrere le voci a raffica (`event.repeat`).
+
+4. `index.js`:
+   - `animate()` esce subito se lo stato non è `partita`: il gioco **non parte più da solo**.
+   - `keydown`: fuori dalla partita gli input vanno a `gestisciInputMenu(event)`.
+   - nuova `avviaPartita()`: imposta lo stato `partita` e avvia il timer.
+   - avvio: `aggiornaVisibilita()` mostra il caricamento; a caricamento finito si apre il menu.
+
+5. `js/Utili.js` — `decreaseTimer()` riscritta (BUG-09) e rimossa la riga che nascondeva la schermata di caricamento: ora lo fa il cambio di stato.
+
+**Verifiche eseguite:** test automatico con DOM e tastiera simulati (`node`), 30 controlli:
+
+| Controllo | Esito |
+|---|---|
+| Stato iniziale `caricamento`, schermata visibile, menu nascosto | OK |
+| A caricamento finito: stato `menu`, loading nascosto, menu visibile | OK |
+| Voci del menu principale: `PLAY`, `SETTINGS` | OK |
+| Navigazione circolare con frecce su e giù | OK |
+| Sottomenu SETTINGS e PLAY con la voce `wip` etichettata | OK |
+| La navigazione **salta** le voci WIP | OK |
+| VS LOCALE avvia la partita e nasconde il menu | OK |
+| Il timer resta 60 e passa a 59 dopo 1 secondo (BUG-09) | OK |
+| `framesMax` dello sfondo uguale a 1 (BUG-03) | OK |
+| `animate()` aggiorna solo in partita, fine partita e morte ancora funzionanti | OK |
+
+**Cosa testare a mano nel browser** (http://localhost:3000/index.html):
+
+1. All'apertura deve comparire la schermata di caricamento e poi il menu con `PLAY` evidenziato.
+2. Frecce su/giù (o `W`/`S`) per spostare la selezione, Invio per confermare.
+3. `PLAY` -> `VS CPU` e `VS ONLINE` devono avere l'etichetta WIP e non essere raggiungibili con le frecce.
+4. `PLAY` -> `VS LOCALE` deve avviare la partita con il timer a 60 (non 59).
+5. `SETTINGS` -> `FULLSCREEN` deve attivare lo schermo intero; `Esc` torna al menu principale.
+6. Lo sfondo non deve più sfarfallare.
 

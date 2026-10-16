@@ -4,59 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GiocoTps - Fighting Game</title>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bitcount+Prop+Double+Ink:wght@100..900&display=swap" rel="stylesheet">
-    
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-        
-        body {
-            margin: 0;
-            padding: 0;
-        }
-    </style>
+
+    <!-- Stili del gioco (fuori dall'HTML) -->
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div style="position: relative; display: inline-block;">
-        <!-- HUD Container -->
-        <div style="position: absolute; display: flex; width: 100%; align-items: center; padding: 20px; z-index: 10;">
-            <!-- Player Health & Stamina -->
-            <div style="position: relative; width: 750px; display: flex; justify-content: flex-end; border-top: 4px solid black; border-left: 4px solid black; border-bottom: 4px solid black;">
-                <div style="background-color: red; height: 20px; width: 100%;"></div>
-                <div id="player-health" style="position: absolute; background: #595818; bottom: 0; right: 0; top: 0; width: 100%;"></div>
-                <div id="player-stamina" style="position: absolute; background: #482D20; bottom: 0; right: 0; top: 14px; width: 100%;"></div>
+    <div id="areaGioco">
+        <!-- HUD -->
+        <div id="hud">
+            <!-- Vita e stamina del giocatore 1 -->
+            <div class="hud-lato sinistra">
+                <div class="barra-fondo"></div>
+                <div id="player-health" class="barra-valore"></div>
+                <div id="player-stamina" class="barra-valore"></div>
             </div>
 
             <!-- Timer -->
-            <div id="timer" style="background-color: black; height: 50px; width: 100px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: 4px solid black; font-family: 'Bitcount Prop Double Ink', sans-serif; font-size: 35px; color: white;">60</div>
+            <div id="timer">60</div>
 
-            <!-- Enemy Health & Stamina -->
-            <div style="position: relative; width: 750px; border-top: 4px solid black; border-right: 4px solid black; border-bottom: 4px solid black;">
-                <div style="background-color: red; height: 20px;"></div>
-                <div id="enemy-health" style="position: absolute; background: blue; bottom: 0; left: 0; right: 0; top: 0;"></div>
-                <div id="enemy-stamina" style="position: absolute; background: turquoise; bottom: 0; left: 0; right: 0; top: 14px;"></div>
+            <!-- Vita e stamina del giocatore 2 -->
+            <div class="hud-lato destra">
+                <div class="barra-fondo"></div>
+                <div id="enemy-health" class="barra-valore"></div>
+                <div id="enemy-stamina" class="barra-valore"></div>
             </div>
         </div>
-
-        <!-- Game Over Display -->
-        <div id="displayText" style="position: absolute; color: aliceblue; font-size: 50px; align-items: center; justify-content: center; top: 0; left: 0; right: 0; bottom: 0; display: none; background-color: rgba(0, 0, 0, 0.7); z-index: 20;"></div>
 
         <!-- Canvas -->
         <canvas></canvas>
 
-        <!-- Schermata di Caricamento (copre tutto finché gli asset non sono pronti) -->
-        <div id="loadingScreen" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; background-color: black; z-index: 40;">
-            <div style="font-family: 'Bitcount Prop Double Ink', sans-serif; font-size: 60px; color: white;">GiocoTps</div>
-            <div id="loadingTesto" style="font-family: 'Bitcount Prop Double Ink', sans-serif; font-size: 30px; color: #888888;">Caricamento…</div>
+        <!-- Testo di fine partita -->
+        <div id="displayText"></div>
+
+        <!-- Schermata di caricamento (visibile finché gli asset non sono pronti) -->
+        <div id="loadingScreen" class="schermata">
+            <div class="titolo-grande">GiocoTps</div>
+            <div id="loadingTesto">Caricamento…</div>
+        </div>
+
+        <!-- Menu (principale e sottomenu: le voci sono create da js/Menu.js) -->
+        <div id="menu" class="schermata">
+            <div id="menuTitolo">GiocoTps</div>
+            <div id="menuVoci"></div>
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Script: l'ordine conta (Utili -> Stato -> Menu -> Classi -> index) -->
     <script src="js/Utili.js"></script>
+    <script src="js/Stato.js"></script>
+    <script src="js/Menu.js"></script>
     <script src="js/Classi.js"></script>
     <script src="index.js"></script>
 </body>
