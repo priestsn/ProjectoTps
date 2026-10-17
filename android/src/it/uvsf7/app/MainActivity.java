@@ -39,6 +39,15 @@ public class MainActivity extends Activity {
     /** Indirizzo di gioco di serie: la versione pubblicata dal repository. */
     static final String URL_PREDEFINITO = "https://priestsn.github.io/ProjectoTps/";
 
+    /**
+     * Deve corrispondere al versionCode del manifest. Serve a svuotare la cache
+     * della WebView quando l'app viene aggiornata: senza, dopo un rilascio del
+     * gioco l'app può continuare a mostrare HTML/CSS vecchi in cache e sembra
+     * che il layout sia rotto (successo davvero: sfondo piccolo in alto a
+     * sinistra, selezione tagliata).
+     */
+    private static final int BUILD_APP = 2;
+
     /** Dopo quanto tempo in background ricaricare per prendere l'ultima versione. */
     private static final long RICARICA_DOPO_MS = 5 * 60 * 1000L;
 
@@ -62,6 +71,16 @@ public class MainActivity extends Activity {
 
         web = new WebView(this);
         configuraWebView();
+
+        // Aggiornamento dell'app: la cache della WebView va svuotata, altrimenti
+        // dopo un rilascio del gioco si continua a vedere la versione vecchia.
+        int buildVisto = prefs.getInt("buildCache", 0);
+        if (buildVisto != BUILD_APP) {
+            web.clearCache(true);
+            web.clearHistory();
+            prefs.edit().putInt("buildCache", BUILD_APP).apply();
+        }
+
         radice.addView(web, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         setContentView(radice);
@@ -162,13 +181,54 @@ public class MainActivity extends Activity {
     // ------------------------------------------------------------------
 
     private void mostraImpostazioni() {
+        final String[] voci = {
+                "Indirizzo del gioco: " + indirizzo(),
+                "Ricarica la pagina",
+                "Svuota la cache e ricarica",
+                "Cerca aggiornamenti dell'app",
+                "Versione app: " + nomeVersione()
+        };
+
+        new AlertDialog.Builder(this)
+                .setTitle("Impostazioni")
+                .setItems(voci, (dialogo, scelta) -> {
+                    switch (scelta) {
+                        case 0:
+                            chiediIndirizzo();
+                            break;
+                        case 1:
+                            erroreMostrato = false;
+                            web.reload();
+                            Toast.makeText(this, "Ricarico…", Toast.LENGTH_SHORT).show();
+                            break;
+                        case 2:
+                            // è il rimedio quando il gioco sembra rotto dopo un
+                            // rilascio: butta via HTML e CSS in cache
+                            web.clearCache(true);
+                            erroreMostrato = false;
+                            web.loadUrl(indirizzo());
+                            Toast.makeText(this, "Cache svuotata", Toast.LENGTH_SHORT).show();
+                            break;
+                        case 3:
+                            Aggiornamento.controlla(this, false);
+                            break;
+                        default:
+                            break;
+                    }
+                })
+                .setNegativeButton("Chiudi", null)
+                .show();
+    }
+
+    /** Chiede l'indirizzo da caricare e lo salva. */
+    private void chiediIndirizzo() {
         final EditText campo = new EditText(this);
         campo.setText(indirizzo());
         campo.setSingleLine(true);
 
         new AlertDialog.Builder(this)
-                .setTitle("Impostazioni")
-                .setMessage("Indirizzo del gioco (la pagina che l'app carica):")
+                .setTitle("Indirizzo del gioco")
+                .setMessage("La pagina che l'app carica (di serie la versione pubblicata dal repository):")
                 .setView(campo)
                 .setPositiveButton("Salva e ricarica", (d, w) -> {
                     String nuovo = campo.getText().toString().trim();
@@ -182,8 +242,7 @@ public class MainActivity extends Activity {
                     erroreMostrato = false;
                     web.loadUrl(nuovo);
                 })
-                .setNeutralButton("Aggiorna app", (d, w) -> Aggiornamento.controlla(this, false))
-                .setNegativeButton("Chiudi", null)
+                .setNegativeButton("Annulla", null)
                 .show();
     }
 
