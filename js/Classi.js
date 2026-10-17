@@ -50,7 +50,12 @@ class Sprite {
 
     animateFrames() {
         this.framesElapsed++;
-        if (this.framesElapsed % this.framesHold === 0) {
+
+        // Il moltiplicatore permette di rallentare o accelerare le animazioni
+        // (stati delle ultimate). Per lo sfondo vale 1.
+        const hold = Math.max(1, Math.round(this.framesHold * (this.moltiplicatoreAnimazione || 1)));
+
+        if (this.framesElapsed % hold === 0) {
             if (this.framesCurrent < this.framesMax - 1) {
                 this.framesCurrent++;
             } else {
@@ -71,13 +76,13 @@ class Sprite {
  */
 class Lottatore extends Sprite {
     constructor(options = {}) {
-        const { position = { x: 0, y: 0 }, velocity = { x: 0, y: 0 }, imageSrc, scale = 1, framesMax = 1, offset = { x: 0, y: 0 }, sprites, statistiche, corpo, attacco } = options;
+        const { position = { x: 0, y: 0 }, velocity = { x: 0, y: 0 }, imageSrc, scale = 1, framesMax = 1, offset = { x: 0, y: 0 }, sprites, statistiche, corpo, attacco, ultimate } = options;
         super({ position }, imageSrc, scale, framesMax, offset);
 
         // Statistiche del personaggio. Se non vengono passate si usano i valori
         // base, cosi' la classe resta utilizzabile anche senza un personaggio.
         this.statistiche = Object.assign(
-            { vita: 100, stamina: 100, danno: 10, velocita: 5, salto: -10 },
+            { vita: 100, stamina: 100, danno: 10, costoStamina: 20, velocita: 5, salto: -10 },
             statistiche
         );
 
@@ -107,6 +112,39 @@ class Lottatore extends Sprite {
         this.health = this.statistiche.vita;
         this.stamina = this.statistiche.stamina;
         this.isDead = false;
+
+        // --- Meccaniche avanzate (Fase 3) ---
+        this.isStunned = false;          // non può agire
+        this.stunTimer = 0;              // frame di stun rimasti
+        this.framesParata = 0;           // frame dall'inizio della parata
+        this.ultimate = 0;               // carica 0..100
+        this.datiUltimate = ultimate || {
+            nome: 'Ultimate', tipo: 'mischia', danno: 20,
+            effetto: null, durata: 0, colore: '#8be9fd'
+        };
+        this.attaccoCaricato = false;    // colpo in corso che rompe la parata
+        this.attaccoUltimate = false;    // ultimate in corso
+        this.ultimateHaColpito = false;  // l'ultimate ha già fatto centro
+        this.framesAttacco = 0;          // frame dall'inizio dell'attacco
+        this.isCaricando = false;        // tasto attacco tenuto premuto
+        this.framesCarica = 0;           // frame di carica accumulati
+
+        // --- Stati alterati dalle ultimate ---
+        this.rallentamentoTimer = 0;     // movimento e animazioni rallentati
+        this.inversioneTimer = 0;        // comandi invertiti
+        this.congelamentoTimer = 0;      // non può agire
+        this.velenoTimer = 0;            // danno nel tempo
+        this.velenoPerFrame = 0;
+        this.marchioTimer = 0;           // subisce più danno
+        this.bruciaturaTimer = 0;        // danno nel tempo + niente rigenerazione stamina
+        this.bruciaturaPerFrame = 0;
+        this.bloccoStaminaTimer = 0;
+        this.silenzioTimer = 0;          // ultimate bloccata e stamina in calo
+        this.eclissiTimer = 0;           // inversione + rallentamento
+        this.buffTimer = 0;              // velocità e attacchi aumentati
+        this.moltiplicatoreVelocita = 1;
+        this.moltiplicatoreAnimazione = 1;
+
         this.framesCurrent = 0;
         this.framesElapsed = 0;
         this.framesHold = 10;
@@ -177,6 +215,19 @@ class Lottatore extends Sprite {
     update() {
         this.draw();
 
+        // L'attacco termina quando l'ultimo frame e' stato disegnato.
+        // Il controllo sta qui e non in index.js perche' solo il lottatore sa
+        // quando la SUA animazione e' finita: cosi' uno stato verticale
+        // (Jump/Fall) non puo' sostituire Attack1 lasciando isAttacking a true.
+        if (this.isAttacking &&
+            this.image === this.sprites.Attack1.image &&
+            this.framesCurrent === this.sprites.Attack1.framesMax - 1) {
+            this.isAttacking = false;
+            this.attaccoCaricato = false;
+            this.attaccoUltimate = false;
+            this.framesAttacco = 0;
+        }
+
         // La morte si completa da sola: raggiunto l'ultimo frame dell'animazione
         // il lottatore passa a isDead e l'animazione si ferma sull'ultimo disegno.
         if (this.image === this.sprites.Death.image && this.framesCurrent === this.sprites.Death.framesMax - 1) {
@@ -184,7 +235,16 @@ class Lottatore extends Sprite {
         }
 
         if (!this.isDead) {
-            this.animateFrames();
+            // Durante lo stun l'animazione di colpo subito si ferma sull'ultimo
+            // frame: resta visibile per tutta la durata dello stun invece di
+            // ripartire in loop.
+            const takeHitFermo = this.isStunned &&
+                this.image === this.sprites.TakeHit.image &&
+                this.framesCurrent === this.sprites.TakeHit.framesMax - 1;
+
+            if (!takeHitFermo) {
+                this.animateFrames();
+            }
         }
 
         this.position.x += this.velocity.x;
@@ -205,6 +265,22 @@ class Lottatore extends Sprite {
         }
     }
 
+    /**
+     * Avvia un attacco (normale, caricato o ultimate) dal primo frame.
+     * Centralizza il reset dei flag: chi chiama non deve sapere come funziona
+     * l'animazione.
+     */
+    avviaAttacco({ caricato = false, ultimate = false } = {}) {
+        this.cambiaSprite('Attack1');
+        this.isAttacking = true;
+        this.attaccoCaricato = caricato;
+        this.attaccoUltimate = ultimate;
+        this.ultimateHaColpito = false;
+        this.framesAttacco = 0;
+        this.isCaricando = false;
+        this.framesCarica = 0;
+    }
+
     cambiaSprite(sprite) {
         // La morte ha priorità su tutto: una volta avviata, lo sprite non cambia più.
         // L'animazione arriva fino in fondo e isDead viene impostato in update().
@@ -212,11 +288,26 @@ class Lottatore extends Sprite {
             return;
         }
 
+        // Un colpo subito annulla l'attacco in corso: altrimenti resterebbe
+        // isAttacking true anche dopo l'animazione di TakeHit.
+        if (sprite === 'TakeHit' || sprite === 'Death') {
+            this.isAttacking = false;
+            this.attaccoCaricato = false;
+            this.attaccoUltimate = false;
+            this.framesAttacco = 0;
+            this.isCaricando = false;
+            this.framesCarica = 0;
+        }
+
         // Attacco e colpo subito non si interrompono mai... tranne che per la morte.
         // Senza questa eccezione l'animazione di morte non partirebbe quando il colpo
         // mortale lascia il lottatore a metà di "Attack1" o di "TakeHit".
         if (sprite !== 'Death') {
-            if (this.image === this.sprites.Attack1.image && !this.isTakingDmg && this.framesCurrent < this.sprites.Attack1.framesMax - 1) {
+            // Un attacco in corso si interrompe solo se si viene colpiti.
+            // Il controllo è sul flag e non sul frame corrente: prima, sul frame
+            // finale, Jump/Fall potevano sostituire Attack1 e isAttacking restava
+            // true per sempre (attacco bloccato).
+            if (this.isAttacking && !this.isTakingDmg) {
                 return;
             }
             if (this.image === this.sprites.TakeHit.image && this.framesCurrent < this.sprites.TakeHit.framesMax - 1) {
@@ -243,6 +334,11 @@ class Lottatore extends Sprite {
             // frame cambia molto da personaggio a personaggio
             this.framesHold = spriteData.framesHold || this.framesHoldBase;
             this.framesCurrent = 0;
+        } else if (spriteData && sprite === 'Attack1' && !this.isAttacking) {
+            // Lo stesso attacco ripetuto deve ripartire dal primo frame:
+            // prima restava sull'ultimo frame e sembrava bloccato.
+            this.framesCurrent = 0;
+            this.framesElapsed = 0;
         }
     }
 }

@@ -16,21 +16,25 @@
     <div id="areaGioco">
         <!-- HUD -->
         <div id="hud">
-            <!-- Vita e stamina del giocatore 1 -->
+            <!-- Vita, stamina e ultimate del giocatore 1 -->
             <div class="hud-lato sinistra">
                 <div class="barra-fondo"></div>
+                <div class="barra-fondo barra-fondo-ultimate"></div>
                 <div id="player-health" class="barra-valore"></div>
                 <div id="player-stamina" class="barra-valore"></div>
+                <div id="player-ultimate" class="barra-valore barra-ultimate"></div>
             </div>
 
             <!-- Timer -->
             <div id="timer">60</div>
 
-            <!-- Vita e stamina del giocatore 2 -->
+            <!-- Vita, stamina e ultimate del giocatore 2 -->
             <div class="hud-lato destra">
                 <div class="barra-fondo"></div>
+                <div class="barra-fondo barra-fondo-ultimate"></div>
                 <div id="enemy-health" class="barra-valore"></div>
                 <div id="enemy-stamina" class="barra-valore"></div>
+                <div id="enemy-ultimate" class="barra-valore barra-ultimate"></div>
             </div>
         </div>
 
@@ -46,11 +50,14 @@
             <div id="loadingTesto">Caricamento…</div>
         </div>
 
-        <!-- Menu (principale e sottomenu: le voci sono create da js/Menu.js) -->
+        <!-- Menu (principale, pausa e sottomenu: le voci sono create da js/Menu.js) -->
         <div id="menu" class="schermata">
             <img id="menuLogo" src="assets/UVSF7-logo.png" alt="Ultra Verdello Street Fight 7">
             <div id="menuTitolo">Ultra Verdello Street Fight 7</div>
             <div id="menuVoci"></div>
+
+            <!-- Visibile solo nel menu di pausa -->
+            <button id="pausaReport" class="report-angolo">REPORT BUG</button>
         </div>
 
         <!-- Selezione del personaggio (la griglia la crea js/Selezione.js) -->
@@ -67,15 +74,38 @@
                 Esc per tornare indietro
             </div>
         </div>
+
+        <!-- Report bug: si apre con R in qualsiasi momento -->
+        <div id="reportBug" class="report-overlay">
+            <div class="report-pannello">
+                <div class="report-titolo">REPORT BUG</div>
+                <div class="report-istruzioni">
+                    Descrivi il problema. Il contesto di gioco viene allegato automaticamente.
+                    Salvato in locale sul browser; esporta in Markdown per aggiungerlo a bugs.md.
+                    Esc per chiudere.
+                </div>
+                <textarea id="reportTesto" placeholder="Cosa non funziona? Cosa stavi facendo quando è successo?"></textarea>
+                <div class="report-riga">
+                    <button id="reportSalva" class="report-bottone">SALVA</button>
+                    <button id="reportEsporta" class="report-bottone">ESPORTA MD</button>
+                    <button id="reportCopia" class="report-bottone secondario">COPIA</button>
+                    <button id="reportChiudi" class="report-bottone secondario">CHIUDI</button>
+                </div>
+                <div id="reportStato" class="report-stato"></div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Script: l'ordine conta (Utili -> Stato -> Menu -> Classi -> Personaggi -> Selezione -> index) -->
+    <!-- Script: l'ordine conta (Utili -> Stato -> Report -> Menu -> Classi -> Personaggi -> Selezione -> CPU -> index) -->
     <script src="js/Utili.js"></script>
     <script src="js/Stato.js"></script>
+    <script src="js/Report.js"></script>
     <script src="js/Menu.js"></script>
     <script src="js/Classi.js"></script>
     <script src="js/Personaggi.js"></script>
     <script src="js/Selezione.js"></script>
+    <script src="js/CPU.js"></script>
     <script src="index.js"></script>
 </body>
 </html>

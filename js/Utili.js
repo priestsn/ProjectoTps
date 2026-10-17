@@ -101,20 +101,32 @@ function decreaseTimer() {
     // Il primo decremento avviene dopo 1 secondo: cosi' la partita dura davvero 60s
     // (prima il contatore calava subito all'avvio e partiva da 59)
     timerId = setTimeout(() => {
+        // In pausa (menu di pausa o report bug) il tempo non scorre
+        if (reportAperto || statoCorrente === STATI.PAUSA) {
+            decreaseTimer();
+            return;
+        }
+
         timer--;
         document.querySelector('#timer').innerHTML = timer;
 
-        // Rigenera stamina ogni 2 secondi
-        if (Player.stamina < 100 && timer % 2 === 0) {
-            Player.stamina += 10;
-        }
-        if (Enemy.stamina < 100 && timer % 2 === 0) {
-            Enemy.stamina += 10;
+        // Rigenera stamina ogni 2 secondi, senza superare il massimo del personaggio.
+        // La bruciatura di Bakari blocca la rigenerazione.
+        if (timer % 2 === 0) {
+            if (Player.bloccoStaminaTimer <= 0) {
+                Player.stamina = Math.min(Player.statistiche.stamina, Player.stamina + 10);
+            }
+            if (Enemy.bloccoStaminaTimer <= 0) {
+                Enemy.stamina = Math.min(Enemy.statistiche.stamina, Enemy.stamina + 10);
+            }
         }
 
         if (timer > 0) {
             decreaseTimer();
         } else {
+            // Allo scadere del tempo la partita è finita: gli input non devono
+            // più avere effetto (prima gameOver restava false)
+            gameOver = true;
             document.querySelector('#displayText').style.display = 'flex';
             determineWinner(Player, Enemy, timerId);
         }

@@ -8,7 +8,28 @@ const STATI = {
     CARICAMENTO: 'caricamento',
     MENU: 'menu',
     SELEZIONE: 'selezione',
-    PARTITA: 'partita'
+    PARTITA: 'partita',
+    PAUSA: 'pausa'
+};
+
+// Modalità di gioco e difficoltà della CPU.
+// `modalitaPartita` viene impostata dalla selezione e letta da avviaPartita().
+const MODALITA = {
+    LOCALE: 'locale',
+    CPU: 'cpu'
+};
+
+let modalitaPartita = MODALITA.LOCALE;
+let difficoltaCPU = 'difficile';
+
+// True mentre il pannello di report bug è aperto: mette in pausa il gioco
+let reportAperto = false;
+
+// Nomi mostrati nella selezione e nell'HUD
+const NOMI_DIFFICOLTA = {
+    facile: 'Facile',
+    difficile: 'Difficile',
+    guisse: 'Guissè'
 };
 
 let statoCorrente = STATI.CARICAMENTO;
@@ -25,12 +46,13 @@ function cambiaStato(nuovoStato) {
  * Mostra solo la schermata legata allo stato corrente:
  * - caricamento -> schermata di caricamento
  * - menu        -> menu
+ * - pausa       -> menu, sopra la partita in pausa
  * - selezione   -> scelta del personaggio
  * - partita     -> nessuna schermata (si vedono canvas e HUD)
  */
 function aggiornaVisibilita() {
     impostaVisibilita('#loadingScreen', statoCorrente === STATI.CARICAMENTO);
-    impostaVisibilita('#menu', statoCorrente === STATI.MENU);
+    impostaVisibilita('#menu', statoCorrente === STATI.MENU || statoCorrente === STATI.PAUSA);
     impostaVisibilita('#selezione', statoCorrente === STATI.SELEZIONE);
 }
 

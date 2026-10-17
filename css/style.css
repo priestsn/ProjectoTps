@@ -53,11 +53,12 @@ canvas {
     z-index: 10;
 }
 
-/* Metà HUD di un giocatore (barre vita + stamina) */
+/* Metà HUD di un giocatore (vita, stamina e ultimate) */
 .hud-lato {
     position: relative;
     flex: 1;            /* si divide lo spazio disponibile con l'altra metà */
     min-width: 0;
+    height: 44px;       /* 20 vita + 8 ultimate + margini */
 }
 
 .hud-lato.sinistra {
@@ -76,45 +77,73 @@ canvas {
 
 /* Striscia rossa di fondo: si vede quando la vita scende */
 .barra-fondo {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
     background-color: red;
     height: 20px;
-    width: 100%;
+}
+
+/* Fondo della barra ultimate, sotto la stamina */
+.barra-fondo-ultimate {
+    top: 24px;
+    height: 10px;
+    background-color: #111111;
+    border-top: 1px solid #000000;
 }
 
 /* Riempimento sovrapposto: la larghezza in % è impostata da index.js */
 .barra-valore {
     position: absolute;
-    bottom: 0;
-    top: 0;
     width: 100%;
 }
 
 #player-health {
     background: #595818;
     right: 0;
+    top: 0;
+    height: 20px;
 }
 
 #player-stamina {
     background: #482D20;
     right: 0;
+    top: 14px;
+    height: 6px;
+}
+
+#player-ultimate {
+    background: #e7c34a;
+    right: 0;
+    top: 27px;
+    height: 6px;
+    width: 0%;
 }
 
 #enemy-health {
     background: blue;
     left: 0;
     right: 0;
+    top: 0;
+    height: 20px;
 }
 
 #enemy-stamina {
     background: turquoise;
     left: 0;
     right: 0;
+    top: 14px;
+    height: 6px;
 }
 
-/* La stamina è più sottile: parte 14px più in basso */
-#player-stamina,
-#enemy-stamina {
-    top: 14px;
+#enemy-ultimate {
+    background: #e7a23a;
+    left: 0;
+    right: 0;
+    top: 27px;
+    height: 6px;
+    width: 0%;
 }
 
 /* Timer centrale */
@@ -300,6 +329,12 @@ canvas {
     color: #cccccc;
 }
 
+.info-ultimate {
+    font-size: 14px;
+    color: #e7c34a;
+    margin-top: 4px;
+}
+
 /* Griglia dei personaggi */
 #selezioneGriglia {
     display: flex;
@@ -360,4 +395,147 @@ canvas {
     font-size: 16px;
     color: #888888;
     text-align: center;
+}
+
+/* ========================================
+   Report bug (tasto R)
+   ========================================== */
+.report-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.82);
+    z-index: 60;
+    padding: 24px;
+}
+
+.report-overlay.aperto {
+    display: flex;
+}
+
+.report-pannello {
+    width: min(760px, 96vw);
+    background-color: #0d0d12;
+    border: 2px solid #ff4d4d;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 0 30px rgba(255, 77, 77, 0.25);
+}
+
+.report-titolo {
+    font-size: 30px;
+    color: #ff6b6b;
+    letter-spacing: 2px;
+}
+
+.report-istruzioni {
+    font-size: 15px;
+    color: #999999;
+    line-height: 1.4;
+}
+
+#reportTesto {
+    width: 100%;
+    min-height: 180px;
+    resize: vertical;
+    background-color: #050508;
+    color: #eeeeee;
+    border: 1px solid #333333;
+    border-radius: 6px;
+    padding: 12px;
+    font-family: inherit;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+#reportTesto:focus {
+    outline: 2px solid #ff4d4d;
+}
+
+.report-riga {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.report-bottone {
+    background-color: #ff4d4d;
+    color: #050508;
+    border: 0;
+    border-radius: 4px;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    cursor: pointer;
+}
+
+.report-bottone:hover {
+    background-color: #ff7373;
+}
+
+.report-bottone.secondario {
+    background-color: #333333;
+    color: #dddddd;
+}
+
+.report-bottone.secondario:hover {
+    background-color: #444444;
+}
+
+.report-stato {
+    font-size: 14px;
+    color: #9adf9a;
+    min-height: 20px;
+}
+
+/* ========================================
+   Menu di pausa
+   ========================================== */
+/* Sopra la partita: sfondo semitrasparente invece che nero pieno */
+#menu.pausa {
+    background-color: rgba(0, 0, 0, 0.82);
+}
+
+#menu.pausa #menuLogo {
+    display: none;
+}
+
+#menu.pausa #menuTitolo {
+    margin-bottom: 24px;
+}
+
+/* Pulsante report bug nell'angolo del menu di pausa */
+#pausaReport {
+    display: none;
+    position: absolute;
+    right: 22px;
+    bottom: 22px;
+    background-color: #1a1a1a;
+    color: #ff8a8a;
+    border: 1px solid #ff4d4d;
+    border-radius: 4px;
+    padding: 10px 16px;
+    font-family: inherit;
+    font-size: 15px;
+    letter-spacing: 1px;
+    cursor: pointer;
+}
+
+#menu.pausa #pausaReport {
+    display: block;
+}
+
+#pausaReport:hover {
+    background-color: #ff4d4d;
+    color: #050508;
 }

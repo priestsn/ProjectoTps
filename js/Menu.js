@@ -10,34 +10,65 @@ const VOCI_MENU = {
         { testo: 'SETTINGS', azione: () => apriMenu('settings') }
     ],
     play: [
-        { testo: 'VS LOCALE', azione: () => apriSelezione() },
-        { testo: 'VS CPU', wip: true },
+        { testo: 'VS LOCALE', azione: () => apriSelezione(MODALITA.LOCALE) },
+        { testo: 'VS CPU', azione: () => apriMenu('cpu') },
         { testo: 'VS ONLINE', wip: true }
+    ],
+    cpu: [
+        { testo: 'FACILE', azione: () => avviaSelezioneCPU('facile') },
+        { testo: 'DIFFICILE', azione: () => avviaSelezioneCPU('difficile') },
+        { testo: 'GUISSÈ', azione: () => avviaSelezioneCPU('guisse') },
+        { testo: 'INDIETRO', azione: () => apriMenu('play') }
     ],
     settings: [
         { testo: 'FULLSCREEN', azione: () => attivaFullscreen() },
         { testo: 'KEYBINDS', wip: true },
         { testo: 'INDIETRO', azione: () => apriMenu('principale') }
+    ],
+    pausa: [
+        { testo: 'RIPRENDI', azione: () => chiudiPausa() },
+        { testo: 'IMPOSTAZIONI', azione: () => apriMenu('impostazioniPausa', STATI.PAUSA) },
+        { testo: 'ESCI AL MENU', azione: () => esciAlMenu() }
+    ],
+    impostazioniPausa: [
+        { testo: 'FULLSCREEN', azione: () => attivaFullscreen() },
+        { testo: 'KEYBINDS', wip: true },
+        { testo: 'INDIETRO', azione: () => apriMenu('pausa', STATI.PAUSA) }
     ]
 };
 
 const TITOLI_MENU = {
     principale: 'Ultra Verdello Street Fight 7',
     play: 'PLAY',
-    settings: 'SETTINGS'
+    cpu: 'VS CPU',
+    settings: 'SETTINGS',
+    pausa: 'PAUSA',
+    impostazioniPausa: 'IMPOSTAZIONI'
+};
+
+// Menu a cui torna Esc da ciascun sottomenu
+const MENU_PADRE = {
+    play: 'principale',
+    cpu: 'play',
+    settings: 'principale'
 };
 
 let menuCorrente = 'principale';
 let indiceVoce = 0;
 
 /**
- * Apre un menu, evidenzia la prima voce selezionabile e lo rende visibile
+ * Apre un menu, evidenzia la prima voce selezionabile e lo rende visibile.
+ * Con `stato = STATI.PAUSA` il menu viene mostrato sopra la partita in pausa.
  */
-function apriMenu(nome) {
+function apriMenu(nome, stato = STATI.MENU) {
     menuCorrente = nome;
     indiceVoce = primaVoceSelezionabile();
     disegnaMenu();
-    cambiaStato(STATI.MENU);
+
+    // In pausa lo sfondo del menu è trasparente e compare il pulsante report
+    document.querySelector('#menu').classList.toggle('pausa', stato === STATI.PAUSA);
+
+    cambiaStato(stato);
 }
 
 /**
@@ -117,13 +148,33 @@ function attivaVoce() {
 }
 
 /**
- * Torna al menu principale
+ * Apre la selezione in modalità CPU con la difficoltà scelta
+ */
+function avviaSelezioneCPU(difficolta) {
+    difficoltaCPU = difficolta;
+    apriSelezione(MODALITA.CPU);
+}
+
+/**
+ * Torna al menu padre del menu corrente
  */
 function tornaIndietro() {
-    if (menuCorrente === 'principale') {
+    // Esc dal menu di pausa riprende la partita
+    if (menuCorrente === 'pausa') {
+        chiudiPausa();
         return;
     }
-    apriMenu('principale');
+
+    // Esc dalle impostazioni in pausa torna al menu di pausa
+    if (menuCorrente === 'impostazioniPausa') {
+        apriMenu('pausa', STATI.PAUSA);
+        return;
+    }
+
+    const padre = MENU_PADRE[menuCorrente];
+    if (padre) {
+        apriMenu(padre);
+    }
 }
 
 /**
@@ -143,7 +194,7 @@ function attivaFullscreen() {
  * mai attivi contemporaneamente.
  */
 function gestisciInputMenu(evento) {
-    if (statoCorrente !== STATI.MENU) {
+    if (statoCorrente !== STATI.MENU && statoCorrente !== STATI.PAUSA) {
         return;
     }
 

@@ -19,13 +19,21 @@ let confermatoP1 = false;
 let confermatoP2 = false;
 
 /**
- * Apre la schermata di selezione ripartendo da zero
+ * Apre la schermata di selezione ripartendo da zero.
+ * In modalità CPU il giocatore 2 è scelto dal computer ed è già confermato.
  */
-function apriSelezione() {
+function apriSelezione(modalita = MODALITA.LOCALE) {
+    modalitaPartita = modalita;
+
     sceltaP1 = 0;
     sceltaP2 = PERSONAGGI.length > 1 ? 1 : 0;
     confermatoP1 = false;
     confermatoP2 = false;
+
+    if (modalitaPartita === MODALITA.CPU) {
+        sceltaP2 = Math.floor(Math.random() * PERSONAGGI.length);
+        confermatoP2 = true;
+    }
 
     disegnaSelezione();
     cambiaStato(STATI.SELEZIONE);
@@ -70,7 +78,12 @@ function disegnaSelezione() {
     });
 
     aggiornaSchedaGiocatore('#infoP1', sceltaP1, confermatoP1);
-    aggiornaSchedaGiocatore('#infoP2', sceltaP2, confermatoP2);
+
+    // In modalità CPU la scheda del giocatore 2 mostra la difficoltà
+    const extraP2 = modalitaPartita === MODALITA.CPU
+        ? 'CPU ' + NOMI_DIFFICOLTA[difficoltaCPU]
+        : '';
+    aggiornaSchedaGiocatore('#infoP2', sceltaP2, confermatoP2, extraP2);
 }
 
 /**
@@ -99,7 +112,7 @@ function stileRitratto(personaggio) {
 /**
  * Mostra nome, archetipo e statistiche del personaggio sotto il cursore
  */
-function aggiornaSchedaGiocatore(selettore, indice, confermato) {
+function aggiornaSchedaGiocatore(selettore, indice, confermato, extra = '') {
     const personaggio = PERSONAGGI[indice];
     const stat = personaggio.statistiche;
     const scheda = document.querySelector(selettore);
@@ -107,11 +120,16 @@ function aggiornaSchedaGiocatore(selettore, indice, confermato) {
     scheda.innerHTML =
         '<div class="info-nome">' + personaggio.nome +
         (confermato ? '<span class="info-ok">PRONTO</span>' : '') + '</div>' +
-        '<div class="info-archetipo">' + personaggio.archetipo + '</div>' +
+        '<div class="info-archetipo">' + personaggio.archetipo +
+        (extra ? ' &middot; ' + extra : '') + '</div>' +
         '<div class="info-stat">Vita ' + stat.vita +
+        ' &middot; Stamina ' + stat.stamina +
         ' &middot; Danno ' + stat.danno +
+        ' &middot; Costo ' + stat.costoStamina +
         ' &middot; Velocità ' + stat.velocita +
-        ' &middot; Salto ' + Math.abs(stat.salto) + '</div>';
+        ' &middot; Salto ' + Math.abs(stat.salto) + '</div>' +
+        '<div class="info-ultimate">ULT &mdash; ' + personaggio.ultimate.nome +
+        ': ' + personaggio.ultimate.descrizione + '</div>';
 }
 
 /**
@@ -178,22 +196,22 @@ function gestisciInputSelezione(evento) {
             confermaScelta(1);
             break;
 
-        // --- giocatore 2 ---
+        // --- giocatore 2 (solo in VS locale: in VS CPU comanda il computer) ---
         case 'ArrowLeft':
-            spostaCursore(2, -1);
+            if (modalitaPartita === MODALITA.LOCALE) spostaCursore(2, -1);
             break;
 
         case 'ArrowRight':
-            spostaCursore(2, 1);
+            if (modalitaPartita === MODALITA.LOCALE) spostaCursore(2, 1);
             break;
 
         case 'ù':
-            confermaScelta(2);
+            if (modalitaPartita === MODALITA.LOCALE) confermaScelta(2);
             break;
 
         // --- indietro ---
         case 'Escape':
-            apriMenu('play');
+            apriMenu(modalitaPartita === MODALITA.CPU ? 'cpu' : 'play');
             break;
     }
 }
