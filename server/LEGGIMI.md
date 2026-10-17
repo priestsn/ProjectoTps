@@ -90,6 +90,35 @@ Il campo di gioco viene fissato all'inizio della partita (stesse misure del
 canvas dell'host) e non cambia più: ridimensionare la finestra durante una
 partita online non ha effetto.
 
+## Indirizzo pubblico con HTTPS (Cloudflare Quick Tunnel)
+
+Aruba in chiaro sulla porta 80 (`http://217.61.59.110`) funziona, ma molte reti
+scolastiche o aziendali bloccano HTTP su IP nudo. Con `cloudflared` il gioco
+esce su un indirizzo HTTPS senza aprire porte e senza dominio:
+
+```
+apt install -y ./cloudflared.deb        # pacchetto da github.com/cloudflare/cloudflared
+cloudflared tunnel --url http://127.0.0.1:80
+```
+
+L'indirizzo compare nel log (`https://<nome-casuale>.trycloudflare.com`). Sul
+server è configurato come servizio:
+
+```
+systemctl status uvsf7-tunnel
+grep -Eo 'https://[a-z0-9-]+\.trycloudflare\.com' /var/log/uvsf7-tunnel.log | tail -1
+```
+
+Da sapere:
+
+- il nome è casuale e **cambia a ogni riavvio del servizio** (crash, reboot,
+  `systemctl restart`): per una prova va bene, per un indirizzo fisso serve un
+  dominio con un tunnel nominato;
+- il tunnel inoltra anche il WebSocket, quindi VS ONLINE funziona identico;
+- chi ha il link può giocare: non c'è autenticazione;
+- `systemctl stop uvsf7-tunnel` chiude l'accesso pubblico, la porta 80 resta
+  raggiungibile via IP.
+
 ## Limiti noti
 
 - La pausa (Esc) durante una partita online ferma solo il browser in cui viene
