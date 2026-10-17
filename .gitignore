@@ -1,0 +1,10 @@
+# Dipendenze (il progetto non ne usa: resta per sicurezza)
+node_modules/
+
+# File temporanei e log locali
+stato-git.txt
+*.log
+
+# Report bug generati dal server in locale
+reports/
+server/reports/
