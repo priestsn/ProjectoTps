@@ -9,7 +9,8 @@ const STATI = {
     MENU: 'menu',
     SELEZIONE: 'selezione',
     PARTITA: 'partita',
-    PAUSA: 'pausa'
+    PAUSA: 'pausa',
+    KEYBINDS: 'keybinds'
 };
 
 // Modalità di gioco e difficoltà della CPU.
@@ -60,6 +61,7 @@ function aggiornaVisibilita() {
     impostaVisibilita('#loadingScreen', statoCorrente === STATI.CARICAMENTO);
     impostaVisibilita('#menu', statoCorrente === STATI.MENU || statoCorrente === STATI.PAUSA);
     impostaVisibilita('#selezione', statoCorrente === STATI.SELEZIONE);
+    impostaVisibilita('#keybinds', statoCorrente === STATI.KEYBINDS);
 }
 
 /**

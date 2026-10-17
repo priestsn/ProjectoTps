@@ -21,7 +21,7 @@ Due giocatori su macchine diverse, con stanza e codice di 4 caratteri:
 3. L'altro apre lo stesso indirizzo, sceglie **ENTRA CON CODICE**, digita il codice e conferma.
 4. Ognuno sceglie il personaggio: comanda solo il proprio cursore (giocatore 1 `A`/`D`/`H`, giocatore 2 frecce e `ù`).
 
-Chi crea la stanza simula la partita e manda 30 fotogrammi al secondo all'altro; l'ospite disegna lo stato ricevuto e gli rimanda i propri tasti. Per questo il gioco in rete ha bisogno del server: con `file://` funzionano solo VS LOCALE e VS CPU. Installazione su VPS in `server/LEGGIMI.md`.
+Chi crea la stanza simula la partita e manda 30 fotogrammi al secondo all'altro; l'ospite disegna lo stato ricevuto e gli rimanda le proprie azioni (non i tasti: ogni giocatore tiene i suoi keybinds). Per questo il gioco in rete ha bisogno del server: con `file://` funzionano solo VS LOCALE e VS CPU. Installazione su VPS in `server/LEGGIMI.md`.
 
 | | Giocatore 1 | Giocatore 2 |
 |---|---|---|
@@ -29,6 +29,9 @@ Chi crea la stanza simula la partita e manda 30 fotogrammi al secondo all'altro;
 | Salta | `W` | `↑` |
 | Attacco | `H` | `ù` |
 | Parata | `J` | `à` |
+| Ultimate | `G` | `L` |
+
+I tasti si possono cambiare da **SETTINGS → KEYBINDS** (anche in pausa, `Esc → IMPOSTAZIONI → KEYBINDS`): si sceglie l'azione con le frecce, si preme `Invio`, poi il nuovo tasto. La configurazione resta salvata nel browser e vale anche per i comandi touch; `RIPRISTINA PREDEFINITI` rimette tutto com'era.
 
 ## Regole
 

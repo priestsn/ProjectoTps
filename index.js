@@ -130,9 +130,6 @@ const keys = {
     à: { pressed: false }
 };
 
-// Tasti riservati al giocatore 2: in VS CPU vengono ignorati
-const TASTI_P2 = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'ù', 'à', 'l'];
-
 // Flag di fine partita: impedisce che il risultato venga ricalcolato a ogni frame
 let gameOver = false;
 
@@ -1004,6 +1001,12 @@ window.addEventListener('keydown', (event) => {
         return;
     }
 
+    // Schermata dei keybinds: la tastiera serve alla rimappatura
+    if (statoCorrente === STATI.KEYBINDS) {
+        gestisciInputKeybinds(event);
+        return;
+    }
+
     // Debug: il tasto U mostra o nasconde le hitbox (funziona in ogni schermata)
     if (!event.repeat && (event.key === 'u' || event.key === 'U')) {
         hitboxVisibili = !hitboxVisibili;
@@ -1037,142 +1040,62 @@ window.addEventListener('keydown', (event) => {
 
     if (gameOver) return;
 
-    // VS ONLINE, lato ospite: i tasti vanno mandati all'host, che simula
-    if (onlineStato.attivo && onlineStato.ospite) {
-        gestisciInputOspite(event, true);
+    const key = (event.key && event.key.length === 1) ? event.key.toLowerCase() : event.key;
+
+    // Le frecce non devono far scorrere la pagina mentre si gioca (BUG-18)
+    if (event.key.startsWith('Arrow') || event.key === ' ') {
+        event.preventDefault();
+    }
+
+    // Un tasto diventa un'azione tramite i keybinds (js/Keybinds.js): nessun
+    // tasto è scritto qui dentro.
+    const comando = azioneDaTasto(key);
+    if (!comando) {
         return;
     }
 
-    const key = (event.key && event.key.length === 1) ? event.key.toLowerCase() : event.key;
+    // VS ONLINE, lato ospite: comanda solo il giocatore 2 (il suo)
+    if (onlineStato.attivo && onlineStato.ospite && comando.giocatore !== 'p2') {
+        return;
+    }
 
     // In VS CPU il giocatore 2 è controllato dall'IA, in VS ONLINE dall'ospite:
     // nessun tasto umano deve toccarlo
-    if ((modalitaPartita === MODALITA.CPU || modalitaPartita === MODALITA.ONLINE) &&
-        TASTI_P2.includes(key)) {
+    if (comando.giocatore === 'p2' &&
+        (modalitaPartita === MODALITA.CPU || modalitaPartita === MODALITA.ONLINE) &&
+        !(onlineStato.attivo && onlineStato.ospite)) {
         return;
     }
 
-    switch (key) {
-        case 'w':
-            salta(Player);
-            break;
-
-        case 'a':
-            if (!Player.isDead && !Player.isStunned) {
-                keys.a.pressed = true;
-                lastKey = 'a';
-                Player.lastKey = 'a';
-            }
-            break;
-
-        case 'd':
-            if (!Player.isDead && !Player.isStunned) {
-                keys.d.pressed = true;
-                lastKey = 'd';
-                Player.lastKey = 'd';
-            }
-            break;
-
-        case 'h':
-            iniziaCarica(Player);
-            break;
-
-        case 'j':
-            iniziaParata(Player);
-            break;
-
-        case 'g':
-            // Ultimate del giocatore 1
-            attivaUltimate(Player);
-            break;
-
-        case 'ArrowUp':
-            salta(Enemy);
-            break;
-
-        case 'ArrowLeft':
-            if (!Enemy.isDead && !Enemy.isStunned) {
-                keys.ArrowLeft.pressed = true;
-                Enemy.lastKey = 'ArrowLeft';
-            }
-            break;
-
-        case 'ArrowRight':
-            if (!Enemy.isDead && !Enemy.isStunned) {
-                keys.ArrowRight.pressed = true;
-                Enemy.lastKey = 'ArrowRight';
-            }
-            break;
-
-        case 'ù':
-            iniziaCarica(Enemy);
-            break;
-
-        case 'à':
-            iniziaParata(Enemy);
-            break;
-
-        case 'l':
-            // Ultimate del giocatore 2
-            attivaUltimate(Enemy);
-            break;
-    }
+    premiAzione(comando.giocatore, comando.azione, true);
 });
 
 window.addEventListener('keyup', (event) => {
     const key = (event.key && event.key.length === 1) ? event.key.toLowerCase() : event.key;
 
+    // Il rilascio conta solo durante la partita: fuori, i menu non ne hanno bisogno
+    if (statoCorrente !== STATI.PARTITA) {
+        return;
+    }
+
+    const comando = azioneDaTasto(key);
+    if (!comando) {
+        return;
+    }
+
     // VS ONLINE, lato ospite: il rilascio va comunicato all'host
-    if (onlineStato.attivo && onlineStato.ospite) {
-        if (statoCorrente === STATI.PARTITA) {
-            gestisciInputOspite(event, false);
-        }
+    if (onlineStato.attivo && onlineStato.ospite && comando.giocatore !== 'p2') {
         return;
     }
 
     // In VS CPU i tasti del giocatore 2 non devono toccare l'IA
-    if ((modalitaPartita === MODALITA.CPU || modalitaPartita === MODALITA.ONLINE) &&
-        TASTI_P2.includes(key)) {
+    if (comando.giocatore === 'p2' &&
+        (modalitaPartita === MODALITA.CPU || modalitaPartita === MODALITA.ONLINE) &&
+        !(onlineStato.attivo && onlineStato.ospite)) {
         return;
     }
 
-    switch (key) {
-        case 'a':
-            keys.a.pressed = false;
-            break;
-
-        case 'd':
-            keys.d.pressed = false;
-            break;
-
-        case 'h':
-            if (statoCorrente === STATI.PARTITA) {
-                rilasciaCarica(Player);
-            }
-            break;
-
-        case 'j':
-            finisciParata(Player);
-            break;
-
-        case 'ArrowLeft':
-            keys.ArrowLeft.pressed = false;
-            break;
-
-        case 'ArrowRight':
-            keys.ArrowRight.pressed = false;
-            break;
-
-        case 'ù':
-            if (statoCorrente === STATI.PARTITA) {
-                rilasciaCarica(Enemy);
-            }
-            break;
-
-        case 'à':
-            finisciParata(Enemy);
-            break;
-    }
+    premiAzione(comando.giocatore, comando.azione, false);
 });
 
 // ========================================

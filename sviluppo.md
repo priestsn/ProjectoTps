@@ -27,13 +27,14 @@ Piano delle funzionalità da implementare.
 | Schermata di caricamento | `[OK]` disponibile |
 | Morte + schermata vincitore | `[OK]` disponibile |
 | Stili | `[OK]` tutti in `css/style.css` |
-| Menu principale / Play / Settings | `[OK]` (keybinds ancora `WIP`) |
+| Menu principale / Play / Settings | `[OK]` (keybinds compresi) |
 | Menu di pausa | `[OK]` con `Esc`: Riprendi, Impostazioni, Esci al menu (funziona anche a partita finita) |
 | Report bug | `[OK]` pulsante nel menu di pausa, salvataggio locale ed export Markdown |
 | Selezione personaggio | `[OK]` 9 personaggi con statistiche proprie |
 | vs CPU | `[OK]` tre difficoltà: Facile, Difficile, Guissè |
 | vs online | `[OK]` stanze con codice, host che simula e ospite collegato (Fase 5) |
 | Perfect block / ultimate / attacco caricato | `[OK]` disponibili (Fase 3) |
+| Keybinds | `[OK]` rimappatura per i due giocatori, salvata nel browser |
 
 **Debito tecnico da saldare** (dettagli in `bugs.md`):
 
@@ -81,9 +82,9 @@ All'apertura non si gioca più subito: compare un menu a schermo intero con il n
 - `[OK]` **vs CPU** — contro l'IA a *facile*, *difficile* e *guissè*: sottomenu dedicato, avversario scelto dal computer e tre profili di comportamento
 - `[OK]` **vs online** — server su VPS con creazione/ingresso in stanze — Fase 5
 
-### F4 — Settings  ·  `[OK]` parziale (Fase 1)
+### F4 — Settings  ·  `[OK]` (Fase 1 e sezione 12)
 - `[OK]` **fullscreen** — attiva/disattiva schermo intero sull'**intera pagina**
-- `WIP` **keybinds** — rimappatura dei tasti per entrambi i giocatori, con variabili affiancate a `keys`/`lastKey`
+- `[OK]` **keybinds** — schermata di rimappatura per entrambi i giocatori (6 azioni ciascuno), salvataggio nel browser e ripristino dei valori predefiniti. I tasti non sono più scritti nel codice: `js/Keybinds.js` traduce tasto -> azione e `premiAzione()` esegue
 
 ### F5 — Selezione personaggio  ·  `[OK]` (Fase 2)
 - `[OK]` schermata di selezione (per P1 e P2) prima della partita
@@ -392,4 +393,64 @@ Con emulazione telefono (430 x 830) e su link pubblico HTTPS:
 - VS LOCALE: due gruppi con sigla, disposti su due file senza uscire dallo schermo;
 - VS ONLINE da ospite: tasti `ù` / `à` / `l` (giocatore 2);
 - pausa: comandi nascosti e tasti rilasciati, di nuovo visibili alla ripresa;
+- nessun errore JavaScript.
+
+---
+
+## 12. Keybinds — rimappatura dei tasti (17/10/2026)
+
+I tasti non sono più scritti dentro l'handler della tastiera: sono dati modificabili per ognuno dei due giocatori, salvati nel browser.
+
+### Come si usa
+
+`SETTINGS -> KEYBINDS` (anche da `Esc -> IMPOSTAZIONI` in partita):
+
+| Tasto | Effetto |
+|---|---|
+| frecce su/giù o `W`/`S` | sposta la selezione tra le dodici azioni e la riga `RIPRISTINA PREDEFINITI` |
+| `Invio` | aspetta il tasto da assegnare (`PREMI UN TASTO`) |
+| `Esc` | annulla l'assegnazione in corso, oppure torna al menu di provenienza |
+
+Assegnare un tasto già usato da un'altra azione lo toglie all'altra: non esistono doppioni. `Esc`, `Invio`, `Tab` e `U` (hitbox) sono riservati e vengono rifiutati.
+
+### Valori predefiniti
+
+| Azione | Giocatore 1 | Giocatore 2 |
+|---|---|---|
+| Sinistra | `A` | `←` |
+| Destra | `D` | `→` |
+| Salto | `W` | `↑` |
+| Attacco | `H` | `Ù` |
+| Parata | `J` | `À` |
+| Ultimate | `G` | `L` |
+
+La configurazione vive in `localStorage` (`uvsf7-keybinds`) e vale per tutte le modalità, touch compreso. Restano fissi la conferma nella selezione del personaggio (`H` / `Ù`) e la navigazione dei menu.
+
+### Come funziona
+
+- `js/Keybinds.js` contiene i dati (`tastiComandi`), la lettura/scrittura su `localStorage`, `azioneDaTasto()` e `premiAzione()`.
+- `index.js` non conosce più nessun tasto: `keydown` e `keyup` traducono il tasto in `{ giocatore, azione }` e chiamano `premiAzione()`.
+- `premiAzione()` scrive i flag di movimento letti dal game loop (`keys.a`, `keys.d`, `keys.ArrowLeft`, `keys.ArrowRight`, `lastKey`) e per il resto chiama i comandi condivisi (`salta`, `iniziaCarica`, `rilasciaCarica`, `iniziaParata`, `finisciParata`, `attivaUltimate`).
+- In **VS ONLINE** l'ospite non simula: manda l'**azione** all'host (`{ t: 'azione', g: 'p2', a, giu }`), che la esegue sul giocatore 2. Viaggia l'azione e non il tasto, quindi ogni giocatore può avere keybinds diversi.
+- I **comandi touch** chiamano `premiAzione()` direttamente: sono indipendenti dai tasti fisici.
+
+### File
+
+| File | Ruolo |
+|---|---|
+| `js/Keybinds.js` | dati, salvataggio, traduzione tasto -> azione, esecuzione, schermata di rimappatura |
+| `index.html` | schermata `#keybinds` e ordine degli script |
+| `js/Stato.js` | stato `STATI.KEYBINDS` e visibilità della schermata |
+| `js/Menu.js` | `KEYBINDS` non è più `WIP`: apre la schermata da menu e pausa |
+| `js/Online.js` | messaggio `azione` al posto di `tasto` |
+| `js/Touch.js` | leva e tasti chiamano `premiAzione()` |
+| `css/style.css` | stili della schermata |
+
+### Verifiche fatte (17/10/2026)
+
+- rimappatura, persistenza dopo il ricaricamento, ripristino dei predefiniti;
+- nuovo tasto funzionante in partita, vecchio tasto inerte;
+- doppioni impediti, tasti riservati rifiutati;
+- keybinds aperti dalla pausa con ritorno corretto;
+- touch e VS ONLINE con keybinds personalizzati;
 - nessun errore JavaScript.

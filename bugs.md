@@ -23,10 +23,10 @@ Verifiche eseguite: lettura completa del codice, confronto percorsi asset ↔ fi
 | BUG-12 | Medio | `js/Classi.js:135` + `index.js:16` | `gravity` definita in `index.js` ma usata in `Classi.js` (dipendenza nascosta) |
 | BUG-13 | Medio | `index.js:111-117`, `124-130`, `237-262` | La parata è "invisibile": sovrascritta da Jump/Fall o bloccata da un attacco in corso |
 | BUG-14 | Medio | `index.js:104,127`, `js/Classi.js:105` | `facing` di Enemy invertito e AttackBox legata a un `lastKey` mai aggiornato dai tasti attacco/parata |
-| BUG-15 | Basso | `index.js:67-78` | Stato `keys.*.pressed` scritto ma mai letto (codice morto) |
+| BUG-15 | Risolto | `js/Keybinds.js`, `index.js` | Stato `keys.*.pressed`: ora c'e' un unico strato di input e i flag di movimento sono l'unica fonte letta dal loop |
 | BUG-16 | Basso | `index.js:259,305,326,340` | `Player.color` / `Enemy.color` non esistono (proprietà fantasma) |
 | BUG-17 | Risolto | `js/Classi.js` | Hitbox di debug invisibile: ora si attivano con il tasto U |
-| BUG-18 | Basso | `index.js:210-311` | Nessun `event.repeat` e nessun `preventDefault()`: frecce che scrollano, eventi duplicati |
+| BUG-18 | Risolto | `index.js` | Nessun `event.repeat` / `preventDefault()`: aggiunti entrambi |
 | BUG-19 | Risolto | `index.js` (`hud`) | ~10 `document.querySelector` per frame dentro il game loop |
 | BUG-20 | Basso | `index.js:171`, `index.js:189` | `setTimeout` su `isTakingDmg` non tracciati (colpi ravvicinati) |
 | BUG-21 | Risolto (UX) | `js/Utili.js`, `js/Classi.js`, `index.html`, `index.js` | Asset caricati uno alla volta: aggiunta la schermata di caricamento |
@@ -289,6 +289,8 @@ ed eliminare `await`/`setTimeout` dall'handler `keydown`.
 
 **Impatto:** stato duplicato che induce in errore (sembra che il loop controlli i tasti di attacco, ma non lo fa) e che diventerà incoerente alla prima modifica.
 
+**RISOLTO (Fix #11)** — con i keybinds l'input passa da un unico strato (`azioneDaTasto` / `premiAzione`): i soli flag letti dal game loop sono quelli di movimento (`keys.a`, `keys.d`, `keys.ArrowLeft`, `keys.ArrowRight`), scritti in un punto solo. Attacco, parata e ultimate non usano più flag duplicati ma i comandi condivisi (`iniziaCarica`, `rilasciaCarica`, `iniziaParata`, `finisciParata`, `attivaUltimate`).
+
 **Fix suggerito:** rimuoverli da `keys` o usarli come unica fonte di verità per attacco/parata.
 
 ---
@@ -328,6 +330,8 @@ Il calcolo della posizione dell'`AttackBox` è stato separato dal disegno (`aggi
 **Causa/Impatto:**
 - le `ArrowUp/Left/Right` non chiamano `event.preventDefault()`, quindi **la pagina scrolla** mentre si gioca;
 - non si controlla `event.repeat`: tenendo premuto un tasto, il browser genera `keydown` ripetuti. Per `a`/`d` è innocuo, ma per `h`/`ù` tali eventi vengono serializzati dall'`await` (BUG-04) e per `w`/`ArrowUp` si tenta il salto più volte.
+
+**RISOLTO (Fix #11)** — `event.repeat` viene ignorato in testa all'handler e le frecce (più la barra spaziatrice) ricevono `preventDefault()` durante la partita: la pagina non scorre più.
 
 ---
 
@@ -1162,3 +1166,56 @@ Lo smoke test del caricamento e della fine partita è stato rieseguito senza reg
 4. Amara: attivare l'ultimate e notare movimento e attacchi più rapidi.
 5. Controllare le etichette di stato sopra i lottatori.
 
+
+---
+
+## Fix #11 — Keybinds e unico strato di input (BUG-15, BUG-18) — 17/10/2026
+
+**Obiettivo:** rendere rimappabili i tasti di entrambi i giocatori e togliere dall'handler della tastiera la catena di `switch` con i tasti scritti a mano.
+
+**Nuovo file:** `js/Keybinds.js` (caricato subito dopo `js/Stato.js`).
+
+**Come funziona:**
+
+| Passo | Chi | Cosa |
+|---|---|---|
+| 1 | `keydown` in `index.js` | calcola il tasto normalizzato e chiama `azioneDaTasto(key)` |
+| 2 | `azioneDaTasto()` | cerca il tasto nella configurazione: restituisce `{ giocatore, azione }` oppure `null` |
+| 3 | `premiAzione()` | esegue l'azione: scrittura dei flag di movimento o chiamata ai comandi condivisi del gioco |
+| 4 | VS ONLINE, ospite | `premiAzione()` non simula: manda `{ t: 'azione', g: 'p2', a, giu }`; l'host la esegue sul giocatore 2 |
+
+**Dati e persistenza:**
+
+- sei azioni per giocatore (`sinistra`, `destra`, `salto`, `attacco`, `parata`, `ultimate`);
+- valori predefiniti identici ai tasti storici (`A`/`D`/`W`/`H`/`J`/`G`, frecce e `Ù`/`À`/`L`);
+- salvataggio in `localStorage` sotto `uvsf7-keybinds`, ripristino dei predefiniti dalla schermata;
+- un tasto già usato da un'altra azione viene **tolto** all'altra, così non esistono doppioni;
+- `Esc`, `Invio`, `Tab`, `U` sono riservati (menu, pausa, debug) e vengono rifiutati con un messaggio.
+
+**Schermata:** `SETTINGS -> KEYBINDS`, raggiungibile anche da `Esc -> IMPOSTAZIONI` in partita. Frecce su/giù (o `W`/`S`) per spostarsi, `Invio` per assegnare ("PREMI UN TASTO"), `Esc` per annullare l'assegnazione o tornare al menu di partenza. Nuovo stato `STATI.KEYBINDS` in `js/Stato.js` con la sua schermata `#keybinds`.
+Gli altri input restano fissi: la conferma nella selezione (`H` / `Ù`) e la navigazione dei menu (frecce o `W`/`S`) non dipendono dai keybinds.
+
+**Effetti collaterali positivi:**
+
+- **BUG-18** — `event.repeat` ignorato in testa e `preventDefault()` su frecce e barra spaziatrice durante la partita: la pagina non scorre più.
+- **BUG-15** — i flag `keys.*` di attacco/parata non vengono più scritti: le sole fonti sono i flag di movimento (letti dal loop) e i comandi condivisi.
+- **Touch** — `js/Touch.js` non manda più eventi di tastiera: chiama `premiAzione(ruolo, azione)`, quindi i tasti virtuali funzionano anche con keybinds personalizzati.
+- **VS ONLINE** — viaggia l'azione, non il tasto: ogni giocatore tiene i propri keybinds.
+
+**Verifiche eseguite (browser, gioco reale):**
+
+| Controllo | Esito |
+|---|---|
+| Schermata con 12 azioni + ripristino, gruppi Giocatore 1 / Giocatore 2 | OK |
+| Assegnazione di `K` all'attacco P1: riga aggiornata, `localStorage` scritto | OK |
+| `K` in partita: carica fino a 60 frame e rilascia l'attacco caricato | OK |
+| Vecchio tasto `H` dopo la rimappatura: non fa nulla | OK |
+| Persistenza dopo il ricaricamento della pagina | OK |
+| Doppione: `K` assegnato alla parata P2 -> tolto all'attacco P1 | OK |
+| Ripristino predefiniti dalla riga `INVIO` | OK |
+| Tasto riservato (`Esc`) durante l'assegnazione: rifiutato con messaggio | OK |
+| Keybinds aperti dalla pausa: `Esc` torna a `IMPOSTAZIONI` in pausa | OK |
+| Touch ATT con attacco rimappato su `K`: carica e colpo caricato | OK |
+| VS ONLINE: l'ospite con attacco su `K` fa partire la carica sull'host (`Enemy.isCaricando`) | OK |
+| VS ONLINE: parata dell'ospite su `O` arriva all'host | OK |
+| Nessun errore JavaScript | OK |

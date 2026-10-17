@@ -850,3 +850,69 @@ canvas {
         gap: 6px;
     }
 }
+
+/* ========================================
+   Keybinds
+   ========================================== */
+#keybinds {
+    gap: 14px;
+}
+
+#keybindsTitolo {
+    font-size: 40px;
+    letter-spacing: 4px;
+    color: white;
+}
+
+#keybindsElenco {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 460px;
+    max-height: 66vh;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.keybinds-gruppo {
+    margin: 10px 0 2px;
+    font-size: 16px;
+    letter-spacing: 2px;
+    color: #7dff7d;
+}
+
+.keybinds-riga {
+    display: flex;
+    justify-content: space-between;
+    gap: 28px;
+    padding: 6px 12px;
+    font-size: 20px;
+    color: #9a9a9a;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.keybinds-riga.selezionata {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.06);
+    border-color: #3a3a3a;
+}
+
+.keybinds-riga.in-ascolto {
+    color: #ffd34d;
+    border-color: #ffd34d;
+}
+
+.keybinds-tasto {
+    min-width: 200px;
+    text-align: right;
+    color: inherit;
+}
+
+.keybinds-stato {
+    max-width: 560px;
+    font-size: 15px;
+    line-height: 1.4;
+    text-align: center;
+    color: #b8b8b8;
+}

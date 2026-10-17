@@ -13,10 +13,12 @@
 // In VS ONLINE i comandi sono quelli del giocatore che sta usando il telefono:
 // l'host manda i tasti del giocatore 1, l'ospite quelli del giocatore 2.
 
-const TASTI_TOUCH = {
-    p1: { sinistra: 'a', destra: 'd', salto: 'w', attacco: 'h', parata: 'j', ultimate: 'g' },
-    p2: { sinistra: 'ArrowLeft', destra: 'ArrowRight', salto: 'ArrowUp', attacco: 'ù', parata: 'à', ultimate: 'l' }
-};
+// Azioni dei tre tasti a destra: gli stessi nomi usati dai keybinds
+const AZIONI_TASCHE = [
+    { azione: 'attacco', testo: 'ATT', classe: 'attacco' },
+    { azione: 'parata', testo: 'PAR', classe: 'parata' },
+    { azione: 'ultimate', testo: 'ULT', classe: 'ultimate' }
+];
 
 // Lunghezze in pixel dei comandi: la leva ha una corsa di 46, la zona morta e' 14
 const CORSA_LEVA = 46;
@@ -56,24 +58,15 @@ function disposizioneTouch() {
 }
 
 /**
- * Manda alla pagina un evento di tastiera, identico a quello di un tasto vero
- */
-function premiTasto(tasto, premuto) {
-    window.dispatchEvent(new KeyboardEvent(premuto ? 'keydown' : 'keyup', {
-        key: tasto,
-        bubbles: true,
-        cancelable: true
-    }));
-}
-
-/**
  * Rilascia tutti i tasti dei comandi touch: serve quando si esce dalla partita
  * (pausa, menu, partita finita) per non lasciare tasti premuti.
  */
 function rilasciTuttoTouch() {
-    for (const ruolo in TASTI_TOUCH) {
-        for (const azione in TASTI_TOUCH[ruolo]) {
-            premiTasto(TASTI_TOUCH[ruolo][azione], false);
+    // Si rilasciano le azioni di entrambi i giocatori: costa nulla e non
+    // lascia mai un comando premuto dopo la partita
+    for (const ruolo of ['p1', 'p2']) {
+        for (const azione of AZIONI_TASTIERA) {
+            premiAzione(ruolo, azione.id, false);
         }
     }
 
@@ -104,7 +97,6 @@ function creaZonaLeva(ruolo) {
     leva.appendChild(pomello);
     zona.appendChild(leva);
 
-    const tasti = TASTI_TOUCH[ruolo];
     const stato = { puntatore: null, sinistra: false, destra: false, salto: false };
     let centro = { x: 0, y: 0 };
 
@@ -117,18 +109,18 @@ function creaZonaLeva(ruolo) {
 
         if (sinistra !== stato.sinistra) {
             stato.sinistra = sinistra;
-            premiTasto(tasti.sinistra, sinistra);
+            premiAzione(ruolo, 'sinistra', sinistra);
         }
         if (destra !== stato.destra) {
             stato.destra = destra;
-            premiTasto(tasti.destra, destra);
+            premiAzione(ruolo, 'destra', destra);
         }
 
         // Salto: parte una volta sola per trascinamento verso l'alto
         if (dy < -ZONA_MORTA * 2 && !stato.salto) {
             stato.salto = true;
-            premiTasto(tasti.salto, true);
-            premiTasto(tasti.salto, false);
+            premiAzione(ruolo, 'salto', true);
+            premiAzione(ruolo, 'salto', false);
         } else if (dy > -ZONA_MORTA && stato.salto) {
             stato.salto = false;
         }
@@ -173,8 +165,8 @@ function creaZonaLeva(ruolo) {
         stato.sinistra = false;
         stato.destra = false;
 
-        premiTasto(tasti.sinistra, false);
-        premiTasto(tasti.destra, false);
+        premiAzione(ruolo, 'sinistra', false);
+        premiAzione(ruolo, 'destra', false);
 
         pomello.style.transform = 'translate(0px, 0px)';
         leva.classList.remove('attiva');
@@ -207,19 +199,14 @@ function creaZonaTasti(ruolo) {
     const riga = document.createElement('div');
     riga.className = 'riga-tasti';
 
-    const tasti = TASTI_TOUCH[ruolo];
-    const voci = [
-        { tasto: tasti.attacco, testo: 'ATT', classe: 'attacco' },
-        { tasto: tasti.parata, testo: 'PAR', classe: 'parata' },
-        { tasto: tasti.ultimate, testo: 'ULT', classe: 'ultimate' }
-    ];
+    const voci = AZIONI_TASCHE;
 
     voci.forEach((voce) => {
         const bottone = document.createElement('button');
         bottone.type = 'button';
         bottone.className = 'tasto-touch ' + voce.classe;
         bottone.textContent = voce.testo;
-        bottone.dataset.tasto = voce.tasto;
+        bottone.dataset.azione = voce.azione;
 
         let premuto = false;
 
@@ -230,7 +217,7 @@ function creaZonaTasti(ruolo) {
             }
             premuto = true;
             bottone.classList.add('premuto');
-            premiTasto(voce.tasto, true);
+            premiAzione(ruolo, voce.azione, true);
             try {
                 bottone.setPointerCapture(evento.pointerId);
             } catch (errore) {
@@ -244,7 +231,7 @@ function creaZonaTasti(ruolo) {
             }
             premuto = false;
             bottone.classList.remove('premuto');
-            premiTasto(voce.tasto, false);
+            premiAzione(ruolo, voce.azione, false);
         };
 
         bottone.addEventListener('pointerdown', giu);

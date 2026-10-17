@@ -28,7 +28,7 @@ const VOCI_MENU = {
     ],
     settings: [
         { testo: 'FULLSCREEN', azione: () => attivaFullscreen() },
-        { testo: 'KEYBINDS', wip: true },
+        { testo: 'KEYBINDS', azione: () => apriKeybinds('settings') },
         { testo: 'INDIETRO', azione: () => apriMenu('principale') }
     ],
     pausa: [
@@ -38,7 +38,7 @@ const VOCI_MENU = {
     ],
     impostazioniPausa: [
         { testo: 'FULLSCREEN', azione: () => attivaFullscreen() },
-        { testo: 'KEYBINDS', wip: true },
+        { testo: 'KEYBINDS', azione: () => apriKeybinds('impostazioniPausa') },
         { testo: 'INDIETRO', azione: () => apriMenu('pausa', STATI.PAUSA) }
     ]
 };

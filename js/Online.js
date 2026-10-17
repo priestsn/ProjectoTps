@@ -24,9 +24,6 @@ const onlineStato = {
     contatoreInvio: 0     // usato per mandare un fotogramma ogni due frame
 };
 
-// Tasti che l'ospite può usare: sono quelli del giocatore 2
-const TASTI_OSPITE = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ù', 'à', 'l'];
-
 // Campi degli stati alterati, nell'ordine in cui viaggiano nel fotogramma
 const CAMPI_STATI = [
     'rallentamentoTimer', 'inversioneTimer', 'congelamentoTimer', 'velenoTimer',
@@ -311,8 +308,8 @@ function gestisciMessaggioOnline(dati) {
             return;
         }
 
-        case 'tasto': {
-            applicaTastoRemoto(dati.k, dati.giu);
+        case 'azione': {
+            applicaAzioneRemota(dati.g, dati.a, dati.giu);
             return;
         }
 
@@ -589,74 +586,30 @@ function aggiornaOspite() {
 }
 
 // ========================================
-// Ospite: invio dei tasti all'host
-// ========================================
+// Ospite: invio delle azioni all'host
+// ==========================================
+// L'ospite non ha una simulazione: premiAzione() (js/Keybinds.js) manda qui
+// l'azione, che l'host esegue sul giocatore 2. Il tasto fisico non viaggia:
+// viaggia l'azione, così ogni giocatore tiene i propri keybinds.
 
+// ========================================
+// Host: applicazione delle azioni dell'ospite
+// ==========================================
 /**
- * L'ospite non ha una simulazione: manda i tasti all'host, che li applica
- * al giocatore 2. Usa gli stessi tasti del giocatore 2 in VS locale.
- */
-function gestisciInputOspite(evento, premuto) {
-    const tasto = (evento.key && evento.key.length === 1) ? evento.key.toLowerCase() : evento.key;
-
-    if (!TASTI_OSPITE.includes(tasto)) {
-        return;
-    }
-
-    Rete.invia({ t: 'tasto', k: tasto, giu: premuto ? 1 : 0 });
-}
-
-// ========================================
-// Host: applicazione dei tasti dell'ospite
-// ========================================
-/**
- * L'host applica i comandi ricevuti al giocatore 2 usando gli stessi comandi
+ * L'host applica le azioni ricevute al giocatore 2 usando gli stessi comandi
  * condivisi del gioco (salta, iniziaParata, ...): nessuna seconda logica.
  */
-function applicaTastoRemoto(tasto, premuto) {
+function applicaAzioneRemota(giocatore, azione, premuto) {
     if (!onlineStato.attivo || onlineStato.ospite || !Enemy || gameOver) {
         return;
     }
 
-    const giu = premuto === 1 || premuto === true;
-
-    switch (tasto) {
-        case 'ArrowLeft':
-        case 'ArrowRight':
-            keys[tasto].pressed = giu;
-            if (giu) {
-                Enemy.lastKey = tasto;
-            }
-            break;
-
-        case 'ArrowUp':
-            if (giu) {
-                salta(Enemy);
-            }
-            break;
-
-        case 'ù':
-            if (giu) {
-                iniziaCarica(Enemy);
-            } else {
-                rilasciaCarica(Enemy);
-            }
-            break;
-
-        case 'à':
-            if (giu) {
-                iniziaParata(Enemy);
-            } else {
-                finisciParata(Enemy);
-            }
-            break;
-
-        case 'l':
-            if (giu) {
-                attivaUltimate(Enemy);
-            }
-            break;
+    // L'ospite comanda sempre e solo il giocatore 2
+    if (giocatore !== 'p2' || !azione) {
+        return;
     }
+
+    premiAzione('p2', azione, premuto === 1 || premuto === true);
 }
 
 // ========================================
