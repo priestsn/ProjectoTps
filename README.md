@@ -18,8 +18,13 @@
 </p>
 
 <p align="center">
-  <strong>Server di gioco</strong> — l'indirizzo pubblico non è nel repository: si configura sul VPS
-  (vedi <a href="#server-e-messa-online">Server e messa online</a>)
+  <a href="https://priestsn.github.io/ProjectoTps/"><strong>▶ GIOCA ORA: priestsn.github.io/ProjectoTps</strong></a>
+</p>
+
+<p align="center">
+  <sub>Questa è la versione pubblicata direttamente da questo repository (GitHub Pages): si aggiorna a ogni push.
+  Il <strong>VS ONLINE</strong> ha bisogno anche del server delle stanze, il cui indirizzo non è qui dentro —
+  si configura sul VPS (vedi <a href="#server-e-messa-online">Server e messa online</a>).</sub>
 </p>
 
 ![Schermata del gioco](screenshot.png)
@@ -126,8 +131,12 @@ Il nome pubblico può essere un dominio tuo, un sottodominio DuckDNS, oppure un 
 gioco non cambia: il client parla con lo **stesso host da cui ha caricato la pagina**
 (`location.host` in `js/Rete.js`), quindi nessun indirizzo è cablato nel codice.
 
-Dietro c'è **Caddy** come reverse proxy: gestisce il certificato TLS e inoltra al server Node, che
-ascolta solo su `127.0.0.1:8090`.
+**La versione giocabile senza server è su GitHub Pages**: `https://priestsn.github.io/ProjectoTps/`
+(pubblica questo repository, si aggiorna a ogni push, e la usa anche l'app Android come
+indirizzo di serie). Lì funzionano VS LOCALE e VS CPU; per il **VS ONLINE** serve invece
+l'indirizzo del server delle stanze, che vive solo sul VPS.
+
+Dietro Caddy c'è il reverse proxy: gestisce il certificato TLS e inoltra al server Node, che ascolta solo su `127.0.0.1:8090`.
 
 > Con `file://` funzionano solo VS LOCALE e VS CPU: senza server non esiste l'indirizzo WebSocket delle stanze né l'invio dei report.
 
