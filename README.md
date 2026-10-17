@@ -33,6 +33,14 @@ Chi crea la stanza simula la partita e manda 30 fotogrammi al secondo all'altro;
 
 I tasti si possono cambiare da **SETTINGS → KEYBINDS** (anche in pausa, `Esc → IMPOSTAZIONI → KEYBINDS`): si sceglie l'azione con le frecce, si preme `Invio`, poi il nuovo tasto. La configurazione resta salvata nel browser e vale anche per i comandi touch; `RIPRISTINA PREDEFINITI` rimette tutto com'era.
 
+## Fine partita e rivincita
+
+Quando la partita finisce compare il menu **FINE PARTITA**: `RIVINCITA` (stessi personaggi), `CAMBIA PERSONAGGI` (torna alla selezione) oppure `ESCI AL MENU`. In VS ONLINE la rivincita riparte per entrambi i giocatori.
+
+## Report bug
+
+`Esc` in partita → **REPORT BUG**: si scrive il problema e si preme **INVIA**. Il contesto di gioco (stato, personaggi, timer, posizioni) viene allegato da solo e il report viene **salvato sul server** in `/var/lib/uvsf7/reports/`: non serve scaricare niente. Se il server non risponde, il report resta nel browser e viene reinviato più tardi; `ESPORTA MD` e `COPIA` restano come riserva.
+
 ## Regole
 
 - Ogni lottatore ha **vita** e **stamina**: attaccare e parare consumano stamina.
@@ -78,4 +86,4 @@ Da telefono o tablet, in partita compaiono da soli i comandi touch (su PC con mo
 - **PAR**: parata (tienilo premuto);
 - **ULT**: ultimate, quando la barra è piena.
 
-In VS LOCALE sullo stesso schermo ci sono due gruppi di comandi, uno per lato, con la sigla P1 / P2. In VS ONLINE il telefono comanda il giocatore che lo sta usando (chi crea la stanza è P1, chi entra è P2). Conviene giocare in orizzontale: in verticale compare un avviso.
+Su telefono la **selezione del personaggio** si fa toccando la cella e usando i pulsanti `<` `>` `CONFERMA`; i lottatori vengono ridotti in proporzione allo schermo. In VS LOCALE sullo stesso schermo ci sono due gruppi di comandi, uno per lato, con la sigla P1 / P2. In VS ONLINE il telefono comanda il giocatore che lo sta usando (chi crea la stanza è P1, chi entra è P2). Conviene giocare in orizzontale: in verticale compare un avviso.

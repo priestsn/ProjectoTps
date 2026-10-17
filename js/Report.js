@@ -142,7 +142,11 @@ function apriReport() {
     document.querySelector('#reportBug').classList.add('aperto');
 
     const reports = leggiReport();
-    mostraStatoReport('Report salvati: ' + reports.length, '#9adf9a');
+    const inviati = reports.filter((report) => report.inviatoAlServer).length;
+    mostraStatoReport('Report inviati: ' + inviati + ' su ' + reports.length, '#9adf9a');
+
+    // Se qualche report non era partito (rete caduta), si riprova ora
+    inviaReportPendenti();
 
     const testo = document.querySelector('#reportTesto');
     testo.focus();
@@ -158,7 +162,52 @@ function chiudiReport() {
 }
 
 /**
- * Salva il report corrente con il contesto di gioco
+ * Invia un report al server del gioco (POST /report).
+ * Il file Markdown lo compone il server: l'utente non scarica nulla.
+ */
+function inviaReportAlServer(report) {
+    return fetch('/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            testo: report.testo,
+            contesto: report.contesto,
+            markdown: formattaReport(report),
+            pagina: location.href
+        })
+    }).then((risposta) => {
+        if (!risposta.ok) {
+            throw new Error('HTTP ' + risposta.status);
+        }
+        return risposta.json();
+    });
+}
+
+/**
+ * Riprova a mandare i report rimasti in locale (server irraggiungibile,
+ * pagina aperta da file, rete caduta)
+ */
+function inviaReportPendenti() {
+    const reports = leggiReport();
+    const pendenti = reports.filter((report) => !report.inviatoAlServer);
+
+    if (!pendenti.length) {
+        return;
+    }
+
+    pendenti.forEach((report) => {
+        inviaReportAlServer(report).then(() => {
+            report.inviatoAlServer = true;
+            scriviReport(reports);
+            mostraStatoReport('Report in sospeso inviati al server.', '#9adf9a');
+        }).catch(() => {
+            // resta in coda: si riprova alla prossima apertura del pannello
+        });
+    });
+}
+
+/**
+ * Salva il report corrente con il contesto di gioco e lo manda al server
  */
 function salvaReportCorrente() {
     const area = document.querySelector('#reportTesto');
@@ -175,7 +224,8 @@ function salvaReportCorrente() {
         data: adesso.toISOString(),
         dataLeggibile: adesso.toLocaleString('it-IT'),
         testo: testo,
-        contesto: contestoReport()
+        contesto: contestoReport(),
+        inviatoAlServer: false
     };
 
     const reports = leggiReport();
@@ -183,8 +233,17 @@ function salvaReportCorrente() {
     scriviReport(reports);
 
     area.value = '';
-    mostraStatoReport('Report salvato. Totale: ' + reports.length, '#9adf9a');
-    area.focus();
+    mostraStatoReport('Invio al server...', '#d9d9d9');
+
+    inviaReportAlServer(report).then(() => {
+        report.inviatoAlServer = true;
+        scriviReport(reports);
+        mostraStatoReport('Report inviato al server. Grazie!', '#9adf9a');
+        area.focus();
+    }).catch((errore) => {
+        mostraStatoReport('Server non raggiungibile: report salvato in locale e verra\' reinviato (' + errore.message + ').', '#ff8a8a');
+        area.focus();
+    });
 }
 
 /**

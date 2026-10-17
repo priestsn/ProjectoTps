@@ -1,4 +1,11 @@
 // ========================================
+// Costanti condivise da tutti gli script
+// ==========================================
+// `gravity` sta qui e non in index.js: e' usata da js/Classi.js (Lottatore),
+// che viene caricato prima e non deve dipendere da un file successivo (BUG-12).
+const gravity = 0.25;
+
+// ========================================
 // Caricamento degli Asset
 // ==========================================
 const immaginiDaCaricare = [];  // tutte le Image create dal gioco

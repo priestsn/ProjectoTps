@@ -55,6 +55,7 @@
             <img id="menuLogo" src="assets/UVSF7-logo.png" alt="Ultra Verdello Street Fight 7">
             <div id="menuTitolo">Ultra Verdello Street Fight 7</div>
             <div id="menuVoci"></div>
+            <div id="menuSuggerimento" class="menu-suggerimento"></div>
 
             <!-- Visibile solo nel menu di pausa -->
             <button id="pausaReport" class="report-angolo">REPORT BUG</button>
@@ -68,6 +69,8 @@
                 <div class="info-lato" id="infoP2"></div>
             </div>
             <div id="selezioneGriglia"></div>
+            <!-- Pulsanti per scorrere e confermare: visibili solo su telefono -->
+            <div id="selezioneComandi" class="selezione-comandi"></div>
             <div id="selezioneIstruzioni">
                 Giocatore 1: A / D per scegliere, H per confermare &nbsp;&middot;&nbsp;
                 Giocatore 2: frecce per scegliere, ù per confermare &nbsp;&middot;&nbsp;
@@ -106,13 +109,12 @@
             <div class="report-pannello">
                 <div class="report-titolo">REPORT BUG</div>
                 <div class="report-istruzioni">
-                    Descrivi il problema. Il contesto di gioco viene allegato automaticamente.
-                    Salvato in locale sul browser; esporta in Markdown per aggiungerlo a bugs.md.
-                    Esc per chiudere.
+                    Descrivi il problema: il contesto di gioco viene allegato automaticamente e il
+                    report viene inviato al server, senza scaricare file. Esc per chiudere.
                 </div>
                 <textarea id="reportTesto" placeholder="Cosa non funziona? Cosa stavi facendo quando è successo?"></textarea>
                 <div class="report-riga">
-                    <button id="reportSalva" class="report-bottone">SALVA</button>
+                    <button id="reportSalva" class="report-bottone">INVIA</button>
                     <button id="reportEsporta" class="report-bottone">ESPORTA MD</button>
                     <button id="reportCopia" class="report-bottone secondario">COPIA</button>
                     <button id="reportChiudi" class="report-bottone secondario">CHIUDI</button>

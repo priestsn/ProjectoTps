@@ -49,6 +49,8 @@ non esiste l'indirizzo WebSocket. VS LOCALE e VS CPU funzionano comunque.
    Restart=always
    RestartSec=3
    Environment=PORTA=80
+   Environment=REPORT_DIR=/var/lib/uvsf7/reports
+   Environment=REPORT_CHIAVE=cambia-questa-chiave
    User=root
 
    [Install]
@@ -126,3 +128,29 @@ Da sapere:
 - Se l'host chiude la pagina la partita finisce per entrambi; se la chiude
   l'ospite, l'host torna al menu.
 - Non c'è riconnessione automatica: si ricrea la stanza.
+
+## Report bug salvati sul server
+
+Il pannello `REPORT BUG` del gioco invia i report con `POST /report`. Il server li
+accoda in un file Markdown per giorno dentro `REPORT_DIR` (default
+`/var/lib/uvsf7/reports`):
+
+```
+/var/lib/uvsf7/reports/report-2026-10-17.md
+```
+
+Ogni blocco contiene il report formattato, data ISO, IP del client e user agent.
+Non serve scaricare nulla dal browser e non c'è autenticazione per inviare
+(chi gioca deve poter segnalare), ma c'è un limite di 20 report ogni 10 minuti
+per IP e il corpo massimo è 32 KB.
+
+Per **leggere** i report serve la chiave impostata in `REPORT_CHIAVE`:
+
+```
+curl "http://<server>/reports?chiave=<CHIAVE>"
+curl "http://<server>/reports/file?chiave=<CHIAVE>&nome=report-2026-10-17.md"
+```
+
+Senza `REPORT_CHIAVE` gli endpoint di lettura rispondono 403 (i report si leggono
+comunque via SSH dal file). Se il server è irraggiungibile, il gioco tiene il
+report in `localStorage` e lo reinvia alla riapertura del pannello.

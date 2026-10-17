@@ -306,6 +306,8 @@ function disegnaKeybinds() {
     if (stato) {
         if (keybindsInAscolto) {
             stato.innerHTML = 'Premi il tasto da assegnare. Esc per annullare.';
+        } else if (dispositivoTouch()) {
+            stato.innerHTML = 'Su telefono i keybinds si cambiano collegando una tastiera. Esc per tornare indietro.';
         } else {
             stato.innerHTML = 'Frecce su/giu per spostarti, Invio per cambiare, Esc per tornare indietro.';
         }

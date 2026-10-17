@@ -12,7 +12,8 @@ const VOCI_MENU = {
     play: [
         { testo: 'VS LOCALE', azione: () => apriSelezione(MODALITA.LOCALE) },
         { testo: 'VS CPU', azione: () => apriMenu('cpu') },
-        { testo: 'VS ONLINE', azione: () => apriMenu('online') }
+        { testo: 'VS ONLINE', azione: () => apriMenu('online') },
+        { testo: 'INDIETRO', azione: () => apriMenu('principale') }
     ],
     // VS ONLINE: la sfida in rete passa da una stanza con codice
     online: [
@@ -36,6 +37,12 @@ const VOCI_MENU = {
         { testo: 'IMPOSTAZIONI', azione: () => apriMenu('impostazioniPausa', STATI.PAUSA) },
         { testo: 'ESCI AL MENU', azione: () => esciAlMenu() }
     ],
+    // Compare da sola a fine partita: rivincita o cambio personaggi
+    finePartita: [
+        { testo: 'RIVINCITA', azione: () => rivincita() },
+        { testo: 'CAMBIA PERSONAGGI', azione: () => cambiaPersonaggi() },
+        { testo: 'ESCI AL MENU', azione: () => esciAlMenu() }
+    ],
     impostazioniPausa: [
         { testo: 'FULLSCREEN', azione: () => attivaFullscreen() },
         { testo: 'KEYBINDS', azione: () => apriKeybinds('impostazioniPausa') },
@@ -50,6 +57,7 @@ const TITOLI_MENU = {
     online: 'VS ONLINE',
     settings: 'SETTINGS',
     pausa: 'PAUSA',
+    finePartita: 'FINE PARTITA',
     impostazioniPausa: 'IMPOSTAZIONI'
 };
 
@@ -59,6 +67,18 @@ const MENU_PADRE = {
     cpu: 'play',
     online: 'play',
     settings: 'principale'
+};
+
+// Testo di aiuto mostrato sotto le voci: ricorda che Esc fa sempre da "back"
+const SUGGERIMENTI_MENU = {
+    principale: 'Invio per scegliere',
+    play: 'Esc per tornare indietro',
+    cpu: 'Esc per tornare indietro',
+    online: 'Esc per tornare indietro',
+    settings: 'Esc per tornare indietro',
+    pausa: 'Esc per riprendere la partita',
+    finePartita: 'Esc per uscire al menu principale',
+    impostazioniPausa: 'Esc per tornare alla pausa'
 };
 
 let menuCorrente = 'principale';
@@ -84,6 +104,11 @@ function apriMenu(nome, stato = STATI.MENU) {
  */
 function disegnaMenu() {
     document.querySelector('#menuTitolo').innerHTML = TITOLI_MENU[menuCorrente];
+
+    const suggerimento = document.querySelector('#menuSuggerimento');
+    if (suggerimento) {
+        suggerimento.innerHTML = SUGGERIMENTI_MENU[menuCorrente] || '';
+    }
 
     const contenitore = document.querySelector('#menuVoci');
     contenitore.innerHTML = '';
@@ -170,6 +195,12 @@ function tornaIndietro() {
     // Esc dal menu di pausa riprende la partita
     if (menuCorrente === 'pausa') {
         chiudiPausa();
+        return;
+    }
+
+    // A fine partita Esc equivale a "esci al menu"
+    if (menuCorrente === 'finePartita') {
+        esciAlMenu();
         return;
     }
 

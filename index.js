@@ -14,11 +14,6 @@ canvas.height = window.innerHeight;
 c.fillStyle = 'black';
 c.fillRect(0, 0, canvas.width, canvas.height);
 
-// ========================================
-// Costanti di Gioco
-// ==========================================
-const gravity = 0.25;
-
 // --- Meccaniche avanzate (Fase 3) ---
 const STUN_FRAMI = 60;                  // 1 secondo a 60 fps
 const FINESTRA_PERFETTO = 3;            // frame entro cui la parata è perfetta
@@ -26,6 +21,11 @@ const CARICA_ATTACCO_FRAMI = 60;        // 1 secondo di carica prima del colpo c
 const ULTIMATE_CARICA_FRAME = 100 / (60 * 20); // barra piena in circa 20 secondi
 const ULTIMATE_PER_PARATA_PERFETTA = 15; // carica guadagnata dal perfect block
 const ULTIMATE_PERSA_PER_STUN = 25;      // carica persa quando si viene stunnati
+
+// Durata dello stato "colpo subito" in frame (24 = 400 ms a 60 fps).
+// Sostituisce il setTimeout che non era tracciato (BUG-20): lo stato si chiude
+// contando i frame, come il resto delle meccaniche.
+const DANNO_FRAMI = 24;
 
 // Elementi dell'HUD letti una sola volta (niente querySelector nel game loop)
 const hud = {
@@ -99,6 +99,9 @@ let cpu = null;
 // Proiettili delle ultimate (Bakari, Sekou, Ayo)
 const proiettili = [];
 
+// Ultimi personaggi usati: serve alla rivincita con gli stessi lottatori
+let ultimiPersonaggi = { p1: null, p2: null };
+
 /**
  * Crea i due lottatori a partire dai personaggi scelti.
  * Il giocatore 2 parte rivolto verso sinistra (le sprite nascono verso destra)
@@ -107,6 +110,8 @@ const proiettili = [];
 function preparaPartita(idP1, idP2) {
     // Posizioni ai lati del campo, calcolate sulla larghezza attuale della finestra
     const margine = Math.round(canvas.width * 0.05);
+
+    ultimiPersonaggi = { p1: idP1, p2: idP2 };
 
     Player = creaLottatore(trovaPersonaggio(idP1), margine, 1);
     Enemy = creaLottatore(trovaPersonaggio(idP2), canvas.width - margine, -1);
@@ -161,6 +166,7 @@ function mostraAvviso(testo, colore) {
  * - carica ultimate nel tempo
  * - conta i frame di stun
  * - conta i frame dall'inizio della parata (per il perfect block)
+ * - chiude lo stato di colpo subito dopo DANNO_FRAMI
  * - trasforma un attacco tenuto premuto in attacco caricato
  */
 function aggiornaMeccaniche(lottatore) {
@@ -182,6 +188,19 @@ function aggiornaMeccaniche(lottatore) {
 
     // Parata: quanti frame sono passati dall'inizio
     lottatore.framesParata = lottatore.isParata ? lottatore.framesParata + 1 : 0;
+
+    // Colpo subito: si chiude contando i frame (BUG-20). Prima era un
+    // setTimeout per ogni colpo: due colpi ravvicinati si azzeravano il flag
+    // a vicenda e lo stato non era deterministico.
+    if (lottatore.isTakingDmg) {
+        lottatore.framesDanno++;
+        if (lottatore.framesDanno >= DANNO_FRAMI) {
+            lottatore.isTakingDmg = false;
+            lottatore.framesDanno = 0;
+        }
+    } else {
+        lottatore.framesDanno = 0;
+    }
 
     // Carica dell'attacco: si riempie solo mentre il tasto è tenuto premuto.
     // Il colpo parte al rilascio (vedi rilasciaCarica).
@@ -273,14 +292,13 @@ function applicaDanno(attaccante, difensore, danno, forza = false) {
     }
 
     difensore.isTakingDmg = true;
+    difensore.framesDanno = 0;
     difensore.isParata = false;
     difensore.cambiaSprite('TakeHit');
     difensore.health = Math.max(0, difensore.health - danno);
 
     const barra = difensore === Player ? hud.playerHealth : hud.enemyHealth;
     barra.style.width = percentualeBarra(difensore.health, difensore.statistiche.vita) + '%';
-
-    setTimeout(() => { difensore.isTakingDmg = false; }, 400);
 }
 
 /**
@@ -979,6 +997,9 @@ function animate() {
         }
         hud.displayText.style.display = 'flex';
         determineWinner(Player, Enemy, timerId);
+
+        // A fine partita compare il menu con rivincita e cambio personaggi
+        apriMenu('finePartita', STATI.PAUSA);
     }
 
     // VS ONLINE, lato host: lo stato appena calcolato va all'ospite
@@ -1214,6 +1235,47 @@ function chiudiPausa() {
 
     document.querySelector('#menu').classList.remove('pausa');
     cambiaStato(STATI.PARTITA);
+}
+
+// ========================================
+// Rivincita e cambio personaggi
+// ========================================
+
+/**
+ * Rivincita con gli stessi personaggi.
+ * In VS ONLINE deve ripartire per entrambi: l'host rimanda 'avvia', l'ospite
+ * chiede all'host di riavviare.
+ */
+function rivincita() {
+    if (!ultimiPersonaggi.p1 || !ultimiPersonaggi.p2) {
+        apriMenu('finePartita', STATI.PAUSA);
+        return;
+    }
+
+    if (modalitaPartita === MODALITA.ONLINE && onlineStato.attivo) {
+        if (onlineStato.ospite) {
+            Rete.invia({ t: 'rivincita' });
+            mostraBadgeOnline('RICHIESTA DI RIVINCITA INVIATA');
+            return;
+        }
+        inviaAvvioOnline();
+        return;
+    }
+
+    avviaPartita(ultimiPersonaggi.p1, ultimiPersonaggi.p2);
+}
+
+/**
+ * Torna alla selezione del personaggio. In VS ONLINE la schermata si apre
+ * anche dall'altro lato, così i due scelgono di nuovo insieme.
+ */
+function cambiaPersonaggi() {
+    if (modalitaPartita === MODALITA.ONLINE && onlineStato.attivo) {
+        Rete.invia({ t: 'selezione' });
+        apriSelezione(MODALITA.ONLINE);
+        return;
+    }
+    apriSelezione(modalitaPartita);
 }
 
 /**

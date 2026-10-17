@@ -17,6 +17,11 @@ class Sprite {
         this.framesHold = 30; // Controlla la velocità dell'animazione
         this.offset = offset || { x: 0, y: 0 };
 
+        // Direzione dello sprite: 1 = guarda a destra, -1 = guarda a sinistra.
+        // Sta qui e non solo in Lottatore perché draw() la usa per ogni Sprite,
+        // sfondo compreso (BUG-10).
+        this.facing = 1;
+
         // Asse di ribaltamento orizzontale, rispetto a position.x.
         // I lottatori lo impostano al centro del corpo (vedi Lottatore);
         // per gli sprite senza corpo, come lo sfondo, resta 0.
@@ -86,7 +91,10 @@ class Lottatore extends Sprite {
             statistiche
         );
 
-        this.facing = 1; // 1 per destra, -1 per sinistra
+        // Convenzione unica per entrambi i lottatori: 1 = guarda a destra,
+        // -1 = guarda a sinistra. La direzione la decide il movimento (o la
+        // CPU) e da `facing` dipendono sprite e AttackBox (BUG-14).
+        this.facing = 1;
 
         // Riquadro di collisione del corpo: dipende dal personaggio, perché
         // ogni sprite ha proporzioni proprie
@@ -109,6 +117,7 @@ class Lottatore extends Sprite {
         this.isParata = false; // Stato di parata
         this.isAttacking = false; // Stato di attacco
         this.isTakingDmg = false; // Stato di danno
+        this.framesDanno = 0;     // frame passati dall'inizio del colpo subito (BUG-20)
         this.health = this.statistiche.vita;
         this.stamina = this.statistiche.stamina;
         this.isDead = false;

@@ -29,12 +29,15 @@ Piano delle funzionalità da implementare.
 | Stili | `[OK]` tutti in `css/style.css` |
 | Menu principale / Play / Settings | `[OK]` (keybinds compresi) |
 | Menu di pausa | `[OK]` con `Esc`: Riprendi, Impostazioni, Esci al menu (funziona anche a partita finita) |
-| Report bug | `[OK]` pulsante nel menu di pausa, salvataggio locale ed export Markdown |
+| Report bug | `[OK]` pulsante nel menu di pausa, invio al server (`POST /report`) con copia locale di riserva |
 | Selezione personaggio | `[OK]` 9 personaggi con statistiche proprie |
 | vs CPU | `[OK]` tre difficoltà: Facile, Difficile, Guissè |
 | vs online | `[OK]` stanze con codice, host che simula e ospite collegato (Fase 5) |
 | Perfect block / ultimate / attacco caricato | `[OK]` disponibili (Fase 3) |
 | Keybinds | `[OK]` rimappatura per i due giocatori, salvata nel browser |
+| Rivincita | `[OK]` menu di fine partita: stessi personaggi o cambio personaggi |
+| Selezione per modalità | `[OK]` schede e istruzioni diverse in VS LOCALE, VS CPU e VS ONLINE |
+| Versione mobile | `[OK]` layout responsive, selezione a tocchi, lottatori scalati, comandi touch |
 
 **Debito tecnico da saldare** (dettagli in `bugs.md`):
 
@@ -454,3 +457,55 @@ La configurazione vive in `localStorage` (`uvsf7-keybinds`) e vale per tutte le 
 - keybinds aperti dalla pausa con ritorno corretto;
 - touch e VS ONLINE con keybinds personalizzati;
 - nessun errore JavaScript.
+
+---
+
+## 13. Richieste dei giocatori — 17/10/2026
+
+Cinque richieste arrivate dopo le prime prove in classe, più il debito tecnico rimasto in `bugs.md` (dettagli nel "Fix #12").
+
+### Tasto indietro nei menu
+
+Il menu `PLAY` era l'unico senza voce di ritorno: ora ha `INDIETRO` come gli altri. Sotto le voci compare `#menuSuggerimento`, una riga che dice cosa fa `Esc` in quel menu ("Esc per tornare indietro", "Esc per riprendere la partita", "Esc per uscire al menu principale").
+
+### Rivincita
+
+A fine partita si apre da sola la schermata `FINE PARTITA` (stato `PAUSA`, il risultato resta visibile dietro):
+
+| Voce | Effetto |
+|---|---|
+| `RIVINCITA` | nuova partita con gli stessi personaggi (`ultimiPersonaggi`), timer a 60, vita e stamina piene |
+| `CAMBIA PERSONAGGI` | torna alla selezione del personaggio della stessa modalità |
+| `ESCI AL MENU` | menu principale |
+
+In **VS ONLINE**: l'host che sceglie `RIVINCITA` rimanda `avvia` (l'ospite riparte da solo); l'ospite che la sceglie manda `rivincita` e l'host riavvia entrambi. `CAMBIA PERSONAGGI` manda `selezione`: la schermata si apre su tutti e due, così la scelta resta condivisa.
+
+### Selezione del personaggio diversa per modalità
+
+| Modalità | Cosa si vede |
+|---|---|
+| VS LOCALE | due schede attive (P1 e P2) e istruzioni per entrambi |
+| VS CPU | la propria scheda e quella dell'avversario già scelto, con `CPU Facile/Difficile/Guissè` |
+| VS ONLINE | la propria scheda marcata `TU` e l'altra come `AVVERSARIO`: nome e statistiche compaiono solo dopo la sua conferma, prima dice "in attesa della scelta" |
+
+Le istruzioni in fondo cambiano di conseguenza (`A / D` e `H` per P1, frecce e `ù` per P2, `Esc` per uscire dalla stanza).
+
+### Versione mobile
+
+- CSS responsive (max 820 px di larghezza o 620 di altezza): menu, schede, griglia, keybinds e pannelli si rimpiccioliscono; la selezione può scorrere.
+- Selezione giocabile **senza tastiera**: cella toccabile e pulsanti `P1/P2` con `<`, `>`, `CONFERMA` (`#selezioneComandi`, creati solo su dispositivi touch).
+- Lottatori ridotti in proporzione al campo con `fattoreScalaCampo()`: su 390 px di larghezza il corpo passa da 194x210 a 52x88 e velocità/salto scalano con lo stesso fattore, così le collisioni restano coerenti.
+- Comandi touch invariati (leva + ATT/PAR/ULT), visibili solo in partita.
+
+### Report bug salvati sul server
+
+Il pannello (`Esc` → `REPORT BUG`) ora invia il report con `POST /report`; il server lo aggiunge a `/var/lib/uvsf7/reports/report-AAAA-MM-GG.md` con data, IP e user agent. Nessun file da scaricare. Se il server non risponde il report resta in `localStorage` e viene reinviato alla riapertura del pannello; `ESPORTA MD` e `COPIA` restano come riserva.
+
+Lettura dei report (chiave obbligatoria):
+
+```
+curl "http://<server>/reports?chiave=<CHIAVE>"
+curl "http://<server>/reports/file?chiave=<CHIAVE>&nome=report-2026-10-17.md"
+```
+
+La chiave si imposta con `REPORT_CHIAVE` nel servizio systemd; la cartella con `REPORT_DIR` (default `/var/lib/uvsf7/reports`).

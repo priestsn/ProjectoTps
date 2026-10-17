@@ -262,24 +262,55 @@ function spriteDelPersonaggio(personaggio) {
 }
 
 /**
+ * Fattore di riduzione dei lottatori sugli schermi stretti.
+ * Su telefono il campo è largo quanto la finestra (400-500 px): le sprite,
+ * misurate per un campo da ~1500 px, occuperebbero metà schermo. Si riducono
+ * insieme scala, offset, riquadro del corpo, area d'attacco, velocità e salto:
+ * le misure restano coerenti tra loro e le collisioni non cambiano.
+ */
+function fattoreScalaCampo() {
+    const larghezza = (typeof canvas !== 'undefined' && canvas.width) ? canvas.width : 1500;
+    return Math.min(1, Math.max(0.42, larghezza / 1500));
+}
+
+/**
  * Crea un lottatore pronto per la partita.
  * `facing` vale 1 se il personaggio guarda a destra, -1 se guarda a sinistra
  * (il giocatore 2 parte rivolto verso sinistra).
  */
 function creaLottatore(personaggio, x, facing) {
     const sprite = personaggio.sprite;
+    const k = fattoreScalaCampo();
+
+    const scale = sprite.scale * k;
+    const offset = { x: sprite.offset.x * k, y: sprite.offset.y * k };
+    const corpo = {
+        larghezza: Math.round(sprite.corpo.larghezza * k),
+        altezza: Math.round(sprite.corpo.altezza * k)
+    };
+    const attacco = {
+        frame: sprite.attacco.frame,
+        dx: Math.round(sprite.attacco.dx * k),
+        dy: Math.round(sprite.attacco.dy * k),
+        larghezza: Math.round(sprite.attacco.larghezza * k),
+        altezza: Math.round(sprite.attacco.altezza * k)
+    };
+    const statistiche = Object.assign({}, personaggio.statistiche, {
+        velocita: personaggio.statistiche.velocita * k,
+        salto: personaggio.statistiche.salto * k
+    });
 
     const lottatore = new Lottatore({
         position: { x: x, y: 0 },
         velocity: { x: 0, y: 5 },
         imageSrc: sprite.cartella + 'idle.png',
-        scale: sprite.scale,
+        scale: scale,
         framesMax: sprite.frames.idle,
-        offset: { x: sprite.offset.x, y: sprite.offset.y },
+        offset: offset,
         sprites: spriteDelPersonaggio(personaggio),
-        statistiche: personaggio.statistiche,
-        corpo: sprite.corpo,
-        attacco: sprite.attacco,
+        statistiche: statistiche,
+        corpo: corpo,
+        attacco: attacco,
         ultimate: personaggio.ultimate
     });
 

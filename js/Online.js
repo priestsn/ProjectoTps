@@ -21,7 +21,8 @@ const onlineStato = {
     codice: null,         // codice della stanza
     idAvversario: null,   // personaggio scelto dall'altro
     fotogramma: null,     // ultimo stato ricevuto (solo ospite)
-    contatoreInvio: 0     // usato per mandare un fotogramma ogni due frame
+    contatoreInvio: 0,    // usato per mandare un fotogramma ogni due frame
+    fineMostrata: false   // il menu di fine partita è già comparso (solo ospite)
 };
 
 // Campi degli stati alterati, nell'ordine in cui viaggiano nel fotogramma
@@ -313,6 +314,22 @@ function gestisciMessaggioOnline(dati) {
             return;
         }
 
+        case 'rivincita': {
+            // L'ospite ha chiesto la rivincita: riparte l'host, che rimanda 'avvia'
+            if (!onlineStato.ospite) {
+                inviaAvvioOnline();
+            }
+            return;
+        }
+
+        case 'selezione': {
+            // L'altro vuole cambiare personaggi: si riapre la selezione qui
+            if (statoCorrente !== STATI.SELEZIONE) {
+                apriSelezione(MODALITA.ONLINE);
+            }
+            return;
+        }
+
         case 'fotogramma': {
             if (onlineStato.ospite) {
                 onlineStato.fotogramma = dati;
@@ -363,6 +380,7 @@ function avviaPartitaOnline(ospite, idP1, idP2, larghezza, altezza) {
     onlineStato.ospite = ospite;
     onlineStato.fotogramma = null;
     onlineStato.contatoreInvio = 0;
+    onlineStato.fineMostrata = false;
 
     if (ospite) {
         // Stesse misure dell'host: le posizioni che arrivano sono pixel del
@@ -579,6 +597,12 @@ function aggiornaOspite() {
     if (stato.over) {
         hud.displayText.style.display = 'flex';
         hud.displayText.innerHTML = stato.testo;
+
+        // Anche l'ospite deve poter chiedere la rivincita
+        if (!onlineStato.fineMostrata && statoCorrente === STATI.PARTITA) {
+            onlineStato.fineMostrata = true;
+            apriMenu('finePartita', STATI.PAUSA);
+        }
     } else if (hud.displayText.style.display !== 'none') {
         hud.displayText.style.display = 'none';
         hud.displayText.innerHTML = '';

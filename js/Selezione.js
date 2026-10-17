@@ -56,10 +56,15 @@ function disegnaSelezione() {
         const cella = document.createElement('div');
         cella.className = 'cella';
 
-        if (indice === sceltaP1) {
+        // In VS ONLINE il cursore dell'avversario non va mostrato finché non ha
+        // scelto: altrimenti sembra che stia scorrendo anche lui
+        const mostraP1 = controllaCursoreP1() || confermatoP1;
+        const mostraP2 = controllaCursoreP2() || confermatoP2;
+
+        if (indice === sceltaP1 && mostraP1) {
             cella.className += ' p1';
         }
-        if (indice === sceltaP2) {
+        if (indice === sceltaP2 && mostraP2) {
             cella.className += ' p2';
         }
         if (indice === sceltaP1 && confermatoP1) {
@@ -78,18 +83,92 @@ function disegnaSelezione() {
         nome.className = 'cella-nome';
         nome.innerHTML = personaggio.nome;
 
+        // Tocco: su telefono si sceglie direttamente la cella
+        cella.addEventListener('click', () => {
+            toccaCella(indice);
+        });
+
         cella.appendChild(ritratto);
         cella.appendChild(nome);
         griglia.appendChild(cella);
     });
 
-    aggiornaSchedaGiocatore('#infoP1', sceltaP1, confermatoP1);
+    aggiornaSchedeSelezione();
+    aggiornaComandiSelezione();
+}
 
-    // In modalità CPU la scheda del giocatore 2 mostra la difficoltà
-    const extraP2 = modalitaPartita === MODALITA.CPU
-        ? 'CPU ' + NOMI_DIFFICOLTA[difficoltaCPU]
-        : '';
-    aggiornaSchedaGiocatore('#infoP2', sceltaP2, confermatoP2, extraP2);
+/**
+ * Un tocco su una cella sposta il cursore del giocatore che sta scegliendo:
+ * P1 se non ha ancora confermato, altrimenti P2 (solo in VS LOCALE).
+ */
+function toccaCella(indice) {
+    if (!confermatoP1 && controllaCursoreP1()) {
+        sceltaP1 = indice;
+        disegnaSelezione();
+        return;
+    }
+
+    if (!confermatoP2 && controllaCursoreP2()) {
+        sceltaP2 = indice;
+        disegnaSelezione();
+    }
+}
+
+/**
+ * Su telefono la schermata di selezione non ha una tastiera: compaiono dei
+ * pulsanti per scorrere e confermare, uno per giocatore.
+ */
+function aggiornaComandiSelezione() {
+    const contenitore = document.querySelector('#selezioneComandi');
+    if (!contenitore) {
+        return;
+    }
+
+    if (!dispositivoTouch()) {
+        contenitore.innerHTML = '';
+        contenitore.style.display = 'none';
+        return;
+    }
+
+    contenitore.innerHTML = '';
+    contenitore.style.display = 'flex';
+
+    const giocatori = [];
+    if (controllaCursoreP1()) giocatori.push({ numero: 1, etichetta: 'P1' });
+    if (controllaCursoreP2()) giocatori.push({ numero: 2, etichetta: 'P2' });
+
+    giocatori.forEach((giocatore) => {
+        const gruppo = document.createElement('div');
+        gruppo.className = 'gruppo-selezione';
+
+        const etichetta = document.createElement('span');
+        etichetta.className = 'gruppo-nome';
+        etichetta.textContent = giocatore.etichetta;
+        gruppo.appendChild(etichetta);
+
+        const sinistra = document.createElement('button');
+        sinistra.type = 'button';
+        sinistra.className = 'tasto-selezione';
+        sinistra.textContent = '<';
+        sinistra.addEventListener('click', () => spostaCursore(giocatore.numero, -1));
+
+        const destra = document.createElement('button');
+        destra.type = 'button';
+        destra.className = 'tasto-selezione';
+        destra.textContent = '>';
+        destra.addEventListener('click', () => spostaCursore(giocatore.numero, 1));
+
+        const conferma = document.createElement('button');
+        conferma.type = 'button';
+        conferma.className = 'tasto-selezione conferma';
+        conferma.textContent = 'CONFERMA';
+        conferma.addEventListener('click', () => confermaScelta(giocatore.numero));
+
+        gruppo.appendChild(sinistra);
+        gruppo.appendChild(destra);
+        gruppo.appendChild(conferma);
+        contenitore.appendChild(gruppo);
+    });
 }
 
 /**
@@ -99,7 +178,8 @@ function disegnaSelezione() {
  */
 function stileRitratto(personaggio) {
     const sprite = personaggio.sprite;
-    const lato = 110;                                    // lato del ritratto in pixel
+    // Su schermi stretti il ritratto è più piccolo, così la griglia sta in 3 colonne
+    const lato = window.innerWidth <= 820 ? 64 : 110;    // lato del ritratto in pixel
     const ritaglio = sprite.ritaglio;
     const frame = sprite.frame;
     const fattore = lato / ritaglio.altezza;             // il personaggio riempie in altezza
@@ -109,6 +189,8 @@ function stileRitratto(personaggio) {
     // Le due misure vanno scalate con lo stesso fattore, altrimenti il
     // personaggio risulta schiacciato in orizzontale.
     return {
+        width: lato + 'px',
+        height: lato + 'px',
         backgroundImage: 'url(' + sprite.cartella + 'idle.png)',
         backgroundSize: (frame * sprite.frames.idle * fattore) + 'px ' + (frame * fattore) + 'px',
         backgroundPosition: scostamentoX + 'px ' + (-ritaglio.y * fattore) + 'px'
@@ -136,6 +218,75 @@ function aggiornaSchedaGiocatore(selettore, indice, confermato, extra = '') {
         ' &middot; Salto ' + Math.abs(stat.salto) + '</div>' +
         '<div class="info-ultimate">ULT &mdash; ' + personaggio.ultimate.nome +
         ': ' + personaggio.ultimate.descrizione + '</div>';
+}
+
+/**
+ * Schede dei due giocatori, diverse per modalità:
+ * - VS LOCALE: due giocatori sullo stesso schermo, entrambe le schede attive;
+ * - VS CPU: scheda del giocatore e scheda dell'avversario già scelto dalla CPU;
+ * - VS ONLINE: la propria scheda e quella dell'avversario, che resta "in attesa"
+ *   finché non arriva la sua scelta.
+ */
+function aggiornaSchedeSelezione() {
+    const istruzioni = document.querySelector('#selezioneIstruzioni');
+
+    if (modalitaPartita === MODALITA.CPU) {
+        aggiornaSchedaGiocatore('#infoP1', sceltaP1, confermatoP1);
+        aggiornaSchedaGiocatore('#infoP2', sceltaP2, true, 'CPU ' + NOMI_DIFFICOLTA[difficoltaCPU]);
+        if (istruzioni) {
+            istruzioni.innerHTML = 'Scegli il tuo personaggio: A / D per scorrere, H per confermare' +
+                ' &nbsp;&middot;&nbsp; l\'avversario è scelto dalla CPU &nbsp;&middot;&nbsp; Esc per tornare indietro';
+        }
+        return;
+    }
+
+    if (modalitaPartita === MODALITA.ONLINE) {
+        if (onlineStato.ospite) {
+            aggiornaSchedaAvversario('#infoP1', sceltaP1, confermatoP1);
+            aggiornaSchedaGiocatore('#infoP2', sceltaP2, confermatoP2, 'TU');
+            if (istruzioni) {
+                istruzioni.innerHTML = 'Frecce per scorrere, ù per confermare' +
+                    ' &nbsp;&middot;&nbsp; Esc per uscire dalla stanza';
+            }
+        } else {
+            aggiornaSchedaGiocatore('#infoP1', sceltaP1, confermatoP1, 'TU');
+            aggiornaSchedaAvversario('#infoP2', sceltaP2, confermatoP2);
+            if (istruzioni) {
+                istruzioni.innerHTML = 'A / D per scorrere, H per confermare' +
+                    ' &nbsp;&middot;&nbsp; Esc per uscire dalla stanza';
+            }
+        }
+        return;
+    }
+
+    aggiornaSchedaGiocatore('#infoP1', sceltaP1, confermatoP1);
+    aggiornaSchedaGiocatore('#infoP2', sceltaP2, confermatoP2);
+    if (istruzioni) {
+        istruzioni.innerHTML = 'Giocatore 1: A / D per scegliere, H per confermare' +
+            ' &nbsp;&middot;&nbsp; Giocatore 2: frecce per scegliere, ù per confermare' +
+            ' &nbsp;&middot;&nbsp; Esc per tornare indietro';
+    }
+}
+
+/**
+ * Scheda dell'avversario in VS ONLINE: nome solo dopo la sua conferma
+ */
+function aggiornaSchedaAvversario(selettore, indice, confermato) {
+    const scheda = document.querySelector(selettore);
+    if (!scheda) {
+        return;
+    }
+
+    const personaggio = PERSONAGGI[indice];
+    const stat = personaggio.statistiche;
+
+    scheda.innerHTML =
+        '<div class="info-nome avversario">AVVERSARIO' +
+        (confermato ? '<span class="info-ok">PRONTO</span>' : '') + '</div>' +
+        '<div class="info-archetipo">' + (confermato ? personaggio.nome : 'in attesa della scelta...') + '</div>' +
+        '<div class="info-stat">' + (confermato
+            ? 'Vita ' + stat.vita + ' &middot; Danno ' + stat.danno + ' &middot; Velocità ' + stat.velocita
+            : 'L\'altro giocatore sta scegliendo il suo personaggio') + '</div>';
 }
 
 /**

@@ -64,6 +64,192 @@ function generaCodice() {
 }
 
 // ========================================
+// Report bug inviati dal gioco
+// ========================================
+// I report arrivano con POST /report e finiscono in un file Markdown sul
+// server, una riga per report: nessun download da parte dell'utente.
+const CARTELLA_REPORT = process.env.REPORT_DIR || '/var/lib/uvsf7/reports';
+const CHIAVE_REPORT = process.env.REPORT_CHIAVE || '';
+const REPORT_MASSIMO_BYTE = 32768;
+const REPORT_PER_IP = 20;
+const REPORT_FINESTRA_MS = 10 * 60 * 1000;
+
+const inviiReport = new Map(); // ip -> { quanti, dal }
+
+try {
+    fs.mkdirSync(CARTELLA_REPORT, { recursive: true });
+} catch (errore) {
+    console.error('Impossibile creare la cartella dei report:', errore.message);
+}
+
+/**
+ * Nome del file del giorno, in UTC
+ */
+function nomeFileReport(adesso) {
+    const data = adesso.toISOString().slice(0, 10);
+    return 'report-' + data + '.md';
+}
+
+/**
+ * Limite semplice per IP: evita che un client impazzito riempia il disco
+ */
+function invioConsentito(ip) {
+    const adesso = Date.now();
+    const stato = inviiReport.get(ip);
+
+    if (!stato || adesso - stato.dal > REPORT_FINESTRA_MS) {
+        inviiReport.set(ip, { quanti: 1, dal: adesso });
+        return true;
+    }
+
+    if (stato.quanti >= REPORT_PER_IP) {
+        return false;
+    }
+
+    stato.quanti++;
+    return true;
+}
+
+function leggiCorpo(richiesta, limite, fatto) {
+    const pezzi = [];
+    let totale = 0;
+
+    richiesta.on('data', (pezzo) => {
+        totale += pezzo.length;
+        if (totale > limite) {
+            richiesta.destroy();
+            fatto(new Error('Corpo troppo grande'), null);
+            return;
+        }
+        pezzi.push(pezzo);
+    });
+
+    richiesta.on('end', () => fatto(null, Buffer.concat(pezzi).toString('utf8')));
+    richiesta.on('error', (errore) => fatto(errore, null));
+}
+
+/**
+ * POST /report — salva un report inviato dal gioco
+ */
+function riceviReport(richiesta, risposta) {
+    const ip = richiesta.socket.remoteAddress || 'sconosciuto';
+
+    if (!invioConsentito(ip)) {
+        inviaErrore(risposta, 429, 'Troppi report: riprova piu\' tardi');
+        return;
+    }
+
+    leggiCorpo(richiesta, REPORT_MASSIMO_BYTE, (errore, corpo) => {
+        if (errore || !corpo) {
+            inviaErrore(risposta, 400, 'Report non valido');
+            return;
+        }
+
+        let dati;
+        try {
+            dati = JSON.parse(corpo);
+        } catch (e) {
+            inviaErrore(risposta, 400, 'Report non valido');
+            return;
+        }
+
+        const testo = String(dati.testo || '').slice(0, 4000);
+        const markdown = String(dati.markdown || '').slice(0, 20000);
+
+        if (!testo.trim()) {
+            inviaErrore(risposta, 400, 'Descrizione mancante');
+            return;
+        }
+
+        const adesso = new Date();
+        const file = path.join(CARTELLA_REPORT, nomeFileReport(adesso));
+
+        const blocco = [
+            '<!-- inviato il ' + adesso.toISOString() + ' da ' + ip +
+                ' | ' + String(richiesta.headers['user-agent'] || '').slice(0, 200) + ' -->',
+            markdown || ('## Report ' + adesso.toISOString() + '\n\n**Descrizione:**\n' + testo),
+            '',
+            '---',
+            ''
+        ].join('\n');
+
+        fs.appendFile(file, blocco, 'utf8', (erroreScrittura) => {
+            if (erroreScrittura) {
+                console.error('Report non salvato:', erroreScrittura.message);
+                inviaErrore(risposta, 500, 'Salvataggio non riuscito');
+                return;
+            }
+
+            console.log('Report salvato in ' + file + ' da ' + ip);
+            risposta.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+            risposta.end(JSON.stringify({ ok: true, file: path.basename(file) }));
+        });
+    });
+}
+
+/**
+ * Chiave corretta per leggere i report: chi non ce l'ha non li vede
+ */
+function chiaveValida(richiesta) {
+    if (!CHIAVE_REPORT) {
+        return false;
+    }
+    const url = new URL(richiesta.url, 'http://localhost');
+    return url.searchParams.get('chiave') === CHIAVE_REPORT;
+}
+
+/**
+ * GET /reports?chiave=... — elenco dei file di report
+ */
+function elencoReport(richiesta, risposta) {
+    if (!chiaveValida(richiesta)) {
+        inviaErrore(risposta, 403, 'Chiave mancante o errata');
+        return;
+    }
+
+    fs.readdir(CARTELLA_REPORT, (errore, files) => {
+        if (errore) {
+            inviaErrore(risposta, 500, 'Cartella dei report non leggibile');
+            return;
+        }
+
+        const elenco = files
+            .filter((nome) => /^report-\d{4}-\d{2}-\d{2}\.md$/.test(nome))
+            .sort();
+
+        risposta.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+        risposta.end(JSON.stringify({ cartella: CARTELLA_REPORT, file: elenco }, null, 2));
+    });
+}
+
+/**
+ * GET /reports/file?nome=report-AAAA-MM-GG.md&chiave=... — contenuto di un file
+ */
+function inviaFileReport(richiesta, risposta) {
+    if (!chiaveValida(richiesta)) {
+        inviaErrore(risposta, 403, 'Chiave mancante o errata');
+        return;
+    }
+
+    const url = new URL(richiesta.url, 'http://localhost');
+    const nome = url.searchParams.get('nome') || '';
+
+    if (!/^report-\d{4}-\d{2}-\d{2}\.md$/.test(nome)) {
+        inviaErrore(risposta, 400, 'Nome file non valido');
+        return;
+    }
+
+    fs.readFile(path.join(CARTELLA_REPORT, nome), 'utf8', (errore, contenuto) => {
+        if (errore) {
+            inviaErrore(risposta, 404, 'File non trovato');
+            return;
+        }
+        risposta.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' });
+        risposta.end(contenuto);
+    });
+}
+
+// ========================================
 // File statici
 // ========================================
 function inviaErrore(risposta, codiceHttp, testo) {
@@ -78,6 +264,21 @@ function gestisciRichiesta(richiesta, risposta) {
         percorso = decodeURIComponent(percorso);
     } catch (e) {
         inviaErrore(risposta, 400, 'Richiesta non valida');
+        return;
+    }
+
+    if (percorso === '/report' && richiesta.method === 'POST') {
+        riceviReport(richiesta, risposta);
+        return;
+    }
+
+    if (percorso === '/reports') {
+        elencoReport(richiesta, risposta);
+        return;
+    }
+
+    if (percorso === '/reports/file') {
+        inviaFileReport(richiesta, risposta);
         return;
     }
 

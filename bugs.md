@@ -18,17 +18,17 @@ Verifiche eseguite: lettura completa del codice, confronto percorsi asset ↔ fi
 | BUG-07 | Risolto | `index.js` (blocco parata dedicato) | Drenaggio stamina della parata solo da fermi e non in movimento |
 | BUG-08 | Risolto | `index.js` (blocco "Condizione di fine gioco") | `determineWinner` richiamato a ogni frame dopo la morte |
 | BUG-09 | Risolto | `js/Utili.js` (`decreaseTimer`) | Timer off-by-one: partiva da 59 e la prima iterazione era istantanea |
-| BUG-10 | Medio | `js/Classi.js:27`, `js/Classi.js:69` | `this.facing` usato in `Sprite` ma definito solo in `Lottatore` |
+| BUG-10 | Risolto | `js/Classi.js` | `this.facing` usato in `Sprite` ma definito solo in `Lottatore`: ora sta nel costruttore di `Sprite` |
 | BUG-11 | Risolto | `js/Personaggi.js`, `index.js` | Magic number (50, 200) nelle hitbox: ora ogni personaggio ha le sue misure |
-| BUG-12 | Medio | `js/Classi.js:135` + `index.js:16` | `gravity` definita in `index.js` ma usata in `Classi.js` (dipendenza nascosta) |
-| BUG-13 | Medio | `index.js:111-117`, `124-130`, `237-262` | La parata è "invisibile": sovrascritta da Jump/Fall o bloccata da un attacco in corso |
-| BUG-14 | Medio | `index.js:104,127`, `js/Classi.js:105` | `facing` di Enemy invertito e AttackBox legata a un `lastKey` mai aggiornato dai tasti attacco/parata |
+| BUG-12 | Risolto | `js/Utili.js`, `js/Classi.js` | `gravity` spostata in `js/Utili.js`: nessuna dipendenza da un file caricato dopo |
+| BUG-13 | Risolto | `index.js`, `js/Classi.js` | La parata è "invisibile": verificato che ora lo sprite `ParataIdle` vince su attacco e su Jump/Fall |
+| BUG-14 | Risolto | `js/Classi.js` (`aggiornaAttackBox`) | `facing` unico per i due lottatori e AttackBox calcolata da `facing`, non da `lastKey` |
 | BUG-15 | Risolto | `js/Keybinds.js`, `index.js` | Stato `keys.*.pressed`: ora c'e' un unico strato di input e i flag di movimento sono l'unica fonte letta dal loop |
-| BUG-16 | Basso | `index.js:259,305,326,340` | `Player.color` / `Enemy.color` non esistono (proprietà fantasma) |
+| BUG-16 | Risolto | `index.js` | Proprietà `color` fantasma rimosse: restano solo le proprietà lette da disegno e collisioni |
 | BUG-17 | Risolto | `js/Classi.js` | Hitbox di debug invisibile: ora si attivano con il tasto U |
 | BUG-18 | Risolto | `index.js` | Nessun `event.repeat` / `preventDefault()`: aggiunti entrambi |
 | BUG-19 | Risolto | `index.js` (`hud`) | ~10 `document.querySelector` per frame dentro il game loop |
-| BUG-20 | Basso | `index.js:171`, `index.js:189` | `setTimeout` su `isTakingDmg` non tracciati (colpi ravvicinati) |
+| BUG-20 | Risolto | `index.js`, `js/Classi.js` | Lo stato di colpo subito si chiude contando i frame (`framesDanno`, 24 frame), niente `setTimeout` |
 | BUG-21 | Risolto (UX) | `js/Utili.js`, `js/Classi.js`, `index.html`, `index.js` | Asset caricati uno alla volta: aggiunta la schermata di caricamento |
 | BUG-22 | Risolto | `js/Classi.js` (`cambiaSprite`/`update`), `index.js` | L'animazione di morte non partiva e il lottatore morto si muoveva ancora |
 | BUG-23 | Risolto | `js/Classi.js` (`cambiaSprite`/`update`), `index.js` | Dopo il primo attacco `isAttacking` restava `true`: lottatore bloccato in attacco senza animazione |
@@ -253,7 +253,7 @@ ed eliminare `await`/`setTimeout` dall'handler `keydown`.
 
 **Causa/Impatto:** `Classi.js` viene caricato **prima** di `index.js` (ordine negli script di `index.html`) e dipende da una costante definita dopo. Funziona solo grazie allo scope globale delle variabili `const` di script classici e perché `update()` viene chiamata a runtime. È una dipendenza nascosta: spostando `const gravity` dentro una funzione o usando i moduli ES, il gioco si rompe con `ReferenceError`.
 
-**Fix suggerito:** spostare `gravity` in `js/Utili.js` (caricato per primo) o passarla come opzione a `Lottatore`.
+**RISOLTO (Fix #12)** — `const gravity = 0.25` sta in `js/Utili.js`, caricato per primo: `js/Classi.js` la trova sempre. Verificato: `typeof gravity` è `number` e il gioco anima senza errori.
 
 ---
 
@@ -267,7 +267,7 @@ ed eliminare `await`/`setTimeout` dall'handler `keydown`.
 
 **Impatto:** lo stato logico (`isParata = true`, i danni sono bloccati) e la grafica non coincidono: si blocca senza mostrare il blocco, quindi l'avversario non capisce perché il colpo non va a segno.
 
-**Fix suggerito:** riapplicare lo sprite di parata nel loop (con priorità su `Jump`/`Fall`) e impedire di entrare in parata mentre `isAttacking` è vero.
+**RISOLTO (Fix #12)** — verificato che `iniziaParata()` annulla l'attacco prima di cambiare sprite (`isAttacking = false`) e che la parata si può avviare solo da terra (BUG-25): premendo parata durante `Attack1` lo sprite passa subito a `ParataIdle` con `isAttacking` a `false`.
 
 ---
 
@@ -279,7 +279,7 @@ ed eliminare `await`/`setTimeout` dall'handler `keydown`.
 - La convenzione è opposta tra i due lottatori (`+1` = destra per Player, `-1` = destra per Enemy): non è un bug se gli sprite di Enemy sono disegnati speculari, ma è una **trappola** che porterà a errori appena si aggiunge un personaggio. Va documentata con un commento.
 - `Enemy.lastKey` è aggiornato **solo** dai tasti di movimento (`index.js:271`, `278`), mai da `ù`/`à`. Se il nemico non si è mai mosso, `lastKey` resta `'ArrowRight'` (impostato a `index.js:66`) e la direzione dell'`AttackBox` è decisa da uno stato vecchio/stantio, non dalla direzione attuale.
 
-**Fix suggerito:** calcolare il lato dell'`AttackBox` da `this.facing` invece che dal tasto premuto, così vale per entrambi i lottatori.
+**RISOLTO (Fix #12)** — `aggiornaAttackBox()` usa `this.facing` per entrambi i lottatori e la convenzione è documentata nel costruttore di `Lottatore`. Verificato: con `facing = 1` l'area parte a destra del centro del corpo, con `facing = -1` a sinistra.
 
 ---
 
@@ -300,6 +300,8 @@ ed eliminare `await`/`setTimeout` dall'handler `keydown`.
 **Dove:** `index.js:259`, `305`, `326`, `340` — `Player.color = 'blue'` / `Enemy.color = 'green'`.
 
 **Impatto:** nessuna classe definisce `color` e nessuno la legge: codice morto che suggerisce un feedback visivo mai implementato.
+
+**RISOLTO (Fix #12)** — le assegnazioni sono sparite nelle riscritture del game loop; un `grep` su `Player.color` / `Enemy.color` non trova più nulla.
 
 ---
 
@@ -359,7 +361,7 @@ setTimeout(() => { Enemy.isTakingDmg = false; }, 400);
 
 **Impatto:** `isTakingDmg` può essere azzerato dal timer del colpo precedente mentre è ancora in corso l'animazione di `TakeHit`; inoltre il flag non viene mai pulito in modo deterministico.
 
-**Fix suggerito:** azzerare `isTakingDmg` alla fine dell'animazione `TakeHit` (come già avviene per `Attack1`) e non con `setTimeout`.
+**RISOLTO (Fix #12)** — nuovo contatore `framesDanno` sul lottatore: `applicaDanno()` lo azzera a ogni colpo e `aggiornaMeccaniche()` lo incrementa, chiudendo `isTakingDmg` a `DANNO_FRAMI` (24 frame, cioè i 400 ms di prima). Due colpi ravvicinati non si cancellano più lo stato a vicenda. Verificato: 10 frame → ancora in danno, 30 frame → tornato normale.
 
 ---
 
@@ -1218,4 +1220,47 @@ Gli altri input restano fissi: la conferma nella selezione (`H` / `Ù`) e la nav
 | Touch ATT con attacco rimappato su `K`: carica e colpo caricato | OK |
 | VS ONLINE: l'ospite con attacco su `K` fa partire la carica sull'host (`Enemy.isCaricando`) | OK |
 | VS ONLINE: parata dell'ospite su `O` arriva all'host | OK |
+| Nessun errore JavaScript | OK |
+
+---
+
+## Fix #12 — Debito tecnico rimasto e richieste del 17/10/2026
+
+**Obiettivo:** chiudere gli ultimi bug aperti (BUG-10, BUG-12, BUG-13, BUG-14, BUG-16, BUG-20) e sistemare le richieste arrivate dai giocatori: tasto indietro nei menu, rivincita, selezione diversa per modalità, versione mobile, report bug salvati sul server.
+
+### Bug chiusi
+
+| Bug | Correzione |
+|---|---|
+| BUG-10 | `this.facing = 1` spostato nel costruttore di `Sprite` (serve a `draw()` di ogni sprite) |
+| BUG-12 | `const gravity = 0.25` spostata in `js/Utili.js`, caricato per primo |
+| BUG-13 | verificata la resa della parata: lo sprite `ParataIdle` vince su attacco e su Jump/Fall |
+| BUG-14 | `aggiornaAttackBox()` usa `facing`; convenzione documentata nel costruttore |
+| BUG-16 | rimosse le proprietà `color` fantasma |
+| BUG-20 | `framesDanno` (24 frame) al posto del `setTimeout` non tracciato |
+
+### Menu e partita
+
+- **Tasto indietro**: aggiunto `INDIETRO` al menu `PLAY` (era l'unico senza) e una riga di aiuto sotto le voci (`#menuSuggerimento`) che ricorda cosa fa `Esc` in quel menu.
+- **Fine partita**: al termine compare il menu `FINE PARTITA` con `RIVINCITA` (stessi personaggi), `CAMBIA PERSONAGGI` (torna alla selezione) e `ESCI AL MENU`. In VS ONLINE la rivincita riparte per entrambi: l'host rimanda `avvia`, l'ospite manda una richiesta `rivincita`; il cambio personaggi si propaga con il messaggio `selezione`.
+- **Selezione per modalità**: la schermata non è più identica ovunque. VS LOCALE mostra due schede attive; VS CPU mostra il personaggio del computer già scelto con la difficoltà; VS ONLINE mostra la propria scheda (`TU`) e quella dell'avversario come `AVVERSARIO` con lo stato "in attesa" finché non arriva la scelta. Anche le istruzioni in fondo cambiano con i tasti giusti.
+- **Mobile**: layout responsive (menu, selezione, keybinds, pannelli), ritratti più piccoli, griglia scorrevole, pulsanti `P1/P2` con `<` `>` `CONFERMA` nella selezione (senza tastiera non si poteva scegliere) e cella toccabile. I lottatori si riducono in proporzione al campo (`fattoreScalaCampo()` in `js/Personaggi.js`: scala, offset, corpo, area d'attacco, velocità e salto moltiplicati per lo stesso fattore), così su telefono non occupano metà schermo. I comandi touch compaiono come prima solo in partita.
+- **Report bug sul server**: il pannello ora invia il report con `POST /report`; il server lo accoda in `/var/lib/uvsf7/reports/report-AAAA-MM-GG.md` con data, IP e user agent. Niente più file da scaricare. Se il server non risponde il report resta in `localStorage` e viene reinviato alla riapertura del pannello; `ESPORTA MD` e `COPIA` restano come riserva.
+
+### Verifiche eseguite (browser, gioco reale)
+
+| Controllo | Esito |
+|---|---|
+| Menu `PLAY` con `INDIETRO` e riga di aiuto per ogni menu | OK |
+| Fine partita -> menu `FINE PARTITA` con le tre voci | OK |
+| `RIVINCITA`: stessi personaggi, timer a 60, vita piena | OK |
+| `CAMBIA PERSONAGGI`: torna alla selezione | OK |
+| Selezione: testi e schede diversi in LOCALE / CPU / ONLINE | OK |
+| Mobile 390x844: menu, selezione e partita dentro lo schermo, celle toccabili, `CONFERMA` funzionante | OK |
+| Mobile: lottatori ridotti (corpo 52x88, velocità 2.52, salto -4.83) e piedi a terra | OK |
+| Mobile: tasto `ATT` touch carica e rilascia l'attacco caricato | OK |
+| Report dal pannello: `POST /report` -> file Markdown sul server con contesto | OK |
+| Report senza server: resta in coda e viene reinviato | OK (fallback) |
+| BUG-20: 10 frame in danno, 30 frame -> stato chiuso | OK |
+| BUG-14: AttackBox a destra con `facing = 1`, a sinistra con `facing = -1` | OK |
 | Nessun errore JavaScript | OK |

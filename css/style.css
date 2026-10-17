@@ -916,3 +916,211 @@ canvas {
     text-align: center;
     color: #b8b8b8;
 }
+
+/* ========================================
+   Suggerimento sotto le voci di menu
+   ========================================== */
+.menu-suggerimento {
+    margin-top: 26px;
+    font-size: 15px;
+    letter-spacing: 1px;
+    color: #777777;
+    text-align: center;
+}
+
+/* Scheda dell'avversario in VS ONLINE */
+.info-nome.avversario {
+    color: #ff7a4a;
+}
+
+/* ========================================
+   Schermi stretti (telefono in verticale, tablet piccoli)
+   ========================================== */
+@media (max-width: 820px), (max-height: 620px) {
+    #menuLogo {
+        width: 116px;
+        margin-bottom: 8px;
+    }
+
+    #menuTitolo {
+        margin-bottom: 16px;
+        font-size: 24px;
+        letter-spacing: 2px;
+    }
+
+    #menuVoci {
+        gap: 10px;
+    }
+
+    .voce {
+        font-size: 24px;
+    }
+
+    .menu-suggerimento {
+        margin-top: 14px;
+        font-size: 12px;
+    }
+
+    #pausaReport {
+        right: 10px;
+        bottom: 10px;
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    /* Selezione: schede compatte e griglia che può scorrere */
+    #selezione {
+        gap: 8px;
+        padding: 10px;
+        overflow-y: auto;
+        justify-content: flex-start;
+    }
+
+    #selezioneTitolo {
+        font-size: 20px;
+        letter-spacing: 2px;
+    }
+
+    #selezioneInfo {
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .info-lato {
+        min-height: 0;
+        padding: 4px 8px;
+        border-width: 2px;
+    }
+
+    .info-nome {
+        font-size: 15px;
+    }
+
+    .info-ok {
+        margin-left: 6px;
+        font-size: 11px;
+    }
+
+    .info-archetipo,
+    .info-stat {
+        font-size: 11px;
+    }
+
+    .info-ultimate {
+        display: none;
+    }
+
+    #selezioneGriglia {
+        gap: 6px;
+    }
+
+    .cella {
+        width: 80px;
+        padding: 4px;
+        border-width: 2px;
+        gap: 3px;
+    }
+
+    .cella-nome {
+        font-size: 10px;
+    }
+
+    #selezioneIstruzioni {
+        font-size: 11px;
+        line-height: 1.4;
+    }
+
+    /* Keybinds: righe più strette */
+    #keybindsTitolo {
+        font-size: 24px;
+        letter-spacing: 2px;
+    }
+
+    #keybindsElenco {
+        min-width: 0;
+        width: 92%;
+        max-height: 70vh;
+    }
+
+    .keybinds-riga {
+        padding: 4px 8px;
+        gap: 12px;
+        font-size: 15px;
+    }
+
+    .keybinds-tasto {
+        min-width: 120px;
+    }
+
+    .keybinds-stato {
+        font-size: 12px;
+        padding: 0 12px;
+    }
+
+    /* Pannelli di online, report e stanza */
+    .online-pannello,
+    .report-pannello {
+        width: 92%;
+        max-width: 420px;
+        padding: 18px;
+    }
+
+    .online-titolo {
+        font-size: 22px;
+    }
+
+    .online-campo {
+        width: 190px;
+        font-size: 32px;
+        letter-spacing: 10px;
+    }
+
+    #reportTesto {
+        min-height: 90px;
+    }
+}
+
+/* ========================================
+   Pulsanti della selezione su telefono
+   ========================================== */
+.selezione-comandi {
+    display: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+    padding: 4px 8px;
+}
+
+.gruppo-selezione {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.gruppo-nome {
+    font-size: 14px;
+    letter-spacing: 1px;
+    color: #9a9a9a;
+}
+
+.tasto-selezione {
+    min-width: 52px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 16px;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.55);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 6px;
+    touch-action: manipulation;
+}
+
+.tasto-selezione.conferma {
+    font-size: 14px;
+    color: #7dff7d;
+    border-color: #7dff7d;
+}
+
+.tasto-selezione:active {
+    background-color: rgba(255, 255, 255, 0.22);
+}
