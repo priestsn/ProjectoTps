@@ -18,7 +18,8 @@
 </p>
 
 <p align="center">
-  <a href="https://uvsf7.217.61.59.110.nip.io"><strong>Gioca ora: uvsf7.217.61.59.110.nip.io</strong></a>
+  <strong>Server di gioco</strong> — l'indirizzo pubblico non è nel repository: si configura sul VPS
+  (vedi <a href="#server-e-messa-online">Server e messa online</a>)
 </p>
 
 ![Schermata del gioco](screenshot.png)
@@ -109,16 +110,24 @@ PORTA=8080 node server/server.js      # porta diversa
 
 Apri `http://localhost:8080`. Controllo immediato: `http://localhost:8080/stato` restituisce JSON con stanze aperte, connessioni e uptime.
 
-### Indirizzo pubblico già attivo
+### Indirizzo pubblico
 
-| Indirizzo | Note |
+**L'indirizzo del server non è versionato in questo repository**: né l'IP della VPS né il dominio
+compaiono qui, quindi clonare il repo non espone l'infrastruttura. L'indirizzo vive solo sul server,
+in due punti:
+
+| Dove | Cosa contiene |
 |---|---|
-| `https://uvsf7.217.61.59.110.nip.io` | indirizzo **fisso**, HTTPS con certificato Let's Encrypt rinnovato in automatico. Passa da reti scolastiche e aziendali |
-| `http://217.61.59.110` | sempre valido, in chiaro sulla porta 80, come riserva se il nome DNS non risolve |
+| `/etc/caddy/Caddyfile` | il nome pubblico e il reverse proxy verso Node |
+| unità `systemd` del servizio | `PORTA=8090` e `HOST=127.0.0.1` |
 
-Il nome usa `nip.io`, che risolve automaticamente l'IP scritto dentro il dominio (`uvsf7.<ip>.nip.io`): non serve registrare nulla e l'indirizzo non cambia finché non cambia l'IP della VPS.
+Il nome pubblico può essere un dominio tuo, un sottodominio DuckDNS, oppure un nome `nip.io`
+(`<nome>.<ip-del-server>.nip.io`) che risolve da solo senza registrare nulla. In tutti i casi il
+gioco non cambia: il client parla con lo **stesso host da cui ha caricato la pagina**
+(`location.host` in `js/Rete.js`), quindi nessun indirizzo è cablato nel codice.
 
-Dietro c'è **Caddy** come reverse proxy: gestisce il certificato TLS e inoltra al server Node, che ascolta solo su `127.0.0.1:8090`.
+Dietro c'è **Caddy** come reverse proxy: gestisce il certificato TLS e inoltra al server Node, che
+ascolta solo su `127.0.0.1:8090`.
 
 > Con `file://` funzionano solo VS LOCALE e VS CPU: senza server non esiste l'indirizzo WebSocket delle stanze né l'invio dei report.
 
@@ -343,12 +352,13 @@ curl http://<ip-pubblico>/stato
 
 Sul server servono solo `index.html`, `index.js`, `css/`, `js/`, `server/` e gli asset davvero usati (`assets/Background.png`, `assets/UVSF7-logo.png`, `assets/Personaggi/`): circa 1,5 MB.
 
-### HTTPS con un nome fisso (Caddy + nip.io)
+### HTTPS con un nome fisso (Caddy + dominio)
 
 Installazione in [`server/LEGGIMI.md`](server/LEGGIMI.md). In breve: Caddy su 80/443 con certificato Let's Encrypt automatico, Node spostato su `127.0.0.1:8090` e reverse proxy verso di lui (WebSocket compreso).
 
 ```caddyfile
-uvsf7.217.61.59.110.nip.io {
+# <tuo-dominio>  =  il nome pubblico che scegli (dominio, DuckDNS o nip.io)
+<tuo-dominio> {
     encode zstd gzip
     reverse_proxy 127.0.0.1:8090
 }

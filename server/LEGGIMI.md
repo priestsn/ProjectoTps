@@ -92,11 +92,12 @@ Il campo di gioco viene fissato all'inizio della partita (stesse misure del
 canvas dell'host) e non cambia più: ridimensionare la finestra durante una
 partita online non ha effetto.
 
-## Indirizzo pubblico fisso con HTTPS (Caddy + nip.io)
+## Indirizzo pubblico fisso con HTTPS (Caddy + dominio)
 
-L'indirizzo attivo è `https://uvsf7.217.61.59.110.nip.io`: certificato Let's
-Encrypt automatico, WebSocket compreso, nome che non cambia. Dietro c'è Caddy;
-il server Node ascolta solo su localhost.
+L'indirizzo pubblico **non va scritto nel repository**: si imposta solo qui sul
+server. Scegli un nome (dominio tuo, sottodominio DuckDNS o `<nome>.<ip>.nip.io`),
+Caddy prende il certificato Let's Encrypt da solo e il WebSocket passa insieme
+all'HTTP. Il server Node ascolta solo su localhost.
 
 ```bash
 # 1. Caddy dal repository ufficiale
@@ -107,12 +108,9 @@ apt-get update && apt-get install -y caddy
 
 # 2. Caddyfile
 cat > /etc/caddy/Caddyfile <<'FINE'
-uvsf7.217.61.59.110.nip.io {
+# sostituisci <tuo-dominio> col nome pubblico che hai scelto
+<tuo-dominio> {
     encode zstd gzip
-    reverse_proxy 127.0.0.1:8090
-}
-
-http://217.61.59.110 {
     reverse_proxy 127.0.0.1:8090
 }
 FINE
@@ -136,7 +134,7 @@ systemctl reload caddy
 
 ## Vecchio metodo: Cloudflare Quick Tunnel (non più attivo)
 
-Aruba in chiaro sulla porta 80 (`http://217.61.59.110`) funziona, ma molte reti
+L'accesso in chiaro sulla porta 80 (`http://<ip-del-server>`) funziona, ma molte reti
 scolastiche o aziendali bloccano HTTP su IP nudo. Con `cloudflared` il gioco
 esce su un indirizzo HTTPS senza aprire porte e senza dominio:
 
