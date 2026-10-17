@@ -20,7 +20,11 @@ body {
     height: 100dvh;
     overflow: hidden;
     overscroll-behavior: none;
-    touch-action: none;
+    /* ATTENZIONE: qui NON va `touch-action: none`. Bloccherebbe anche lo
+       scorrimento delle schermate sovrapposte (la griglia dei personaggi
+       diventava inaccessibile oltre la prima riga). Il blocco serve solo sul
+       canvas, che sta sotto. */
+    touch-action: manipulation;
     -webkit-user-select: none;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
@@ -36,7 +40,11 @@ body {
    fattore con cui l'HUD — scritto in pixel del mondo — viene rimpicciolito. */
 #areaGioco {
     position: relative;
+    /* doppia dichiarazione: la prima vale per i browser senza `dvh` (Safari e
+       WebView vecchie), la seconda per quelli che lo supportano */
+    width: min(100vw, calc(100vh * 16 / 9));
     width: min(100vw, calc(100dvh * 16 / 9));
+    height: min(100vh, calc(100vw * 9 / 16));
     height: min(100dvh, calc(100vw * 9 / 16));
     overflow: hidden;
     background-color: black;
@@ -50,6 +58,8 @@ body {
     display: block;
     width: 100%;
     height: 100%;
+    /* il blocco dei gesti serve solo qui: sopra il canvas non si scorre */
+    touch-action: none;
 }
 
 /* Font del gioco, usato da HUD, menu e testi */
@@ -307,6 +317,12 @@ canvas {
     gap: 14px;
     padding: 20px;
     overflow: hidden;
+    /* La griglia dei personaggi può essere più alta dell'arena (succede su
+       ogni telefono in orizzontale): deve poter scorrere col dito. Il blocco
+       dei gesti è sul canvas, non qui. */
+    touch-action: pan-y;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 #selezioneTitolo {
@@ -1157,6 +1173,14 @@ canvas {
     font-size: 14px;
     color: #7dff7d;
     border-color: #7dff7d;
+}
+
+/* Pulsante per tornare al menu: su telefono non esiste il tasto Esc, quindi
+   senza questo la schermata di selezione era un vicolo cieco. */
+.tasto-selezione.indietro {
+    font-size: 14px;
+    color: #ff8a20;
+    border-color: #ff8a20;
 }
 
 .tasto-selezione:active {

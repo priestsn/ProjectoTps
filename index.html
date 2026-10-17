@@ -12,8 +12,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bitcount+Prop+Double+Ink:wght@100..900&display=swap" rel="stylesheet">
 
-    <!-- Stili del gioco (fuori dall'HTML) -->
-    <link rel="stylesheet" href="css/style.css">
+    <!-- Stili del gioco (fuori dall'HTML). Il ?v= cambia a ogni rilascio: senza,
+         il telefono può tenere in cache il CSS vecchio insieme al JS nuovo e la
+         pagina si rompe in modi difficili da spiegare (è successo: sfondo
+         piccolo in alto a sinistra, selezione tagliata). -->
+    <link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
     <div id="areaGioco">
@@ -136,19 +139,20 @@
         <button id="ruotaIgnora" class="ruota-bottone">GIOCA LO STESSO</button>
     </div>
 
-    <!-- Script: l'ordine conta (Utili -> Stato -> Keybinds -> Report -> Menu -> Classi -> Personaggi -> Selezione -> CPU -> Rete -> Online -> Touch -> index) -->
-    <script src="js/Utili.js"></script>
-    <script src="js/Stato.js"></script>
-    <script src="js/Keybinds.js"></script>
-    <script src="js/Report.js"></script>
-    <script src="js/Menu.js"></script>
-    <script src="js/Classi.js"></script>
-    <script src="js/Personaggi.js"></script>
-    <script src="js/Selezione.js"></script>
-    <script src="js/CPU.js"></script>
-    <script src="js/Rete.js"></script>
-    <script src="js/Online.js"></script>
-    <script src="js/Touch.js"></script>
-    <script src="index.js"></script>
+    <!-- Script: l'ordine conta (Utili -> Stato -> Keybinds -> Report -> Menu -> Classi -> Personaggi -> Selezione -> CPU -> Rete -> Online -> Touch -> index).
+         Il ?v= è la stessa versione del CSS: si aumenta a ogni rilascio. -->
+    <script src="js/Utili.js?v=3"></script>
+    <script src="js/Stato.js?v=3"></script>
+    <script src="js/Keybinds.js?v=3"></script>
+    <script src="js/Report.js?v=3"></script>
+    <script src="js/Menu.js?v=3"></script>
+    <script src="js/Classi.js?v=3"></script>
+    <script src="js/Personaggi.js?v=3"></script>
+    <script src="js/Selezione.js?v=3"></script>
+    <script src="js/CPU.js?v=3"></script>
+    <script src="js/Rete.js?v=3"></script>
+    <script src="js/Online.js?v=3"></script>
+    <script src="js/Touch.js?v=3"></script>
+    <script src="index.js?v=3"></script>
 </body>
 </html>

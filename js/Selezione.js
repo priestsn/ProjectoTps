@@ -169,6 +169,15 @@ function aggiornaComandiSelezione() {
         gruppo.appendChild(conferma);
         contenitore.appendChild(gruppo);
     });
+
+    // Pulsante indietro: su telefono non c'è il tasto Esc e la schermata
+    // restava senza via d'uscita.
+    const indietro = document.createElement('button');
+    indietro.type = 'button';
+    indietro.className = 'tasto-selezione indietro';
+    indietro.textContent = 'INDIETRO';
+    indietro.addEventListener('click', () => indietroDallaSelezione());
+    contenitore.appendChild(indietro);
 }
 
 /**
@@ -178,8 +187,21 @@ function aggiornaComandiSelezione() {
  */
 function stileRitratto(personaggio) {
     const sprite = personaggio.sprite;
-    // Su schermi stretti il ritratto è più piccolo, così la griglia sta in 3 colonne
-    const lato = window.innerWidth <= 820 ? 64 : 110;    // lato del ritratto in pixel
+    // Il ritratto si misura sull'ARENA, non sulla finestra: con il mondo 16:9
+    // l'area di gioco è più stretta dello schermo, e usando window.innerWidth
+    // la griglia restava a misura grande (e quindi tagliata) su un telefono
+    // in orizzontale, dove la finestra è larga 873 ma l'arena 699.
+    const area = document.getElementById('areaGioco');
+    const larghezzaArea = area ? area.clientWidth : window.innerWidth;
+    const altezzaArea = area ? area.clientHeight : window.innerHeight;
+
+    let lato = 110;                                   // schermo grande
+    if (larghezzaArea <= 900 || altezzaArea <= 460) {
+        lato = 64;                                    // telefono in orizzontale
+    }
+    if (larghezzaArea <= 560 || altezzaArea <= 330) {
+        lato = 52;                                    // schermo molto piccolo
+    }
     const ritaglio = sprite.ritaglio;
     const frame = sprite.frame;
     const fattore = lato / ritaglio.altezza;             // il personaggio riempie in altezza
@@ -414,12 +436,21 @@ function gestisciInputSelezione(evento) {
 
         // --- indietro ---
         case 'Escape':
-            if (modalitaPartita === MODALITA.ONLINE) {
-                esciOnline();
-                apriMenu('play');
-                break;
-            }
-            apriMenu(modalitaPartita === MODALITA.CPU ? 'cpu' : 'play');
+            indietroDallaSelezione();
             break;
     }
+}
+
+/**
+ * Torna al menu dalla schermata di selezione.
+ * È la stessa azione del tasto Esc e del pulsante INDIETRO su telefono:
+ * in VS ONLINE chiude anche la stanza, per non lasciare l'altro in attesa.
+ */
+function indietroDallaSelezione() {
+    if (modalitaPartita === MODALITA.ONLINE) {
+        esciOnline();
+        apriMenu('play');
+        return;
+    }
+    apriMenu(modalitaPartita === MODALITA.CPU ? 'cpu' : 'play');
 }

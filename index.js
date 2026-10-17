@@ -68,13 +68,27 @@ const background = new Sprite({ x: 0, y: 0 }, './assets/Background.png', 1, 5, {
  * vuoti su nessun lato. L'eventuale eccedenza viene ritagliata dal canvas.
  */
 function adattaSfondo() {
-    if (background.image.loaded && background.image.height > 0) {
-        const larghezzaFrame = background.image.width / background.framesMax;
-        background.scale = Math.max(
-            canvas.width / larghezzaFrame,
-            canvas.height / background.image.height
-        );
+    if (!background.image.loaded || !(background.image.height > 0)) {
+        // Se lo sfondo non è ancora pronto si riprova quando carica. Senza
+        // questo, se la prima chiamata avveniva prima del caricamento la scala
+        // restava quella iniziale (1) e lo sfondo veniva disegnato piccolo in
+        // alto a sinistra, con il resto dell'arena nero.
+        if (background.image._scalaInAttesa || !background.image.addEventListener) {
+            return;
+        }
+        background.image._scalaInAttesa = true;
+        background.image.addEventListener('load', () => {
+            background.image._scalaInAttesa = false;
+            adattaSfondo();
+        }, { once: true });
+        return;
     }
+
+    const larghezzaFrame = background.image.width / background.framesMax;
+    background.scale = Math.max(
+        canvas.width / larghezzaFrame,
+        canvas.height / background.image.height
+    );
 }
 
 /**
