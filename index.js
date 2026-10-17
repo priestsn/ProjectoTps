@@ -5,11 +5,19 @@ const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d');
 
 // ========================================
-// Dimensioni della finestra
+// Mondo di gioco: dimensioni fisse
 // ==========================================
-// Il canvas prende le misure della finestra: nessuna dimensione fissa.
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+// Il mondo è sempre 1280x720 (16:9). Il CSS scala il canvas dentro lo schermo
+// e aggiunge le bande nere quando il rapporto del dispositivo è diverso.
+// Se il canvas prendesse le misure della finestra (com'era prima) su un
+// telefono in verticale l'arena diventerebbe altissima e stretta: i due
+// lottatori finirebbero uno sopra l'altro e il campo cambierebbe da telefono
+// a telefono, rendendo la partita ingiocabile.
+const MONDO_LARGHEZZA = 1280;
+const MONDO_ALTEZZA = 720;
+
+canvas.width = MONDO_LARGHEZZA;
+canvas.height = MONDO_ALTEZZA;
 
 c.fillStyle = 'black';
 c.fillRect(0, 0, canvas.width, canvas.height);
@@ -80,12 +88,29 @@ function adattaAllaFinestra() {
         return;
     }
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Il canvas NON viene ridimensionato: il mondo resta 1280x720. Cambia solo
+    // la scala con cui il CSS lo mostra, così HUD e comandi seguono lo schermo
+    // senza che il campo di gioco si deformi.
+    aggiornaScalaSchermo();
 
     ground = canvas.height - 40;
 
     adattaSfondo();
+}
+
+/**
+ * Calcola quanto è grande l'area di gioco rispetto al mondo (1280x720) e lo
+ * espone come variabile CSS `--scala`, usata da HUD e sovrapposizioni per
+ * restare proporzionate su telefoni, tablet e monitor.
+ */
+function aggiornaScalaSchermo() {
+    const area = document.getElementById('areaGioco');
+    if (!area) {
+        return;
+    }
+    const larghezza = area.clientWidth || window.innerWidth;
+    const scala = larghezza / MONDO_LARGHEZZA;
+    document.documentElement.style.setProperty('--scala', String(scala));
 }
 
 // Chi combatte: i due personaggi scelti nella schermata di selezione.
@@ -1320,11 +1345,15 @@ aggiornaVisibilita();
 // scegliere un personaggio non provoca ritardi
 precaricaPersonaggi();
 
-// Se la finestra cambia dimensione, canvas, suolo e sfondo si adattano
+// Se la finestra cambia dimensione, scala dell'HUD, suolo e sfondo si adattano
 window.addEventListener('resize', adattaAllaFinestra);
+
+// Prima scala: l'area di gioco è già dimensionata dal CSS all'avvio
+aggiornaScalaSchermo();
 
 avviaGiocoQuandoPronto(() => {
     // Gli asset sono pronti: lo sfondo si può scalare in modo definitivo
+    aggiornaScalaSchermo();
     adattaSfondo();
     apriMenu('principale');
     animate();

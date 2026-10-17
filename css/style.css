@@ -10,19 +10,46 @@ body {
     padding: 0;
     background-color: black;
 
-    /* Centra l'area di gioco nella finestra */
+    /* Centra l'area di gioco nella finestra.
+       100dvh (non 100vh) perché sui telefoni la barra del browser si nasconde
+       e ritaglia la parte bassa: con 100vh i comandi touch finivano sotto. */
     display: flex;
     align-items: center;
     justify-content: center;
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 /* Contenitore che racchiude canvas, HUD e schermate sovrapposte.
    `position: relative` serve da riferimento per gli elementi assoluti.
-   Nessun line-height qui: verrebbe ereditato da menu e schede. */
+   Nessun line-height qui: verrebbe ereditato da menu e schede.
+
+   L'area ha SEMPRE il rapporto 16:9 del mondo di gioco: si adatta al lato più
+   corto dello schermo e il resto resta nero (bande). Così il campo non cambia
+   forma tra telefono, tablet e PC. `--scala` (impostata da index.js) è il
+   fattore con cui l'HUD — scritto in pixel del mondo — viene rimpicciolito. */
 #areaGioco {
     position: relative;
+    width: min(100vw, calc(100dvh * 16 / 9));
+    height: min(100dvh, calc(100vw * 9 / 16));
+    overflow: hidden;
+    background-color: black;
+}
+
+/* NOTA: `--scala` NON va dichiarata qui. Se la si dichiara su #areaGioco,
+   sovrascrive per eredità il valore messo su <html> da index.js e l'HUD resta
+   a scala 1 (bug verificato: transform matrix(1,0,0,1,0,0) su telefono). */
+
+#areaGioco > canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 
 /* Font del gioco, usato da HUD, menu e testi */
@@ -46,11 +73,19 @@ canvas {
    ========================================== */
 #hud {
     position: absolute;
+    /* L'HUD è scritto nei pixel del mondo (1280 di larghezza) e poi scalato con
+       `--scala`: barre, timer e margini restano identici su ogni schermo,
+       invece di occupare metà telefono o sparire su un monitor 4K. */
+    width: 1280px;
+    left: 0;
+    top: 0;
     display: flex;
-    width: 100%;
     align-items: center;
     padding: 20px;
     z-index: 10;
+    transform: scale(var(--scala, 1));
+    transform-origin: top left;
+    pointer-events: none;
 }
 
 /* Metà HUD di un giocatore (vita, stamina e ultimate) */
@@ -649,11 +684,14 @@ canvas {
    il centro resta libero per non coprire il combattimento. */
 .comandi-touch {
     display: none;
-    position: fixed;
+    /* absolute (non fixed): i comandi vivono DENTRO l'area di gioco, così su
+       un telefono con le bande nere restano appoggiati al bordo dell'arena e
+       non finiscono nella zona nera o sotto la tacca. */
+    position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
-    padding: 12px 16px 18px;
+    padding: 12px 16px calc(18px + env(safe-area-inset-bottom, 0px));
     align-items: flex-end;
     justify-content: space-between;
     gap: 10px;
@@ -1123,4 +1161,73 @@ canvas {
 
 .tasto-selezione:active {
     background-color: rgba(255, 255, 255, 0.22);
+}
+
+/* ========================================
+   Telefono in verticale: invito a ruotare
+   ========================================== */
+/* Il mondo di gioco è 16:9: in verticale resterebbe una fettuccia con i due
+   lottatori sovrapposti. L'avviso copre tutto, ma si può chiudere con "Gioca
+   lo stesso" — nessuno viene obbligato. */
+#ruotaTelefono {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 28px;
+    text-align: center;
+    background-color: #050505;
+    color: #f2f2f2;
+    font-family: 'Bitcount Prop Double Ink', sans-serif;
+}
+
+#ruotaTelefono .icona-ruota {
+    font-size: 56px;
+    animation: ruotaIcona 2.6s ease-in-out infinite;
+}
+
+#ruotaTelefono .testo-ruota {
+    font-size: 20px;
+    letter-spacing: 1px;
+}
+
+#ruotaTelefono .nota-ruota {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #9c9c9c;
+    max-width: 30ch;
+}
+
+.ruota-bottone {
+    margin-top: 6px;
+    padding: 12px 22px;
+    font-family: inherit;
+    font-size: 15px;
+    letter-spacing: 1px;
+    color: #f2f2f2;
+    background-color: #1b1b1b;
+    border: 2px solid #6a6a6a;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.ruota-bottone:active {
+    background-color: #333333;
+}
+
+@keyframes ruotaIcona {
+    0%, 35%   { transform: rotate(0deg); }
+    60%, 100% { transform: rotate(90deg); }
+}
+
+/* Compare solo su un telefono/tablet in verticale, e solo se l'utente non
+   ha detto "gioca lo stesso" (classe su <html> messa da js/Touch.js) */
+@media (orientation: portrait) and (max-width: 900px) and (pointer: coarse) {
+    html:not(.ruota-ignorata) #ruotaTelefono {
+        display: flex;
+    }
 }

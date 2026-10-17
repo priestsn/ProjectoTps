@@ -317,3 +317,33 @@ document.addEventListener('contextmenu', (evento) => {
         evento.preventDefault();
     }
 });
+
+// ------------------------------------------------------------------
+// Avviso "ruota il telefono"
+// ------------------------------------------------------------------
+// Compare solo su un telefono in verticale (vedi la media query in
+// css/style.css). Chi preferisce giocare lo stesso chiude l'avviso e la
+// scelta resta per la sessione: nessun blocco forzato.
+(function collegaAvvisoRotazione() {
+    const ignora = document.getElementById('ruotaIgnora');
+    if (!ignora) {
+        return;
+    }
+    ignora.addEventListener('click', () => {
+        document.documentElement.classList.add('ruota-ignorata');
+        // l'area di gioco cambia misura appena l'avviso sparisce
+        if (typeof aggiornaScalaSchermo === 'function') {
+            aggiornaScalaSchermo();
+        }
+    });
+})();
+
+// Ruotando il telefono cambia lo spazio disponibile: la scala dell'HUD va
+// ricalcolata (aggiornaComandiTouch da solo non la tocca).
+window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+        if (typeof aggiornaScalaSchermo === 'function') {
+            aggiornaScalaSchermo();
+        }
+    }, 250);
+});
