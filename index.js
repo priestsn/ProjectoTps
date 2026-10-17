@@ -1,4 +1,42 @@
 // ========================================
+// Controllo di versione (aggiornamento automatico)
+// ==========================================
+// GitHub Pages tiene l'HTML in cache per ~10 minuti: un telefono può quindi
+// mostrare index.html vecchio con CSS o JS nuovi, e la pagina sembra rotta
+// (è successo davvero: sfondo piccolo in alto a sinistra e selezione tagliata).
+// Qui si chiede versione.json SENZA cache: se il build del server è più recente
+// di quello compilato in questo file, la pagina si ricarica da sola una volta.
+const BUILD_PAGINA = 3;
+
+(function controlloVersione() {
+    if (typeof fetch !== 'function') {
+        return;
+    }
+    fetch('versione.json?t=' + Date.now(), { cache: 'no-store' })
+        .then((risposta) => risposta.json())
+        .then((dati) => {
+            const buildServer = Number(dati && dati.build);
+            if (!buildServer || buildServer <= BUILD_PAGINA) {
+                try { sessionStorage.removeItem('giriAggiornamento'); } catch (e) { /* niente */ }
+                return;
+            }
+            // massimo due ricaricamenti per sessione: se qualcosa va storto non
+            // si entra in un ciclo infinito di ricariche
+            let giri = 0;
+            try { giri = Number(sessionStorage.getItem('giriAggiornamento') || '0'); } catch (e) { giri = 0; }
+            if (giri >= 2) {
+                return;
+            }
+            try { sessionStorage.setItem('giriAggiornamento', String(giri + 1)); } catch (e) { /* niente */ }
+            // replace con un parametro nuovo: forza il download dell'HTML
+            window.location.replace(window.location.pathname + '?agg=' + Date.now());
+        })
+        .catch(() => {
+            // offline o file aperto da disco: si gioca la versione che c'è
+        });
+})();
+
+// ========================================
 // Configurazione Canvas
 // ==========================================
 const canvas = document.querySelector('canvas');
