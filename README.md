@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">
-  <a href="https://condo-enhancing-conf-consumers.trycloudflare.com"><strong>Gioca ora: https://condo-enhancing-conf-consumers.trycloudflare.com</strong></a>
+  <a href="https://uvsf7.217.61.59.110.nip.io"><strong>Gioca ora: uvsf7.217.61.59.110.nip.io</strong></a>
 </p>
 
 ![Schermata del gioco](screenshot.png)
@@ -113,14 +113,12 @@ Apri `http://localhost:8080`. Controllo immediato: `http://localhost:8080/stato`
 
 | Indirizzo | Note |
 |---|---|
-| `https://condo-enhancing-conf-consumers.trycloudflare.com` | HTTPS, passa dalle reti scolastiche e aziendali; è un tunnel Cloudflare rapido, quindi **il nome cambia se il tunnel viene riavviato** |
-| `http://217.61.59.110` | sempre valido, in chiaro sulla porta 80 (può essere bloccato da proxy scolastici) |
+| `https://uvsf7.217.61.59.110.nip.io` | indirizzo **fisso**, HTTPS con certificato Let's Encrypt rinnovato in automatico. Passa da reti scolastiche e aziendali |
+| `http://217.61.59.110` | sempre valido, in chiaro sulla porta 80, come riserva se il nome DNS non risolve |
 
-Se il tunnel riparte e il nome cambia, il nuovo indirizzo si legge sulla VPS con:
+Il nome usa `nip.io`, che risolve automaticamente l'IP scritto dentro il dominio (`uvsf7.<ip>.nip.io`): non serve registrare nulla e l'indirizzo non cambia finché non cambia l'IP della VPS.
 
-```bash
-grep -Eo 'https://[a-z0-9-]+\.trycloudflare\.com' /var/log/uvsf7-tunnel.log | tail -1
-```
+Dietro c'è **Caddy** come reverse proxy: gestisce il certificato TLS e inoltra al server Node, che ascolta solo su `127.0.0.1:8090`.
 
 > Con `file://` funzionano solo VS LOCALE e VS CPU: senza server non esiste l'indirizzo WebSocket delle stanze né l'invio dei report.
 
@@ -301,9 +299,10 @@ node server/server.js
 
 | Variabile | Default | Significato |
 |---|---|---|
-| `PORTA` | `80` | porta HTTP/WebSocket |
+| `PORTA` | `80` | porta HTTP/WebSocket (in produzione `8090`, dietro Caddy) |
 | `REPORT_DIR` | `/var/lib/uvsf7/reports` | cartella dei report |
 | `REPORT_CHIAVE` | *(vuota)* | chiave per leggere i report; se vuota la lettura risponde 403 |
+| `HOST` | `0.0.0.0` | indirizzo di ascolto; con il proxy davanti si usa `127.0.0.1` |
 
 | Endpoint | Descrizione |
 |---|---|
@@ -312,7 +311,7 @@ node server/server.js
 | `POST /report` | invio di un report bug |
 | `GET /reports?chiave=…` | elenco dei file di report |
 | `GET /reports/file?chiave=…&nome=…` | contenuto di un file di report |
-| `WS /ws` | canale delle stanze |
+| `WS /ws` | canale delle stanze (funziona anche dietro proxy: Caddy inoltra l'upgrade) |
 
 ### Installazione su VPS (Ubuntu 24.04)
 
@@ -344,15 +343,18 @@ curl http://<ip-pubblico>/stato
 
 Sul server servono solo `index.html`, `index.js`, `css/`, `js/`, `server/` e gli asset davvero usati (`assets/Background.png`, `assets/UVSF7-logo.png`, `assets/Personaggi/`): circa 1,5 MB.
 
-### HTTPS senza dominio (Cloudflare Quick Tunnel)
+### HTTPS con un nome fisso (Caddy + nip.io)
 
-Utile quando la rete di scuola o ufficio blocca HTTP su IP nudo:
+Installazione in [`server/LEGGIMI.md`](server/LEGGIMI.md). In breve: Caddy su 80/443 con certificato Let's Encrypt automatico, Node spostato su `127.0.0.1:8090` e reverse proxy verso di lui (WebSocket compreso).
 
-```bash
-cloudflared tunnel --url http://127.0.0.1:80
+```caddyfile
+uvsf7.217.61.59.110.nip.io {
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:8090
+}
 ```
 
-Esce un indirizzo `https://<nome-casuale>.trycloudflare.com` che inoltra anche il WebSocket. Il nome cambia a ogni riavvio del tunnel: per un indirizzo fisso serve un dominio con un tunnel nominato. Dettagli in [`server/LEGGIMI.md`](server/LEGGIMI.md).
+Se un giorno compri un dominio (o usi DuckDNS), cambia solo la prima riga del `Caddyfile` e il link nel README: il certificato si rinnova da solo.
 
 ---
 

@@ -92,7 +92,49 @@ Il campo di gioco viene fissato all'inizio della partita (stesse misure del
 canvas dell'host) e non cambia più: ridimensionare la finestra durante una
 partita online non ha effetto.
 
-## Indirizzo pubblico con HTTPS (Cloudflare Quick Tunnel)
+## Indirizzo pubblico fisso con HTTPS (Caddy + nip.io)
+
+L'indirizzo attivo è `https://uvsf7.217.61.59.110.nip.io`: certificato Let's
+Encrypt automatico, WebSocket compreso, nome che non cambia. Dietro c'è Caddy;
+il server Node ascolta solo su localhost.
+
+```bash
+# 1. Caddy dal repository ufficiale
+apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl gnupg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' -o /etc/apt/sources.list.d/caddy-stable.list
+apt-get update && apt-get install -y caddy
+
+# 2. Caddyfile
+cat > /etc/caddy/Caddyfile <<'FINE'
+uvsf7.217.61.59.110.nip.io {
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:8090
+}
+
+http://217.61.59.110 {
+    reverse_proxy 127.0.0.1:8090
+}
+FINE
+
+# 3. firewall per HTTPS
+ufw allow 80/tcp
+ufw allow 443/tcp
+```
+
+Nel servizio `uvsf7`, `PORTA=8090` e `HOST=127.0.0.1`: la porta 80 e la 443
+sono di Caddy, che si occupa anche del rinnovo del certificato.
+
+Per usare **DuckDNS** invece di nip.io basta cambiare la prima riga del
+`Caddyfile` con il proprio dominio (per esempio `uvsf7.duckdns.org`), tenere
+aggiornato l'IP con il token DuckDNS e ricaricare:
+
+```bash
+curl "https://www.duckdns.org/update?domains=uvsf7&token=<TOKEN>&ip="
+systemctl reload caddy
+```
+
+## Vecchio metodo: Cloudflare Quick Tunnel (non più attivo)
 
 Aruba in chiaro sulla porta 80 (`http://217.61.59.110`) funziona, ma molte reti
 scolastiche o aziendali bloccano HTTP su IP nudo. Con `cloudflared` il gioco

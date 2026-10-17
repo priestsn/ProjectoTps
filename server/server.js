@@ -19,6 +19,8 @@ const path = require('path');
 const crypto = require('crypto');
 
 const PORTA = Number(process.env.PORTA || 80);
+// Con un reverse proxy davanti (Caddy/nginx) il server resta su 127.0.0.1
+const INDIRIZZO = process.env.HOST || '0.0.0.0';
 const RADICE = path.resolve(__dirname, '..');
 const GUID_WEBSOCKET = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
@@ -640,8 +642,8 @@ server.on('upgrade', (richiesta, socket) => {
     new Connessione(socket, richiesta.socket.remoteAddress);
 });
 
-server.listen(PORTA, () => {
-    console.log('Server gioco avviato sulla porta ' + PORTA);
+server.listen(PORTA, INDIRIZZO, () => {
+    console.log('Server gioco avviato su ' + INDIRIZZO + ':' + PORTA);
     console.log('Cartella servita: ' + RADICE);
 });
 
