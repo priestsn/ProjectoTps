@@ -35,6 +35,12 @@ function apriSelezione(modalita = MODALITA.LOCALE) {
         confermatoP2 = true;
     }
 
+    // In VS ONLINE il personaggio dell'altro arriva dalla rete (messaggio
+    // 'scelta'): qui si riparte da zero e si mostra il codice della stanza
+    if (modalitaPartita === MODALITA.ONLINE) {
+        aggiornaBadgeOnline();
+    }
+
     disegnaSelezione();
     cambiaStato(STATI.SELEZIONE);
 }
@@ -161,10 +167,46 @@ function confermaScelta(giocatore) {
 
     disegnaSelezione();
 
+    // In VS ONLINE la scelta va comunicata all'altro giocatore
+    if (modalitaPartita === MODALITA.ONLINE) {
+        inviaSceltaOnline(giocatore === 1 ? PERSONAGGI[sceltaP1].id : PERSONAGGI[sceltaP2].id);
+    }
+
     // Si parte solo quando entrambi hanno confermato
     if (confermatoP1 && confermatoP2) {
-        avviaPartita(PERSONAGGI[sceltaP1].id, PERSONAGGI[sceltaP2].id);
+        if (modalitaPartita === MODALITA.ONLINE) {
+            // L'host avvia e comunica tutto all'ospite, che aspetta 'avvia'
+            if (!onlineStato.ospite) {
+                inviaAvvioOnline();
+            }
+        } else {
+            avviaPartita(PERSONAGGI[sceltaP1].id, PERSONAGGI[sceltaP2].id);
+        }
     }
+}
+
+/**
+ * Chi comanda il cursore del giocatore 1 in questa modalità.
+ * In VS ONLINE ogni browser comanda solo il proprio.
+ */
+function controllaCursoreP1() {
+    if (modalitaPartita === MODALITA.ONLINE) {
+        return !onlineStato.ospite;
+    }
+    return true;
+}
+
+/**
+ * Chi comanda il cursore del giocatore 2 in questa modalità
+ */
+function controllaCursoreP2() {
+    if (modalitaPartita === MODALITA.LOCALE) {
+        return true;
+    }
+    if (modalitaPartita === MODALITA.ONLINE) {
+        return onlineStato.ospite;
+    }
+    return false;
 }
 
 /**
@@ -182,6 +224,16 @@ function gestisciInputSelezione(evento) {
 
     const tasto = (evento.key && evento.key.length === 1) ? evento.key.toLowerCase() : evento.key;
 
+    // In VS ONLINE ogni browser pilota solo il proprio cursore
+    if (modalitaPartita === MODALITA.ONLINE) {
+        if (onlineStato.ospite && (tasto === 'a' || tasto === 'd' || tasto === 'h')) {
+            return;
+        }
+        if (!onlineStato.ospite && (tasto === 'ArrowLeft' || tasto === 'ArrowRight' || tasto === 'ù')) {
+            return;
+        }
+    }
+
     switch (tasto) {
         // --- giocatore 1 ---
         case 'a':
@@ -196,21 +248,26 @@ function gestisciInputSelezione(evento) {
             confermaScelta(1);
             break;
 
-        // --- giocatore 2 (solo in VS locale: in VS CPU comanda il computer) ---
+        // --- giocatore 2 (in VS locale e per l'ospite in VS online) ---
         case 'ArrowLeft':
-            if (modalitaPartita === MODALITA.LOCALE) spostaCursore(2, -1);
+            if (controllaCursoreP2()) spostaCursore(2, -1);
             break;
 
         case 'ArrowRight':
-            if (modalitaPartita === MODALITA.LOCALE) spostaCursore(2, 1);
+            if (controllaCursoreP2()) spostaCursore(2, 1);
             break;
 
         case 'ù':
-            if (modalitaPartita === MODALITA.LOCALE) confermaScelta(2);
+            if (controllaCursoreP2()) confermaScelta(2);
             break;
 
         // --- indietro ---
         case 'Escape':
+            if (modalitaPartita === MODALITA.ONLINE) {
+                esciOnline();
+                apriMenu('play');
+                break;
+            }
             apriMenu(modalitaPartita === MODALITA.CPU ? 'cpu' : 'play');
             break;
     }

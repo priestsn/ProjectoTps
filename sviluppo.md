@@ -3,7 +3,7 @@
 Piano delle funzionalità da implementare.
 
 **Ultimo aggiornamento:** 17/10/2026
-**Fase in corso:** **5 — Online** (prossima da avviare)
+**Fase in corso:** Fase 5 completata — VS ONLINE attivo (server sulla VPS)
 
 **Legenda**
 
@@ -32,7 +32,7 @@ Piano delle funzionalità da implementare.
 | Report bug | `[OK]` pulsante nel menu di pausa, salvataggio locale ed export Markdown |
 | Selezione personaggio | `[OK]` 9 personaggi con statistiche proprie |
 | vs CPU | `[OK]` tre difficoltà: Facile, Difficile, Guissè |
-| vs online | `WIP` |
+| vs online | `[OK]` stanze con codice, host che simula e ospite collegato (Fase 5) |
 | Perfect block / ultimate / attacco caricato | `[OK]` disponibili (Fase 3) |
 
 **Debito tecnico da saldare** (dettagli in `bugs.md`):
@@ -79,7 +79,7 @@ All'apertura non si gioca più subito: compare un menu a schermo intero con il n
 ### F3 — Menu Play  ·  `[OK]` la struttura (Fase 1)
 - `[OK]` **vs locale** — 2 giocatori sulla stessa tastiera: la voce apre la selezione del personaggio
 - `[OK]` **vs CPU** — contro l'IA a *facile*, *difficile* e *guissè*: sottomenu dedicato, avversario scelto dal computer e tre profili di comportamento
-- `WIP` **vs online** — server su VPS con creazione/ingresso in stanze — Fase 5
+- `[OK]` **vs online** — server su VPS con creazione/ingresso in stanze — Fase 5
 
 ### F4 — Settings  ·  `[OK]` parziale (Fase 1)
 - `[OK]` **fullscreen** — attiva/disattiva schermo intero sull'**intera pagina**
@@ -130,7 +130,7 @@ Ordine concordato: **si parte dal menu**.
 | **2. Selezione personaggio** | F5: 9 personaggi con sprite dedicati, statistiche, scelta di P1 e P2 | `COMPLETATA` | Fase 1 |
 | **3. Meccaniche** | F6: perfect block (per frame), ultimate e barra, attacco caricato | `COMPLETATA` | Fase 2 |
 | **4. CPU** | F3 vs CPU: facile, difficile, guissè | `COMPLETATA` | Fase 3 |
-| **5. Online** | F3 vs online: server su VPS, stanze | `WIP` | Fase 4 |
+| **5. Online** | F3 vs online: server su VPS, stanze | `COMPLETATA` | Fase 4 |
 
 ### Dettaglio
 
@@ -156,8 +156,10 @@ Perfect block (finestra di 3 frame, stun 1 s), ultimate con barra HUD (tempo + p
 **Fase 4 — CPU** (implementata)
 Menu **VS CPU** con tre difficoltà, avversario scelto dal computer e controller `js/CPU.js` che usa gli stessi comandi del giocatore. Dettagli nella sezione 7.
 
-**Fase 5 — Online**
-*Completata quando:* due giocatori su macchine diverse creano o entrano in una stanza e combattono.
+**Fase 5 — Online** (implementata)
+Menu **VS ONLINE** con **CREA STANZA** (codice di 4 caratteri) e **ENTRA CON CODICE**. L'host simula la partita e manda 30 fotogrammi di stato al secondo all'ospite, che disegna lo stato ricevuto e gli rimanda i propri tasti. Dettagli nella sezione 10.
+
+*Completata quando:* due giocatori su macchine diverse creano o entrano in una stanza e combattono. — verificato il 17/10/2026 con due schede collegate al server sulla VPS.
 
 ---
 
@@ -294,3 +296,54 @@ Ogni personaggio ha la sua ultimate, con un **tipo** e un **effetto** distinti. 
 - **ESPORTA MD** scarica tutti i report come `report-bug-AAAA-MM-GG_HHMM.md`; **COPIA** li mette negli appunti; **Esc** chiude il pannello e torna alla pausa.
 - Il gioco resta in pausa anche con il pannello aperto.
 
+
+---
+
+## 10. VS ONLINE — Fase 5 (17/10/2026)
+
+Due giocatori su macchine diverse, stanza con codice, combattimento in rete. Il combattimento **non** gira sul server: lo simula il browser di chi crea la stanza.
+
+### Ruoli
+
+| Ruolo | Chi è | Cosa fa |
+|---|---|---|
+| **host** | chi crea la stanza | simula la partita come in VS locale e manda lo stato all'ospite |
+| **ospite** | chi entra col codice | non simula nulla: disegna lo stato ricevuto e manda i propri tasti all'host |
+| **server** | `server/server.js` sulla VPS | serve i file del gioco e inoltra i messaggi dentro la stanza |
+
+### Flusso
+
+1. `PLAY -> VS ONLINE -> CREA STANZA`: il server genera un codice di 4 caratteri, mostrato nel badge in alto.
+2. L'host sceglie il personaggio (tasti del giocatore 1); l'ospite entra col codice e sceglie il suo (tasti del giocatore 2).
+3. Ognuno conferma: la scelta parte come messaggio `scelta`. Quando l'host ha entrambe le scelte manda `avvia` con i due personaggi e le **misure del campo** (`canvas.width` / `canvas.height`).
+4. L'ospite adotta quelle misure: le posizioni che riceve sono pixel del campo dell'host, quindi i due schermi mostrano la stessa cosa anche con finestre di dimensioni diverse (il canvas viene scalato via CSS, non ridimensionato).
+5. L'host manda un **fotogramma** ogni due frame (30 al secondo): posizione, velocità verticale, direzione, vita, stamina, ultimate, sprite e frame, parata, stun, morte, stati alterati, proiettili, timer, avviso centrale e risultato finale.
+6. L'ospite manda `tasto` a ogni pressione e rilascio; l'host li applica al giocatore 2 chiamando gli stessi comandi condivisi del gioco (`salta`, `iniziaCarica`, `rilasciaCarica`, `iniziaParata`, `finisciParata`, `attivaUltimate`). Nessuna seconda logica di combattimento.
+
+### File
+
+| File | Ruolo |
+|---|---|
+| `server/server.js` | HTTP statico + WebSocket + stanze, **senza dipendenze npm** |
+| `server/LEGGIMI.md` | installazione sulla VPS, servizio systemd, firewall |
+| `js/Rete.js` | unico punto di contatto col WebSocket |
+| `js/Online.js` | stanze, messaggi, fotogrammi, disegno lato ospite, tasti |
+| `js/Menu.js` | sottomenu `online` (CREA STANZA / ENTRA CON CODICE) |
+| `js/Selezione.js` | in VS ONLINE ogni browser comanda solo il proprio cursore |
+| `index.js` | aggancio nel game loop: l'ospite disegna invece di simulare, l'host invia il fotogramma |
+
+### Scelte tecniche
+
+- **Un solo simulatore** (l'host): niente rollback, niente predizione, niente doppia fisica da tenere allineata. L'ospite vede lo stato con la latenza della rete, che su server italiano è di pochi millisecondi.
+- **Nessuna dipendenza**: il WebSocket è implementato a mano nel server (handshake + frame di testo, ping/pong, close), come chiedono le regole di lavoro.
+- **Campo fisso per partita**: in VS ONLINE il canvas non segue più il ridimensionamento della finestra, altrimenti le posizioni divergerebbero.
+- **La pausa è locale**: `Esc` ferma solo il browser in cui viene premuto. L'host è l'unico che simula, quindi se mette in pausa si ferma la partita per entrambi.
+
+### Verifiche fatte (17/10/2026)
+
+- creazione stanza, ingresso col codice, errore su codice sbagliato e su stanza piena;
+- scelta dei personaggi su due browser distinti e avvio della partita;
+- movimento, parata, attacco caricato e attacco dell'ospite applicati dall'host;
+- fotogrammi ricevuti dall'ospite con posizioni, timer e HUD coerenti;
+- uscita dell'ospite: l'host torna al menu con l'avviso "L'AVVERSARIO HA LASCIATO LA STANZA";
+- nessun errore JavaScript nelle due pagine.

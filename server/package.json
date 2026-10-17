@@ -1,0 +1,14 @@
+{
+  "name": "ultra-verdello-street-fight-7-server",
+  "version": "1.0.0",
+  "description": "Server del gioco: file statici + stanze VS ONLINE via WebSocket, senza dipendenze",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "private": true,
+  "license": "UNLICENSED"
+}

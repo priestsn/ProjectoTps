@@ -12,6 +12,17 @@ Dal menu scegli **PLAY** → **VS LOCALE**: frecce su/giù (o `W`/`S`) per spost
 
 Servono **2 giocatori sulla stessa tastiera**.
 
+## VS ONLINE
+
+Due giocatori su macchine diverse, con stanza e codice di 4 caratteri:
+
+1. Avvia il server: `node server/server.js` (porta 80, oppure `PORTA=8080 node server/server.js`) e apri `http://localhost:8080`.
+2. **PLAY → VS ONLINE → CREA STANZA**: compare il codice (es. `WSJW`), da dettare all'altro giocatore.
+3. L'altro apre lo stesso indirizzo, sceglie **ENTRA CON CODICE**, digita il codice e conferma.
+4. Ognuno sceglie il personaggio: comanda solo il proprio cursore (giocatore 1 `A`/`D`/`H`, giocatore 2 frecce e `ù`).
+
+Chi crea la stanza simula la partita e manda 30 fotogrammi al secondo all'altro; l'ospite disegna lo stato ricevuto e gli rimanda i propri tasti. Per questo il gioco in rete ha bisogno del server: con `file://` funzionano solo VS LOCALE e VS CPU. Installazione su VPS in `server/LEGGIMI.md`.
+
 | | Giocatore 1 | Giocatore 2 |
 |---|---|---|
 | Muovi | `A` / `D` | `←` / `→` |
@@ -43,7 +54,12 @@ js/Utili.js     → caricamento asset, timer, determinazione vincitore
 js/Stato.js     → stati del gioco (caricamento, menu, partita)
 js/Menu.js      → menu, navigazione da tastiera, voci WIP, fullscreen
 js/Classi.js    → classi Sprite e Lottatore
-assets/         → sprite Player, Enemy, sfondo e logo
+js/Selezione.js → scelta del personaggio
+js/CPU.js       → avversario controllato dal computer
+js/Rete.js      → collegamento WebSocket con il server
+js/Online.js    → VS ONLINE: stanze, fotogrammi di stato, tasti
+server/         → server del gioco (HTTP + WebSocket, senza dipendenze npm)
+assets/         → sprite Player, Enemy, personaggi, sfondo e logo
 ```
 
 ## Stack

@@ -16,7 +16,8 @@ const STATI = {
 // `modalitaPartita` viene impostata dalla selezione e letta da avviaPartita().
 const MODALITA = {
     LOCALE: 'locale',
-    CPU: 'cpu'
+    CPU: 'cpu',
+    ONLINE: 'online'
 };
 
 let modalitaPartita = MODALITA.LOCALE;

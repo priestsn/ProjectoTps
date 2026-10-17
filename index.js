@@ -35,7 +35,8 @@ const hud = {
     enemyHealth: document.querySelector('#enemy-health'),
     enemyStamina: document.querySelector('#enemy-stamina'),
     enemyUltimate: document.querySelector('#enemy-ultimate'),
-    displayText: document.querySelector('#displayText')
+    displayText: document.querySelector('#displayText'),
+    timer: document.querySelector('#timer')
 };
 
 // y della superficie del suolo: i piedi dei lottatori poggiano qui.
@@ -72,6 +73,13 @@ function adattaSfondo() {
  * Adatta canvas, suolo e sfondo alle dimensioni attuali della finestra
  */
 function adattaAllaFinestra() {
+    // In VS ONLINE il campo è fissato all'inizio della partita: ridimensionarlo
+    // farebbe divergere le posizioni tra host e ospite
+    if (onlineStato.attivo) {
+        adattaCanvasOspite();
+        return;
+    }
+
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
@@ -775,6 +783,13 @@ function animate() {
         return;
     }
 
+    // VS ONLINE, lato ospite: nessuna simulazione, si disegna lo stato che
+    // arriva dall'host (js/Online.js)
+    if (onlineStato.attivo && onlineStato.ospite) {
+        aggiornaOspite();
+        return;
+    }
+
     // Pulisci canvas
     c.fillStyle = 'black';
     c.fillRect(0, 0, canvas.width, canvas.height);
@@ -968,6 +983,11 @@ function animate() {
         hud.displayText.style.display = 'flex';
         determineWinner(Player, Enemy, timerId);
     }
+
+    // VS ONLINE, lato host: lo stato appena calcolato va all'ospite
+    if (onlineStato.attivo) {
+        inviaFotogramma();
+    }
 }
 
 // ========================================
@@ -976,6 +996,11 @@ function animate() {
 window.addEventListener('keydown', (event) => {
     // Con il report bug aperto la tastiera serve solo al pannello
     if (reportAperto) {
+        return;
+    }
+
+    // Codice della stanza: la tastiera serve al campo di testo del pannello
+    if (pannelloOnlineAperto()) {
         return;
     }
 
@@ -1012,10 +1037,18 @@ window.addEventListener('keydown', (event) => {
 
     if (gameOver) return;
 
+    // VS ONLINE, lato ospite: i tasti vanno mandati all'host, che simula
+    if (onlineStato.attivo && onlineStato.ospite) {
+        gestisciInputOspite(event, true);
+        return;
+    }
+
     const key = (event.key && event.key.length === 1) ? event.key.toLowerCase() : event.key;
 
-    // In VS CPU il giocatore 2 è controllato dall'IA: nessun tasto umano
-    if (modalitaPartita === MODALITA.CPU && TASTI_P2.includes(key)) {
+    // In VS CPU il giocatore 2 è controllato dall'IA, in VS ONLINE dall'ospite:
+    // nessun tasto umano deve toccarlo
+    if ((modalitaPartita === MODALITA.CPU || modalitaPartita === MODALITA.ONLINE) &&
+        TASTI_P2.includes(key)) {
         return;
     }
 
@@ -1089,8 +1122,17 @@ window.addEventListener('keydown', (event) => {
 window.addEventListener('keyup', (event) => {
     const key = (event.key && event.key.length === 1) ? event.key.toLowerCase() : event.key;
 
+    // VS ONLINE, lato ospite: il rilascio va comunicato all'host
+    if (onlineStato.attivo && onlineStato.ospite) {
+        if (statoCorrente === STATI.PARTITA) {
+            gestisciInputOspite(event, false);
+        }
+        return;
+    }
+
     // In VS CPU i tasti del giocatore 2 non devono toccare l'IA
-    if (modalitaPartita === MODALITA.CPU && TASTI_P2.includes(key)) {
+    if ((modalitaPartita === MODALITA.CPU || modalitaPartita === MODALITA.ONLINE) &&
+        TASTI_P2.includes(key)) {
         return;
     }
 
@@ -1211,7 +1253,12 @@ function avviaPartita(idP1, idP2) {
     hud.enemyUltimate.style.width = '0%';
 
     cambiaStato(STATI.PARTITA);
-    decreaseTimer();
+
+    // In VS ONLINE il tempo lo gestisce solo l'host: l'ospite lo riceve
+    // dentro i fotogrammi di stato
+    if (!(onlineStato.attivo && onlineStato.ospite)) {
+        decreaseTimer();
+    }
 }
 
 /**
@@ -1263,6 +1310,9 @@ function esciAlMenu() {
     cpu = null;
     modalitaPartita = MODALITA.LOCALE;
     proiettili.length = 0;
+
+    // Chiude stanza e collegamento se la partita era online
+    esciOnline();
 
     // Chiude un eventuale report rimasto aperto
     reportAperto = false;

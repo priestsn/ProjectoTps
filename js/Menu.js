@@ -12,7 +12,13 @@ const VOCI_MENU = {
     play: [
         { testo: 'VS LOCALE', azione: () => apriSelezione(MODALITA.LOCALE) },
         { testo: 'VS CPU', azione: () => apriMenu('cpu') },
-        { testo: 'VS ONLINE', wip: true }
+        { testo: 'VS ONLINE', azione: () => apriMenu('online') }
+    ],
+    // VS ONLINE: la sfida in rete passa da una stanza con codice
+    online: [
+        { testo: 'CREA STANZA', azione: () => creaStanzaOnline() },
+        { testo: 'ENTRA CON CODICE', azione: () => apriIngressoOnline() },
+        { testo: 'INDIETRO', azione: () => apriMenu('play') }
     ],
     cpu: [
         { testo: 'FACILE', azione: () => avviaSelezioneCPU('facile') },
@@ -41,6 +47,7 @@ const TITOLI_MENU = {
     principale: 'Ultra Verdello Street Fight 7',
     play: 'PLAY',
     cpu: 'VS CPU',
+    online: 'VS ONLINE',
     settings: 'SETTINGS',
     pausa: 'PAUSA',
     impostazioniPausa: 'IMPOSTAZIONI'
@@ -50,6 +57,7 @@ const TITOLI_MENU = {
 const MENU_PADRE = {
     play: 'principale',
     cpu: 'play',
+    online: 'play',
     settings: 'principale'
 };
 
