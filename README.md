@@ -17,6 +17,10 @@
   <img alt="Bug tracciati" src="https://img.shields.io/badge/bug%20tracciati-32-blue">
 </p>
 
+<p align="center">
+  <a href="https://condo-enhancing-conf-consumers.trycloudflare.com"><strong>Gioca ora: https://condo-enhancing-conf-consumers.trycloudflare.com</strong></a>
+</p>
+
 ![Schermata del gioco](screenshot.png)
 
 <p align="center">
@@ -104,6 +108,19 @@ PORTA=8080 node server/server.js      # porta diversa
 ```
 
 Apri `http://localhost:8080`. Controllo immediato: `http://localhost:8080/stato` restituisce JSON con stanze aperte, connessioni e uptime.
+
+### Indirizzo pubblico già attivo
+
+| Indirizzo | Note |
+|---|---|
+| `https://condo-enhancing-conf-consumers.trycloudflare.com` | HTTPS, passa dalle reti scolastiche e aziendali; è un tunnel Cloudflare rapido, quindi **il nome cambia se il tunnel viene riavviato** |
+| `http://217.61.59.110` | sempre valido, in chiaro sulla porta 80 (può essere bloccato da proxy scolastici) |
+
+Se il tunnel riparte e il nome cambia, il nuovo indirizzo si legge sulla VPS con:
+
+```bash
+grep -Eo 'https://[a-z0-9-]+\.trycloudflare\.com' /var/log/uvsf7-tunnel.log | tail -1
+```
 
 > Con `file://` funzionano solo VS LOCALE e VS CPU: senza server non esiste l'indirizzo WebSocket delle stanze né l'invio dei report.
 
