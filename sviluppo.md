@@ -478,6 +478,8 @@ A fine partita si apre da sola la schermata `FINE PARTITA` (stato `PAUSA`, il ri
 | `CAMBIA PERSONAGGI` | torna alla selezione del personaggio della stessa modalità |
 | `ESCI AL MENU` | menu principale |
 
+La schermata compare sia quando un lottatore finisce la vita sia quando scade il tempo (BUG-32, corretto il 17/10/2026).
+
 In **VS ONLINE**: l'host che sceglie `RIVINCITA` rimanda `avvia` (l'ospite riparte da solo); l'ospite che la sceglie manda `rivincita` e l'host riavvia entrambi. `CAMBIA PERSONAGGI` manda `selezione`: la schermata si apre su tutti e due, così la scelta resta condivisa.
 
 ### Selezione del personaggio diversa per modalità

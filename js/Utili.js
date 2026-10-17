@@ -136,6 +136,10 @@ function decreaseTimer() {
             gameOver = true;
             document.querySelector('#displayText').style.display = 'flex';
             determineWinner(Player, Enemy, timerId);
+
+            // Anche chiudendo ai punti compare il menu di fine partita (BUG-32):
+            // prima il menu lo apriva solo la morte di un lottatore
+            apriMenu('finePartita', STATI.PAUSA);
         }
     }, 1000);
 }

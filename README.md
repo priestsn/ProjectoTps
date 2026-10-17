@@ -14,15 +14,20 @@
   <img alt="Canvas 2D" src="https://img.shields.io/badge/rendering-Canvas%202D-e34f26">
   <img alt="Node" src="https://img.shields.io/badge/server-Node%2018%2B-339933?logo=nodedotjs&logoColor=white">
   <img alt="Dipendenze" src="https://img.shields.io/badge/dipendenze-0-brightgreen">
-  <img alt="Bug tracciati" src="https://img.shields.io/badge/bug%20tracciati-31-blue">
+  <img alt="Bug tracciati" src="https://img.shields.io/badge/bug%20tracciati-32-blue">
 </p>
 
 ![Schermata del gioco](screenshot.png)
+
+<p align="center">
+  <em>Partita VS LOCALE: ultimate di Chidi Okonkwo, stato <code>CONGELATO</code> sull'avversario, HUD completo.</em>
+</p>
 
 ---
 
 ## Indice
 
+- [Galleria](#galleria)
 - [Il gioco](#il-gioco)
 - [Avvio rapido](#avvio-rapido)
 - [Comandi](#comandi)
@@ -37,6 +42,24 @@
 - [Qualità e verifiche](#qualità-e-verifiche)
 - [Requisiti](#requisiti)
 - [Crediti e licenze](#crediti-e-licenze)
+
+---
+
+## Galleria
+
+Tutte le immagini sono prese dalla versione attuale del gioco.
+
+| Menu principale | Selezione del personaggio |
+|---|---|
+| ![Menu](docs/screenshots/menu.png) | ![Selezione](docs/screenshots/selezione.png) |
+
+| Fine partita con rivincita | Keybinds |
+|---|---|
+| ![Fine partita](docs/screenshots/fine-partita.png) | ![Keybinds](docs/screenshots/keybinds.png) |
+
+| Telefono in orizzontale | Telefono in verticale |
+|---|---|
+| ![Mobile orizzontale](docs/screenshots/mobile-orizzontale.png) | ![Mobile verticale](docs/screenshots/mobile.png) |
 
 ---
 
@@ -56,7 +79,7 @@ Ultra Verdello Street Fight 7 (UVSF7) è un picchiaduro bidimensionale completo,
 - **Keybinds**: tasti rimappabili per entrambi i giocatori, salvati nel browser.
 - **Strumenti di debug**: tasto `U` per le hitbox e pannello con frame e stati dei lottatori.
 
-Il progetto è accompagnato da due documenti di lavoro tenuti aggiornati: [`sviluppo.md`](sviluppo.md) (piano a fasi, decisioni, bilanciamento) e [`bugs.md`](bugs.md) (31 bug con causa, fix e verifiche).
+Il progetto è accompagnato da due documenti di lavoro tenuti aggiornati: [`sviluppo.md`](sviluppo.md) (piano a fasi, decisioni, bilanciamento) e [`bugs.md`](bugs.md) (32 bug con causa, fix e verifiche).
 
 ---
 
@@ -339,7 +362,7 @@ server/LEGGIMI.md     installazione e messa online
 assets/Personaggi/    sprite per personaggio: idle, run, jump, fall, attack, takehit, death, parry
 assets/               sfondo animato, logo, sprite storici Player/Enemy
 sviluppo.md           piano a fasi, decisioni, tabelle di bilanciamento
-bugs.md               31 bug con causa, fix e verifiche
+bugs.md               32 bug con causa, fix e verifiche
 ```
 
 | File | Righe |
@@ -398,7 +421,7 @@ L'ordine conta: gli script condividono lo scope globale e usano solo dichiarazio
 
 Il progetto tiene un registro dei bug reale, non decorativo:
 
-- **31 bug** documentati in [`bugs.md`](bugs.md) con causa, impatto, fix e verifica: tutti chiusi. Dove la correzione è parziale il motivo è dichiarato (per esempio la dipendenza dal frame rate è una scelta di progetto: logica per frame, senza `deltaTime`).
+- **32 bug** documentati in [`bugs.md`](bugs.md) con causa, impatto, fix e verifica: tutti chiusi. Dove la correzione è parziale il motivo è dichiarato (per esempio la dipendenza dal frame rate è una scelta di progetto: logica per frame, senza `deltaTime`).
 - **12 giri di fix** con data, elenco delle modifiche e tabella delle verifiche eseguite.
 - Verifiche fatte nel browser reale, non solo a occhio: frame fatti avanzare a mano per controllare stun, carica, perfect block e fine partita; due schede collegate al server per la rete; viewport telefono per il layout mobile.
 

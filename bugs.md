@@ -40,6 +40,7 @@ Verifiche eseguite: lettura completa del codice, confronto percorsi asset ↔ fi
 | BUG-29 | Risolto | `index.js`, `js/Classi.js`, `js/CPU.js` | Attacco caricato immediato e senza drawback: ora richiede 1 secondo di carica e parte al rilascio |
 | BUG-30 | Risolto | `index.js` (comandi condivisi) | La CPU restava bloccata in `TakeHit`: poteva iniziare parata/carica/ultimate durante `isTakingDmg`, ma lo sprite non poteva cambiare |
 | BUG-31 | Risolto | `index.js` (`risolviImpatto`), `js/Classi.js` | Le ultimate mischia applicavano danno più volte durante lo stesso frame d'impatto |
+| BUG-32 | Risolto | `js/Utili.js` (`decreaseTimer`) | Partita chiusa allo scadere del tempo: nessun menu di fine partita, quindi niente rivincita |
 
 ---
 
@@ -692,6 +693,20 @@ Il lottatore completa l'animazione di colpo subito e poi torna in `idle`.
 **RISOLTO** — nuovo flag `ultimateHaColpito`, resettato in `avviaAttacco()` e impostato al primo impatto; `risolviImpatto` esce se l'ultimate ha già fatto centro. Ogni ultimate mischia colpisce una sola volta per attivazione.
 
 **Verifica:** Ousmane 20 danni, Chidi 24, Tarisai 20 + veleno; Zuri: attacco normale da 10 → 13 con marchio (+30%).
+
+---
+
+## BUG-32 — [Medio] Allo scadere del tempo non compariva il menu di fine partita
+
+**Dove:** `js/Utili.js` (`decreaseTimer`), `index.js` (blocco di fine gioco).
+
+**Causa:** il menu `FINE PARTITA` (rivincita, cambio personaggi, esci) veniva aperto solo dal blocco in `animate()` che reagisce a `Player.health <= 0 || Enemy.health <= 0`. Quando la partita finiva **ai punti**, il ramo del timer impostava `gameOver`, mostrava il vincitore e si fermava lì: il giocatore restava sul risultato senza rivincita e doveva tornare al menu con `Esc`.
+
+**Impatto:** in tutte le partite concluse per tempo (caso frequente: 60 secondi senza KO) mancava la schermata di fine partita con le opzioni di rivincita.
+
+**RISOLTO** — il ramo del timer chiama `apriMenu('finePartita', STATI.PAUSA)` dopo `determineWinner`, come fa la morte di un lottatore.
+
+**Verifica (browser, gioco reale):** partita con timer portato a 1 secondo e vita non azzerata -> allo scadere compaiono `Giocatore 1 Vince!` e il menu `FINE PARTITA` con `RIVINCITA`, `CAMBIA PERSONAGGI`, `ESCI AL MENU`; `RIVINCITA` riavvia con gli stessi personaggi.
 
 ---
 
