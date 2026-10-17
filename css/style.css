@@ -641,3 +641,212 @@ canvas {
     z-index: 70;
     pointer-events: none;
 }
+
+/* ========================================
+   Comandi touch (telefono e tablet)
+   ========================================== */
+/* Livello trasparente sopra il canvas: le zone attive riattivano i tocchi,
+   il centro resta libero per non coprire il combattimento. */
+.comandi-touch {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 12px 16px 18px;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px;
+    z-index: 35;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    pointer-events: none;
+}
+
+.comandi-touch > * {
+    pointer-events: auto;
+}
+
+.zona-leva {
+    display: flex;
+    align-items: center;
+}
+
+/* Leva virtuale: il pomello si trascina, la base resta ferma */
+.leva-touch {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 136px;
+    height: 136px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.12), rgba(0, 0, 0, 0.45));
+    touch-action: none;
+}
+
+.leva-touch.attiva {
+    border-color: #7dff7d;
+    background: radial-gradient(circle, rgba(125, 255, 125, 0.18), rgba(0, 0, 0, 0.45));
+}
+
+.leva-pomello {
+    width: 58px;
+    height: 58px;
+    border: 2px solid rgba(0, 0, 0, 0.4);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.55);
+    pointer-events: none;
+}
+
+.zona-tasti {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.riga-tasti {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+}
+
+/* Sigla del giocatore: compare solo con due gruppi sullo stesso schermo */
+.etichetta-giocatore {
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: #9a9a9a;
+}
+
+.tasto-touch {
+    width: 76px;
+    height: 76px;
+    font-family: inherit;
+    font-size: 15px;
+    letter-spacing: 1px;
+    color: white;
+    background: rgba(0, 0, 0, 0.45);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    touch-action: none;
+}
+
+.tasto-touch.attacco {
+    color: #ffb3a1;
+    border-color: #ff6b4a;
+}
+
+.tasto-touch.parata {
+    color: #c3d6ff;
+    border-color: #8ab4ff;
+}
+
+.tasto-touch.ultimate {
+    width: 68px;
+    height: 68px;
+    font-size: 13px;
+    color: #ffe9a1;
+    border-color: #ffd34d;
+}
+
+.tasto-touch.premuto {
+    color: white;
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* Due giocatori sullo stesso schermo: comandi più compatti per stare in due */
+.comandi-touch.due-giocatori .leva-touch {
+    width: 108px;
+    height: 108px;
+}
+
+.comandi-touch.due-giocatori .leva-pomello {
+    width: 46px;
+    height: 46px;
+}
+
+.comandi-touch.due-giocatori .riga-tasti {
+    gap: 8px;
+}
+
+.comandi-touch.due-giocatori .tasto-touch {
+    width: 58px;
+    height: 58px;
+    font-size: 12px;
+}
+
+/* Telefono in verticale: invito a ruotarlo */
+.comandi-touch.verticale::before {
+    content: 'Gira il telefono in orizzontale per giocare meglio';
+    position: absolute;
+    top: -34px;
+    left: 0;
+    right: 0;
+    font-size: 13px;
+    text-align: center;
+    color: #b8b8b8;
+    pointer-events: none;
+}
+
+/* Schermi stretti (telefono): comandi più piccoli e, con due giocatori,
+   due file per non farli uscire dallo schermo */
+@media (max-width: 700px) {
+    .comandi-touch {
+        padding: 8px 10px 12px;
+    }
+
+    .leva-touch {
+        width: 112px;
+        height: 112px;
+    }
+
+    .leva-pomello {
+        width: 48px;
+        height: 48px;
+    }
+
+    .riga-tasti {
+        gap: 10px;
+    }
+
+    .tasto-touch {
+        width: 64px;
+        height: 64px;
+        font-size: 13px;
+    }
+
+    .tasto-touch.ultimate {
+        width: 56px;
+        height: 56px;
+        font-size: 11px;
+    }
+
+    .comandi-touch.due-giocatori {
+        flex-wrap: wrap;
+        row-gap: 6px;
+    }
+
+    .comandi-touch.due-giocatori .leva-touch {
+        width: 84px;
+        height: 84px;
+    }
+
+    .comandi-touch.due-giocatori .leva-pomello {
+        width: 36px;
+        height: 36px;
+    }
+
+    .comandi-touch.due-giocatori .tasto-touch {
+        width: 48px;
+        height: 48px;
+        font-size: 10px;
+    }
+
+    .comandi-touch.due-giocatori .riga-tasti {
+        gap: 6px;
+    }
+}

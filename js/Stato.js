@@ -41,6 +41,11 @@ let statoCorrente = STATI.CARICAMENTO;
 function cambiaStato(nuovoStato) {
     statoCorrente = nuovoStato;
     aggiornaVisibilita();
+
+    // I comandi touch compaiono solo in partita (js/Touch.js)
+    if (typeof aggiornaComandiTouch === 'function') {
+        aggiornaComandiTouch();
+    }
 }
 
 /**

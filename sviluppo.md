@@ -347,3 +347,49 @@ Due giocatori su macchine diverse, stanza con codice, combattimento in rete. Il 
 - fotogrammi ricevuti dall'ospite con posizioni, timer e HUD coerenti;
 - uscita dell'ospite: l'host torna al menu con l'avviso "L'AVVERSARIO HA LASCIATO LA STANZA";
 - nessun errore JavaScript nelle due pagine.
+
+---
+
+## 11. Comandi touch — telefono e tablet (17/10/2026)
+
+In partita, su un dispositivo touch, compaiono leva virtuale e tasti a schermo. Non esiste una seconda logica di input: i comandi virtuali mandano gli **stessi eventi di tastiera** dei tasti veri, quindi menu, selezione, partita e VS ONLINE funzionano senza modifiche.
+
+### Disposizione
+
+| Modalità | Comandi |
+|---|---|
+| VS CPU | un solo gruppo: leva a sinistra, ATT/PAR/ULT a destra (tasti del giocatore 1) |
+| VS ONLINE | un solo gruppo, con i tasti del giocatore che sta usando il telefono: P1 per l'host, P2 per l'ospite |
+| VS LOCALE | due gruppi con sigla P1 / P2, uno per lato |
+
+### Comandi
+
+- **leva**: il pomello si trascina (corsa 46 px, zona morta 14 px). Orizzontale = movimento, verticale verso l'alto = salto (uno per trascinamento).
+- **ATT**: `pointerdown` avvia la carica, `pointerup` chiude il colpo: identico al tasto tenuto premuto.
+- **PAR**: parata finché il dito resta sul tasto.
+- **ULT**: colpo singolo.
+
+### Quando compaiono
+
+`js/Touch.js` li costruisce e li mostra solo con `statoCorrente === STATI.PARTITA` e su dispositivo touch: `navigator.maxTouchPoints > 0` **e** `hover: none` (o `pointer: coarse`). Un PC con schermo touch ma con mouse resta a tastiera. In pausa, a partita finita e nei menu spariscono, e `rilasciTuttoTouch()` manda i `keyup` per non lasciare tasti premuti.
+
+### File
+
+| File | Ruolo |
+|---|---|
+| `js/Touch.js` | rilevamento del dispositivo, costruzione della leva e dei tasti, invio degli eventi di tastiera |
+| `css/style.css` | stili dei comandi, versione compatta per due giocatori e per schermi stretti |
+| `js/Stato.js` | `cambiaStato()` richiama `aggiornaComandiTouch()` |
+| `index.html` | contenitore `#comandiTouch`, script `js/Touch.js`, viewport senza zoom |
+
+### Verifiche fatte (17/10/2026)
+
+Con emulazione telefono (430 x 830) e su link pubblico HTTPS:
+
+- comparsa dei comandi solo in partita e solo su touch; nessun comando sul PC con mouse;
+- leva: `keys.a` premuto in movimento, personaggio spostato, rilascio corretto;
+- ATT: carica a 60 frame e colpo caricato al rilascio; PAR del giocatore 2; ULT con avviso del nome;
+- VS LOCALE: due gruppi con sigla, disposti su due file senza uscire dallo schermo;
+- VS ONLINE da ospite: tasti `ù` / `à` / `l` (giocatore 2);
+- pausa: comandi nascosti e tasti rilasciati, di nuovo visibili alla ripresa;
+- nessun errore JavaScript.

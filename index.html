@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ultra Verdello Street Fight 7</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -75,6 +75,9 @@
             </div>
         </div>
 
+        <!-- Comandi touch: leva e tasti, costruiti da js/Touch.js solo in partita -->
+        <div id="comandiTouch" class="comandi-touch"></div>
+
         <!-- VS ONLINE: ingresso in una stanza con codice -->
         <div id="online" class="online-overlay">
             <div class="online-pannello">
@@ -113,7 +116,7 @@
 
     </div>
 
-    <!-- Script: l'ordine conta (Utili -> Stato -> Report -> Menu -> Classi -> Personaggi -> Selezione -> CPU -> Rete -> Online -> index) -->
+    <!-- Script: l'ordine conta (Utili -> Stato -> Report -> Menu -> Classi -> Personaggi -> Selezione -> CPU -> Rete -> Online -> Touch -> index) -->
     <script src="js/Utili.js"></script>
     <script src="js/Stato.js"></script>
     <script src="js/Report.js"></script>
@@ -124,6 +127,7 @@
     <script src="js/CPU.js"></script>
     <script src="js/Rete.js"></script>
     <script src="js/Online.js"></script>
+    <script src="js/Touch.js"></script>
     <script src="index.js"></script>
 </body>
 </html>

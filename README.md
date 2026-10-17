@@ -65,3 +65,14 @@ assets/         → sprite Player, Enemy, personaggi, sfondo e logo
 ## Stack
 
 JavaScript (nessun framework), HTML5 Canvas, CSS.
+
+## Comandi su telefono e tablet
+
+Da telefono o tablet, in partita compaiono da soli i comandi touch (su PC con mouse e tastiera non appaiono):
+
+- **leva virtuale** a sinistra: trascinala a sinistra o a destra per muoversi, in alto per saltare;
+- **ATT** a destra: tienilo premuto per l'attacco caricato, rilascia per colpire;
+- **PAR**: parata (tienilo premuto);
+- **ULT**: ultimate, quando la barra è piena.
+
+In VS LOCALE sullo stesso schermo ci sono due gruppi di comandi, uno per lato, con la sigla P1 / P2. In VS ONLINE il telefono comanda il giocatore che lo sta usando (chi crea la stanza è P1, chi entra è P2). Conviene giocare in orizzontale: in verticale compare un avviso.
