@@ -30,21 +30,21 @@ copre passa.** Niente caselle spuntate "a occhio".
 - [x] Accesso, uscita, sessione con token che scade
 - [x] Profilo: punti, ELO, lottatori posseduti, statistiche
 - [x] Ruolo amministratore (`--promuovi-admin`)
-- [ ] Schermate di iscrizione e accesso nel gioco (client)
+- [x] Schermate di iscrizione e accesso nel gioco (client)
 
 ## 2. Lottatori
 
 - [x] Catalogo dei 9 lottatori in `dati/negozio.json`
 - [x] 6 disponibili dall'iscrizione, 3 da sbloccare (Bakari 2.500, Sekou 3.500, Ayo 4.000)
-- [ ] Card bloccata con lucchetto e prezzo nella schermata di selezione
-- [ ] Selezione che non permette di usare un lottatore non posseduto
+- [x] Card bloccata con lucchetto e prezzo nella schermata di selezione
+- [x] Selezione che non permette di usare un lottatore non posseduto
 
 ## 3. Negozio e punti
 
 - [x] Catalogo letto da `dati/negozio.json`
 - [x] Acquisto che scala i punti e sblocca il lottatore
 - [x] Messaggio chiaro se i punti non bastano (402) o se è già tuo (409)
-- [ ] Schermata del negozio nel gioco (client)
+- [x] Schermata del negozio nel gioco (client)
 - [ ] Punti per partita ranked, amichevole e torneo
 - [ ] Nessun punto per partite non validate dal server
 

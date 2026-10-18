@@ -1408,5 +1408,12 @@ avviaGiocoQuandoPronto(() => {
     aggiornaScalaSchermo();
     adattaSfondo();
     apriMenu('principale');
+
+    // Se c'è un token salvato si riprende la sessione senza chiedere niente:
+    // se è scaduto, il primo errore la dimentica e si resta fuori.
+    if (typeof riprendiSessione === 'function') {
+        riprendiSessione().then(() => { if (statoAccount.dentro) disegnaMenu(); });
+    }
+
     animate();
 });

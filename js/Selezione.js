@@ -56,6 +56,12 @@ function disegnaSelezione() {
         const cella = document.createElement('div');
         cella.className = 'cella';
 
+        // I lottatori non posseduti si vedono ma non si possono scegliere
+        const posseduto = lottatorePosseduto(personaggio.id);
+        if (!posseduto) {
+            cella.className += ' bloccata';
+        }
+
         // In VS ONLINE il cursore dell'avversario non va mostrato finché non ha
         // scelto: altrimenti sembra che stia scorrendo anche lui
         const mostraP1 = controllaCursoreP1() || confermatoP1;
@@ -90,6 +96,14 @@ function disegnaSelezione() {
 
         cella.appendChild(ritratto);
         cella.appendChild(nome);
+
+        if (!posseduto) {
+            const voce = voceNegozio(personaggio.id);
+            const blocco = document.createElement('div');
+            blocco.className = 'cella-blocco';
+            blocco.textContent = voce ? 'BLOCCATO — ' + voce.prezzo + ' PUNTI' : 'BLOCCATO';
+            cella.appendChild(blocco);
+        }
         griglia.appendChild(cella);
     });
 
@@ -102,6 +116,15 @@ function disegnaSelezione() {
  * P1 se non ha ancora confermato, altrimenti P2 (solo in VS LOCALE).
  */
 function toccaCella(indice) {
+    // Un lottatore non posseduto non sposta nemmeno il cursore: si vede il
+    // blocco e il prezzo, e il tocco spiega dove sbloccarlo.
+    if (!lottatorePosseduto(PERSONAGGI[indice].id)) {
+        if (typeof mostraAvviso === 'function') {
+            mostraAvviso('Lottatore bloccato: si sblocca nel negozio', '#e0a020');
+        }
+        return;
+    }
+
     if (!confermatoP1 && controllaCursoreP1()) {
         sceltaP1 = indice;
         disegnaSelezione();
@@ -319,19 +342,48 @@ function spostaCursore(giocatore, passo) {
 
     if (giocatore === 1) {
         if (confermatoP1) return;
-        sceltaP1 = (sceltaP1 + passo + totale) % totale;
+        sceltaP1 = prossimoSelezionabile(sceltaP1, passo);
     } else {
         if (confermatoP2) return;
-        sceltaP2 = (sceltaP2 + passo + totale) % totale;
+        sceltaP2 = prossimoSelezionabile(sceltaP2, passo);
     }
 
     disegnaSelezione();
 }
 
 /**
+ * Prossimo lottatore selezionabile nella direzione del passo: salta quelli
+ * bloccati, così il cursore non si ferma mai su chi non si possiede.
+ */
+function prossimoSelezionabile(indicePartenza, passo) {
+    const totale = PERSONAGGI.length;
+    let indice = indicePartenza;
+
+    for (let giro = 0; giro < totale; giro++) {
+        indice = (indice + passo + totale) % totale;
+        if (lottatorePosseduto(PERSONAGGI[indice].id)) {
+            return indice;
+        }
+    }
+    return indicePartenza;
+}
+
+/**
  * Conferma la scelta di un giocatore
  */
 function confermaScelta(giocatore) {
+    const indiceScelto = giocatore === 1 ? sceltaP1 : sceltaP2;
+    const personaggioScelto = PERSONAGGI[indiceScelto];
+
+    // Un lottatore non posseduto non si può confermare: il blocco vale anche
+    // per la CPU, che sceglierebbe un personaggio non acquistato.
+    if (!lottatorePosseduto(personaggioScelto.id)) {
+        if (typeof mostraAvviso === 'function') {
+            mostraAvviso('Lottatore bloccato: si sblocca nel negozio', '#e0a020');
+        }
+        return;
+    }
+
     if (giocatore === 1) {
         confermatoP1 = true;
     } else {

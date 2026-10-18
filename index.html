@@ -16,7 +16,7 @@
          il telefono può tenere in cache il CSS vecchio insieme al JS nuovo e la
          pagina si rompe in modi difficili da spiegare (è successo: sfondo
          piccolo in alto a sinistra, selezione tagliata). -->
-    <link rel="stylesheet" href="css/style.css?v=3">
+    <link rel="stylesheet" href="css/style.css?v=4">
 </head>
 <body>
     <div id="areaGioco">
@@ -91,6 +91,12 @@
             <div id="keybindsStato" class="keybinds-stato"></div>
         </div>
 
+        <!-- Account: iscrizione, accesso e profilo (js/Account.js) -->
+        <div id="account" class="schermata"></div>
+
+        <!-- Negozio dei lottatori (js/Negozio.js) -->
+        <div id="negozio" class="schermata"></div>
+
         <!-- Comandi touch: leva e tasti, costruiti da js/Touch.js solo in partita -->
         <div id="comandiTouch" class="comandi-touch"></div>
 
@@ -141,18 +147,21 @@
 
     <!-- Script: l'ordine conta (Utili -> Stato -> Keybinds -> Report -> Menu -> Classi -> Personaggi -> Selezione -> CPU -> Rete -> Online -> Touch -> index).
          Il ?v= è la stessa versione del CSS: si aumenta a ogni rilascio. -->
-    <script src="js/Utili.js?v=3"></script>
-    <script src="js/Stato.js?v=3"></script>
-    <script src="js/Keybinds.js?v=3"></script>
-    <script src="js/Report.js?v=3"></script>
-    <script src="js/Menu.js?v=3"></script>
-    <script src="js/Classi.js?v=3"></script>
-    <script src="js/Personaggi.js?v=3"></script>
-    <script src="js/Selezione.js?v=3"></script>
-    <script src="js/CPU.js?v=3"></script>
-    <script src="js/Rete.js?v=3"></script>
-    <script src="js/Online.js?v=3"></script>
-    <script src="js/Touch.js?v=3"></script>
-    <script src="index.js?v=3"></script>
+    <script src="js/Utili.js?v=4"></script>
+    <script src="js/Stato.js?v=4"></script>
+    <script src="js/Api.js?v=4"></script>
+    <script src="js/Keybinds.js?v=4"></script>
+    <script src="js/Report.js?v=4"></script>
+    <script src="js/Menu.js?v=4"></script>
+    <script src="js/Account.js?v=4"></script>
+    <script src="js/Negozio.js?v=4"></script>
+    <script src="js/Classi.js?v=4"></script>
+    <script src="js/Personaggi.js?v=4"></script>
+    <script src="js/Selezione.js?v=4"></script>
+    <script src="js/CPU.js?v=4"></script>
+    <script src="js/Rete.js?v=4"></script>
+    <script src="js/Online.js?v=4"></script>
+    <script src="js/Touch.js?v=4"></script>
+    <script src="index.js?v=4"></script>
 </body>
 </html>

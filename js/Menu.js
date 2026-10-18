@@ -7,6 +7,8 @@
 const VOCI_MENU = {
     principale: [
         { testo: 'PLAY', azione: () => apriMenu('play') },
+        { testo: 'ACCOUNT', azione: () => apriAccount() },
+        { testo: 'NEGOZIO', azione: () => apriNegozio() },
         { testo: 'SETTINGS', azione: () => apriMenu('settings') }
     ],
     play: [
