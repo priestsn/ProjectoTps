@@ -72,6 +72,7 @@ function pubblico(giocatore) {
         sconfitte: giocatore.sconfitte,
         pareggi: giocatore.pareggi || 0,
         partiteGiocate: giocatore.partiteGiocate || 0,
+        partiteRanked: giocatore.partiteRanked || 0,
         partiteOggi: giocatore.partiteOggi || 0,
         serie: giocatore.serie,
         provvisorio: giocatore.provvisorio,

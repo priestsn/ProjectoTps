@@ -13,6 +13,7 @@ const { Magazzino } = require('./dati.js');
 const account = require('./account.js');
 const partite = require('./partite.js');
 const amici = require('./amici.js');
+const classificaModulo = require('./classifica.js');
 
 const RADICE = path.resolve(__dirname, '..');
 
@@ -168,7 +169,12 @@ async function gestisciApi(richiesta, risposta) {
             const giocatore = giocatoreDaRichiesta(richiesta);
             if (!giocatore) { rispondi(risposta, 401, { messaggio: MESSAGGIO_SESSIONE }); return true; }
             const esito = partite.avviaPartita(magazzino, giocatore, corpo);
-            rispondi(risposta, 200, esito);
+            if (!esito.ok) { rispondi(risposta, esito.stato || 400, { messaggio: esito.messaggio }); return true; }
+            rispondi(risposta, 200, {
+                partitaId: esito.partitaId,
+                modo: esito.modo,
+                avversario: esito.avversario
+            });
             return true;
         }
 
@@ -182,8 +188,19 @@ async function gestisciApi(richiesta, risposta) {
                 puntiGuadagnati: esito.puntiGuadagnati,
                 contata: esito.contata,
                 partiteOggi: esito.partiteOggi,
-                limiteGiornaliero: esito.limiteGiornaliero
+                limiteGiornaliero: esito.limiteGiornaliero,
+                elo: esito.elo,
+                eloGuadagnato: esito.eloGuadagnato,
+                avversario: esito.avversario
             });
+            return true;
+        }
+
+        case 'GET /api/classifica': {
+            // Visibile anche senza account: la classifica è pubblica, come in
+            // ogni gioco competitivo. Non contiene dati personali, solo nick e
+            // numeri di gioco.
+            rispondi(risposta, 200, classificaModulo.classifica(magazzino));
             return true;
         }
 

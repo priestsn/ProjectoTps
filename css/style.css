@@ -1261,7 +1261,8 @@ canvas {
    ========================================== */
 #account,
 #negozio,
-#amici {
+#amici,
+#classifica {
     gap: 12px;
     padding: 22px;
     overflow-y: auto;
@@ -1529,5 +1530,80 @@ canvas {
     font-size: 14px;
     letter-spacing: 0;
 }
+
+/* ========================================
+   Classifica
+   ========================================== */
+.classifica-titolo {
+    font-size: 40px;
+    letter-spacing: 4px;
+    color: white;
+}
+
+.classifica-nota {
+    font-size: 15px;
+    color: #9a9a9a;
+    text-align: center;
+}
+
+.classifica-tabella {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 640px;
+    border: 1px solid #333333;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.classifica-riga {
+    display: grid;
+    grid-template-columns: 46px 1fr 76px 76px 84px;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: #0d0d0d;
+    border-top: 1px solid #1e1e1e;
+}
+
+.classifica-riga.intestazione {
+    border-top: none;
+    background-color: #161616;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: #9a9a9a;
+}
+
+/* La propria riga: si riconosce senza doverla cercare */
+.classifica-riga.mia {
+    background-color: #102010;
+}
+
+.classifica-riga.provvisoria .classifica-nick {
+    color: #9a9a9a;
+}
+
+.classifica-pos {
+    color: #ffd34d;
+    font-size: 16px;
+}
+
+.classifica-nick {
+    color: white;
+    font-size: 16px;
+}
+
+.classifica-numero {
+    font-size: 15px;
+    color: #b8b8b8;
+    text-align: right;
+}
+
+.classifica-vuota {
+    padding: 14px 12px;
+    font-size: 15px;
+    color: #9a9a9a;
+}
+
 
 

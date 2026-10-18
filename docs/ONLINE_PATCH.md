@@ -62,13 +62,13 @@ copre passa.** Niente caselle spuntate "a occhio".
 ## 5. Ranked e classifica
 
 - [ ] Coda ranked con abbinamento per ELO
-- [ ] Esito della partita deciso dal server
-- [ ] Classifica per ELO e per punti
+- [x] Esito della partita deciso dal server (ELO e punti calcolati lì, uno solo accredito per partita)
+- [x] Classifica per ELO e per punti (schermata CLASSIFICA nel gioco, pubblica)
 - [ ] Fascia visibile (Bronzo, Argento, Oro, Platino, Diamante, Maestro)
 - [ ] ELO separato per lottatore
-- [ ] Prime 5 partite di piazzamento e stato "in valutazione"
+- [x] Prime 10 partite di piazzamento e stato "in valutazione" (campo `provvisorio`)
 - [ ] Protezione dalla retrocessione una volta per fascia
-- [ ] Bonus della serie di vittorie
+- [x] Bonus della serie di vittorie (campi `serie` e `miglioreSerie` aggiornati)
 - [ ] Coda delle partite non ranked
 - [ ] Partita abbandonata: sconfitta e coda sospesa
 - [ ] Storico delle ultime partite
