@@ -243,6 +243,13 @@ function gestisciMessaggioOnline(dati) {
             onlineStato.codice = dati.codice;
             onlineStato.ospite = false;
             onlineStato.idAvversario = null;
+
+            // Se la stanza nasce dalla coda ranked, il codice va comunicato al
+            // server: l'avversario lo sta aspettando per entrare da solo.
+            if (typeof pubblicaCodiceCoda === 'function') {
+                pubblicaCodiceCoda(dati.codice);
+            }
+
             chiudiPannelloOnline();
             aggiornaBadgeOnline();
             apriSelezione(MODALITA.ONLINE);

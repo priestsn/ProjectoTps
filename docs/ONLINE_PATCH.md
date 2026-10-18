@@ -61,7 +61,8 @@ copre passa.** Niente caselle spuntate "a occhio".
 
 ## 5. Ranked e classifica
 
-- [ ] Coda ranked con abbinamento per ELO
+- [x] Coda ranked con abbinamento per ELO (`/api/coda/entra|stato|esci`, finestra ±300 → ±600 → ±1000)
+- [x] Passaggio automatico del codice stanza dal padrone all'ospite (`/api/coda/codice`)
 - [x] Esito della partita deciso dal server (ELO e punti calcolati lì, uno solo accredito per partita)
 - [x] Classifica per ELO e per punti (schermata CLASSIFICA nel gioco, pubblica)
 - [ ] Fascia visibile (Bronzo, Argento, Oro, Platino, Diamante, Maestro)

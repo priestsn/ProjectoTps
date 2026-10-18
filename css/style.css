@@ -1262,7 +1262,8 @@ canvas {
 #account,
 #negozio,
 #amici,
-#classifica {
+#classifica,
+#coda {
     gap: 12px;
     padding: 22px;
     overflow-y: auto;
@@ -1603,6 +1604,44 @@ canvas {
     padding: 14px 12px;
     font-size: 15px;
     color: #9a9a9a;
+}
+
+/* ========================================
+   Coda ranked
+   ========================================== */
+.coda-titolo {
+    font-size: 40px;
+    letter-spacing: 4px;
+    color: white;
+}
+
+.coda-nota {
+    max-width: 560px;
+    font-size: 15px;
+    color: #9a9a9a;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.coda-riga {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    min-width: 260px;
+    padding: 8px 14px;
+    border: 1px solid #333333;
+    border-radius: 6px;
+    background-color: #0d0d0d;
+}
+
+.coda-etichetta {
+    font-size: 16px;
+    color: #b8b8b8;
+}
+
+.coda-valore {
+    font-size: 18px;
+    color: #ffd34d;
 }
 
 

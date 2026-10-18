@@ -14,6 +14,7 @@ const account = require('./account.js');
 const partite = require('./partite.js');
 const amici = require('./amici.js');
 const classificaModulo = require('./classifica.js');
+const coda = require('./coda.js');
 
 const RADICE = path.resolve(__dirname, '..');
 
@@ -243,6 +244,45 @@ async function gestisciApi(richiesta, risposta) {
             const giocatore = giocatoreDaRichiesta(richiesta);
             if (!giocatore) { rispondi(risposta, 401, { messaggio: MESSAGGIO_SESSIONE }); return true; }
             rispondiAmici(risposta, amici.rimuovi(magazzino, giocatore, account.elencoGiocatori(magazzino), corpo.nick));
+            return true;
+        }
+
+        case 'POST /api/coda/entra': {
+            const giocatore = giocatoreDaRichiesta(richiesta);
+            if (!giocatore) { rispondi(risposta, 401, { messaggio: MESSAGGIO_SESSIONE }); return true; }
+            const esito = coda.entra(magazzino, giocatore, partite);
+            if (!esito.ok) { rispondi(risposta, esito.stato || 500, { messaggio: esito.messaggio }); return true; }
+            rispondi(risposta, 200, esito);
+            return true;
+        }
+
+        case 'GET /api/coda/stato': {
+            const giocatore = giocatoreDaRichiesta(richiesta);
+            if (!giocatore) { rispondi(risposta, 401, { messaggio: MESSAGGIO_SESSIONE }); return true; }
+            rispondi(risposta, 200, coda.statoCoda(magazzino, giocatore));
+            return true;
+        }
+
+        case 'POST /api/coda/esci': {
+            const giocatore = giocatoreDaRichiesta(richiesta);
+            if (!giocatore) { rispondi(risposta, 401, { messaggio: MESSAGGIO_SESSIONE }); return true; }
+            rispondi(risposta, 200, coda.esci(magazzino, giocatore));
+            return true;
+        }
+
+        case 'POST /api/coda/codice': {
+            const giocatore = giocatoreDaRichiesta(richiesta);
+            if (!giocatore) { rispondi(risposta, 401, { messaggio: MESSAGGIO_SESSIONE }); return true; }
+            const esito = coda.consegnaCodice(magazzino, giocatore, corpo.codice);
+            if (!esito.ok) { rispondi(risposta, esito.stato || 400, { messaggio: esito.messaggio }); return true; }
+            rispondi(risposta, 200, esito);
+            return true;
+        }
+
+        case 'GET /api/coda/codice': {
+            const giocatore = giocatoreDaRichiesta(richiesta);
+            if (!giocatore) { rispondi(risposta, 401, { messaggio: MESSAGGIO_SESSIONE }); return true; }
+            rispondi(risposta, 200, coda.codiceDisponibile(magazzino, giocatore));
             return true;
         }
 

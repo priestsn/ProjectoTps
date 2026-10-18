@@ -7,6 +7,7 @@
 const VOCI_MENU = {
     principale: [
         { testo: 'PLAY', azione: () => apriMenu('play') },
+        { testo: 'RANKED', azione: () => apriCodaRanked() },
         { testo: 'ACCOUNT', azione: () => apriAccount() },
         { testo: 'NEGOZIO', azione: () => apriNegozio() },
         { testo: 'AMICI', azione: () => apriAmici() },

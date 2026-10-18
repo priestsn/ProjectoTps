@@ -16,6 +16,10 @@ let partitaPuntiInviata = false;
 
 /** Apre la partita sul server: va chiamata quando l'incontro parte davvero. */
 async function apriPartitaPunti() {
+    // Se la partita è già aperta (per esempio dalla coda ranked) non se ne apre
+    // un'altra: l'identificativo che conta è quello.
+    if (partitaPunti) return;
+
     partitaPunti = null;
     partitaPuntiInviata = false;
 

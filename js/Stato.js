@@ -14,7 +14,8 @@ const STATI = {
     ACCOUNT: 'account',
     NEGOZIO: 'negozio',
     AMICI: 'amici',
-    CLASSIFICA: 'classifica'
+    CLASSIFICA: 'classifica',
+    CODA: 'coda'
 };
 
 // Modalità di gioco e difficoltà della CPU.
@@ -70,6 +71,7 @@ function aggiornaVisibilita() {
     impostaVisibilita('#negozio', statoCorrente === STATI.NEGOZIO);
     impostaVisibilita('#amici', statoCorrente === STATI.AMICI);
     impostaVisibilita('#classifica', statoCorrente === STATI.CLASSIFICA);
+    impostaVisibilita('#coda', statoCorrente === STATI.CODA);
 }
 
 /**
