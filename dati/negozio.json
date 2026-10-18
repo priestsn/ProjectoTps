@@ -1,0 +1,14 @@
+{
+  "versione": 1,
+  "voci": [
+    { "personaggio": "OusmaneDiouf", "prezzo": 0, "ottenutoAllInizio": true, "icona": "assets/interfaccia/personaggi/OusmaneDiouf.png" },
+    { "personaggio": "KwameMensah", "prezzo": 0, "ottenutoAllInizio": true, "icona": "assets/interfaccia/personaggi/KwameMensah.png" },
+    { "personaggio": "ChidiOkonkwo", "prezzo": 0, "ottenutoAllInizio": true, "icona": "assets/interfaccia/personaggi/ChidiOkonkwo.png" },
+    { "personaggio": "AmaraDiallo", "prezzo": 0, "ottenutoAllInizio": true, "icona": "assets/interfaccia/personaggi/AmaraDiallo.png" },
+    { "personaggio": "TarisaiMoyo", "prezzo": 0, "ottenutoAllInizio": true, "icona": "assets/interfaccia/personaggi/TarisaiMoyo.png" },
+    { "personaggio": "ZuriNkosi", "prezzo": 0, "ottenutoAllInizio": true, "icona": "assets/interfaccia/personaggi/ZuriNkosi.png" },
+    { "personaggio": "BakariTraore", "prezzo": 2500, "ottenutoAllInizio": false, "icona": "assets/interfaccia/personaggi/BakariTraore.png" },
+    { "personaggio": "SekouCamara", "prezzo": 3500, "ottenutoAllInizio": false, "icona": "assets/interfaccia/personaggi/SekouCamara.png" },
+    { "personaggio": "AyoAdebayo", "prezzo": 4000, "ottenutoAllInizio": false, "icona": "assets/interfaccia/personaggi/AyoAdebayo.png" }
+  ]
+}

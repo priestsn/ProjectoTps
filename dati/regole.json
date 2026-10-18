@@ -1,0 +1,43 @@
+{
+  "versione": 1,
+  "account": {
+    "nickMinimo": 3,
+    "nickMassimo": 16,
+    "passwordMinima": 10,
+    "puntiIniziali": 500,
+    "durataSessioneOre": 168
+  },
+  "punti": {
+    "rankedVinta": 100,
+    "rankedPersa": 25,
+    "rankedPari": 50,
+    "amichevoleVinta": 20,
+    "torneoPartecipazione": 100,
+    "torneoVittoriaScontro": 150,
+    "torneoVincitore": 1000
+  },
+  "elo": {
+    "iniziale": 1000,
+    "k": 32,
+    "minimo": 100
+  },
+  "tornei": {
+    "postiMinimi": 4,
+    "postiMassimi": 8,
+    "puntiIscrizione": 0
+  },
+  "admin": {
+    "nickIniziali": ["KRISTIAN"],
+    "possonoCreareTornei": true,
+    "approvazioneIscrizioni": true
+  },
+  "paroleBloccate": [
+    "idiota", "stupido", "scemo", "cretino", "imbecille",
+    "coglione", "merda", "cazzo", "puttana", "troia", "negro", "frocio"
+  ],
+  "tentativiAccesso": {
+    "massimo": 10,
+    "finestraMinuti": 5,
+    "bloccoMinuti": 15
+  }
+}

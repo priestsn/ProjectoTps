@@ -17,6 +17,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { gestisciApi } = require('./api.js');
 
 const PORTA = Number(process.env.PORTA || 80);
 // Con un reverse proxy davanti (Caddy/nginx) il server resta su 127.0.0.1
@@ -25,7 +26,7 @@ const RADICE = path.resolve(__dirname, '..');
 const GUID_WEBSOCKET = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
 // Cartelle che non devono essere servite (codice del server, git, agenti)
-const CARTELLE_NASCOSTE = ['/server', '/.git', '/.github', '/bug_reports', '/node_modules'];
+const CARTELLE_NASCOSTE = ['/server', '/.git', '/.github', '/bug_reports', '/node_modules', '/dati'];
 
 const MIME = {
     '.html': 'text/html; charset=utf-8',
@@ -266,6 +267,19 @@ function gestisciRichiesta(richiesta, risposta) {
         percorso = decodeURIComponent(percorso);
     } catch (e) {
         inviaErrore(risposta, 400, 'Richiesta non valida');
+        return;
+    }
+
+    // API del gioco online: account, negozio, classifica, tornei. Parlano JSON
+    // e stanno sulla stessa porta del WebSocket: un solo indirizzo, niente CORS.
+    if (percorso.startsWith('/api/')) {
+        gestisciApi(richiesta, risposta).catch(function (errore) {
+            console.error('errore nelle API:', errore.message);
+            if (!risposta.headersSent) {
+                risposta.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+            }
+            risposta.end(JSON.stringify({ messaggio: 'Errore interno del server.' }));
+        });
         return;
     }
 

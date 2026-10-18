@@ -8,3 +8,6 @@ stato-git.txt
 # Report bug generati dal server in locale
 reports/
 server/reports/
+
+# Stato di esecuzione del gioco online (account, sessioni, tornei, replay)
+dati/runtime/
