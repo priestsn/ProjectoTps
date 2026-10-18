@@ -96,6 +96,12 @@ function determineWinner(player, enemy, timerId) {
     } else {
         document.querySelector('#displayText').innerHTML = 'Giocatore 2 Vince!';
     }
+
+    // VS ONLINE con account: si comunica l'esito al server, che calcola i punti.
+    // In locale e contro la CPU non si accredita niente.
+    if (typeof chiudiPartitaPunti === 'function' && typeof esitoPerP1 === 'function') {
+        chiudiPartitaPunti(esitoPerP1());
+    }
 }
 
 let timer = 60;

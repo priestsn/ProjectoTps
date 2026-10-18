@@ -491,6 +491,8 @@ function inviaFotogramma() {
         pro: statoProiettili(),
         timer: timer,
         over: gameOver ? 1 : 0,
+        // Esito dell'incontro secondo l'host (P1): all'ospite serve per i punti
+        esitoP1: gameOver && typeof esitoPerP1 === 'function' ? esitoPerP1() : null,
         testo: hud.displayText.innerHTML,
         testoVisibile: hud.displayText.style.display !== 'none' ? 1 : 0,
         avviso: { testo: avvisoTesto, colore: avvisoColore, timer: avvisoTimer }
@@ -601,6 +603,12 @@ function aggiornaOspite() {
         // Anche l'ospite deve poter chiedere la rivincita
         if (!onlineStato.fineMostrata && statoCorrente === STATI.PARTITA) {
             onlineStato.fineMostrata = true;
+
+            // L'ospite è P2: l'esito dell'host va letto al contrario
+            if (typeof chiudiPartitaPunti === 'function' && typeof esitoInvertito === 'function' && stato.esitoP1) {
+                chiudiPartitaPunti(esitoInvertito(stato.esitoP1));
+            }
+
             apriMenu('finePartita', STATI.PAUSA);
         }
     } else if (hud.displayText.style.display !== 'none') {

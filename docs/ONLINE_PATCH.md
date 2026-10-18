@@ -45,6 +45,9 @@ copre passa.** Niente caselle spuntate "a occhio".
 - [x] Acquisto che scala i punti e sblocca il lottatore
 - [x] Messaggio chiaro se i punti non bastano (402) o se è già tuo (409)
 - [x] Schermata del negozio nel gioco (client)
+- [x] Punti per partita online decisi dal server (`/api/partita/avvia` + `/api/partita/concludi`)
+- [x] Un solo accredito per partita: identificativo emesso dal server, scade dopo 60 minuti
+- [x] Tetto di 15 partite contate al giorno, oltre le quali si gioca senza punti
 - [ ] Punti per partita ranked, amichevole e torneo
 - [ ] Nessun punto per partite non validate dal server
 

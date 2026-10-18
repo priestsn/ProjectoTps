@@ -11,6 +11,8 @@
     "rankedVinta": 100,
     "rankedPersa": 25,
     "rankedPari": 50,
+    "onlineVinta": 100,
+    "onlinePersa": 25,
     "amichevoleVinta": 20,
     "torneoPartecipazione": 100,
     "torneoVittoriaScontro": 150,

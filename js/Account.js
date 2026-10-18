@@ -12,7 +12,10 @@ const statoAccount = {
     nick: null,
     punti: 0,
     elo: 1000,
-    lottatori: []
+    lottatori: [],
+    partiteGiocate: 0,
+    vittorie: 0,
+    sconfitte: 0
 };
 
 /** True se il lottatore è posseduto. Senza account valgono solo i gratuiti. */
@@ -158,6 +161,8 @@ function moduloProfilo() {
     const righe = [
         ['Punti', statoAccount.punti],
         ['Punteggio (ELO)', statoAccount.elo],
+        ['Partite giocate', statoAccount.partiteGiocate || 0],
+        ['Vittorie / Sconfitte', (statoAccount.vittorie || 0) + ' / ' + (statoAccount.sconfitte || 0)],
         ['Lottatori posseduti', statoAccount.lottatori.length]
     ];
     for (const riga of righe) {
@@ -265,6 +270,9 @@ function applicaProfilo(profilo) {
     statoAccount.punti = profilo.punti;
     statoAccount.elo = profilo.elo;
     statoAccount.lottatori = profilo.personaggi || [];
+    statoAccount.partiteGiocate = profilo.partiteGiocate || 0;
+    statoAccount.vittorie = profilo.vittorie || 0;
+    statoAccount.sconfitte = profilo.sconfitte || 0;
 }
 
 /** All'avvio: se c'è un token salvato si prova a riprendere la sessione. */

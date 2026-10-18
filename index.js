@@ -1256,6 +1256,11 @@ function avviaPartita(idP1, idP2) {
     hud.displayText.innerHTML = '';
     avvisoTimer = 0;
 
+    // Partita online con account: si apre il conto dei punti sul server
+    if (typeof apriPartitaPunti === 'function') {
+        apriPartitaPunti();
+    }
+
     // Rilascia tutti gli input rimasti premuti
     for (const tasto in keys) {
         keys[tasto].pressed = false;

@@ -11,6 +11,7 @@
 const path = require('path');
 const { Magazzino } = require('./dati.js');
 const account = require('./account.js');
+const partite = require('./partite.js');
 
 const RADICE = path.resolve(__dirname, '..');
 
@@ -143,6 +144,29 @@ async function gestisciApi(richiesta, risposta) {
             const esito = account.acquista(magazzino, giocatore, String(corpo.personaggio || ''));
             if (!esito.ok) { rispondi(risposta, esito.stato, { messaggio: esito.messaggio }); return true; }
             rispondi(risposta, 200, { punti: esito.punti, personaggi: esito.personaggi });
+            return true;
+        }
+
+        case 'POST /api/partita/avvia': {
+            const giocatore = giocatoreDaRichiesta(richiesta);
+            if (!giocatore) { rispondi(risposta, 401, { messaggio: MESSAGGIO_SESSIONE }); return true; }
+            const esito = partite.avviaPartita(magazzino, giocatore, corpo);
+            rispondi(risposta, 200, esito);
+            return true;
+        }
+
+        case 'POST /api/partita/concludi': {
+            const giocatore = giocatoreDaRichiesta(richiesta);
+            if (!giocatore) { rispondi(risposta, 401, { messaggio: MESSAGGIO_SESSIONE }); return true; }
+            const esito = partite.concludiPartita(magazzino, giocatore, corpo, account.regole());
+            if (!esito.ok) { rispondi(risposta, esito.stato, { messaggio: esito.messaggio }); return true; }
+            rispondi(risposta, 200, {
+                punti: esito.punti,
+                puntiGuadagnati: esito.puntiGuadagnati,
+                contata: esito.contata,
+                partiteOggi: esito.partiteOggi,
+                limiteGiornaliero: esito.limiteGiornaliero
+            });
             return true;
         }
 
