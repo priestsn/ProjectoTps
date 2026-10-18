@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">
-  <a href="https://priestsn.github.io/ProjectoTps/"><strong>▶ GIOCA ORA: priestsn.github.io/ProjectoTps</strong></a>
+  <a href="https://priestsn.github.io/uvstf7/"><strong>▶ GIOCA ORA: priestsn.github.io/uvstf7</strong></a>
 </p>
 
 <p align="center">
@@ -131,7 +131,7 @@ Il nome pubblico può essere un dominio tuo, un sottodominio DuckDNS, oppure un 
 gioco non cambia: il client parla con lo **stesso host da cui ha caricato la pagina**
 (`location.host` in `js/Rete.js`), quindi nessun indirizzo è cablato nel codice.
 
-**La versione giocabile senza server è su GitHub Pages**: `https://priestsn.github.io/ProjectoTps/`
+**La versione giocabile senza server è su GitHub Pages**: `https://priestsn.github.io/uvstf7/`
 (pubblica questo repository, si aggiorna a ogni push, e la usa anche l'app Android come
 indirizzo di serie). Lì funzionano VS LOCALE e VS CPU; per il **VS ONLINE** serve invece
 l'indirizzo del server delle stanze, che vive solo sul VPS.

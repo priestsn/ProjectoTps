@@ -11,7 +11,7 @@ Ci sono due aggiornamenti distinti, ed è la parte che conta:
 
 | Cosa | Da dove arriva | Come |
 |---|---|---|
-| **Il gioco** | repository → GitHub Pages (`https://priestsn.github.io/ProjectoTps/`) | l'app carica la pagina remota: **ogni push è già sul telefono** alla riapertura. Nessun APK da rifare |
+| **Il gioco** | repository → GitHub Pages (`https://priestsn.github.io/uvstf7/`) | l'app carica la pagina remota: **ogni push è già sul telefono** alla riapertura. Nessun APK da rifare |
 | **L'app (APK)** | Release GitHub (`app-vX.Y.Z` + asset `.apk`) | l'app legge `releases/latest`, confronta la versione, scarica e apre l'installer |
 
 In pratica: cambi una riga del gioco → push → apri l'app → vedi la modifica.

@@ -37,7 +37,7 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
 
     /** Indirizzo di gioco di serie: la versione pubblicata dal repository. */
-    static final String URL_PREDEFINITO = "https://priestsn.github.io/ProjectoTps/";
+    static final String URL_PREDEFINITO = "https://priestsn.github.io/uvstf7/";
 
     /**
      * Deve corrispondere al versionCode del manifest. Serve a svuotare la cache

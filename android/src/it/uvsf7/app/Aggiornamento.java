@@ -34,7 +34,7 @@ public final class Aggiornamento {
 
     /** Ultima release pubblicata sul repository del gioco. */
     private static final String API_RELEASE =
-            "https://api.github.com/repos/priestsn/ProjectoTps/releases/latest";
+            "https://api.github.com/repos/priestsn/uvstf7/releases/latest";
 
     private Aggiornamento() {
     }
