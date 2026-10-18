@@ -12,7 +12,8 @@ const STATI = {
     PAUSA: 'pausa',
     KEYBINDS: 'keybinds',
     ACCOUNT: 'account',
-    NEGOZIO: 'negozio'
+    NEGOZIO: 'negozio',
+    AMICI: 'amici'
 };
 
 // Modalità di gioco e difficoltà della CPU.
@@ -66,6 +67,7 @@ function aggiornaVisibilita() {
     impostaVisibilita('#keybinds', statoCorrente === STATI.KEYBINDS);
     impostaVisibilita('#account', statoCorrente === STATI.ACCOUNT);
     impostaVisibilita('#negozio', statoCorrente === STATI.NEGOZIO);
+    impostaVisibilita('#amici', statoCorrente === STATI.AMICI);
 }
 
 /**

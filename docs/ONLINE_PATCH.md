@@ -53,7 +53,9 @@ copre passa.** Niente caselle spuntate "a occhio".
 
 ## 4. Amici
 
-- [ ] Ricerca per nickname, richiesta, accettazione, rimozione
+- [x] Ricerca per nickname, richiesta, accettazione, rimozione
+- [x] Richiesta incrociata che vale come accettazione
+- [x] Schermata amici nel gioco (client): ricerca, ricevute, elenco, in attesa
 - [ ] Stato in linea e invito diretto in una stanza
 - [ ] Segnalazioni e blocco di un giocatore
 

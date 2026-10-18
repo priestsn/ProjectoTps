@@ -12,6 +12,7 @@ const path = require('path');
 const { Magazzino } = require('./dati.js');
 const account = require('./account.js');
 const partite = require('./partite.js');
+const amici = require('./amici.js');
 
 const RADICE = path.resolve(__dirname, '..');
 
@@ -29,6 +30,22 @@ function rispondi(risposta, stato, dati) {
         'Cache-Control': 'no-store'
     });
     risposta.end(testo);
+}
+
+/**
+ * Risposta per gli esiti del modulo amici, che tornano { ok, stato, messaggio }.
+ * Quando va bene si restituiscono i dati utili, senza i campi di controllo.
+ */
+function rispondiAmici(risposta, esito) {
+    if (!esito.ok) {
+        rispondi(risposta, esito.stato || 400, { messaggio: esito.messaggio });
+        return;
+    }
+
+    const dati = { messaggio: esito.messaggio };
+    if (esito.risultati) dati.risultati = esito.risultati;
+    if (esito.accettata !== undefined) dati.accettata = esito.accettata;
+    rispondi(risposta, 200, dati);
 }
 
 /** Legge il corpo della richiesta, con un tetto alla dimensione. */
@@ -167,6 +184,48 @@ async function gestisciApi(richiesta, risposta) {
                 partiteOggi: esito.partiteOggi,
                 limiteGiornaliero: esito.limiteGiornaliero
             });
+            return true;
+        }
+
+        case 'GET /api/amici': {
+            const giocatore = giocatoreDaRichiesta(richiesta);
+            if (!giocatore) { rispondi(risposta, 401, { messaggio: MESSAGGIO_SESSIONE }); return true; }
+            rispondi(risposta, 200, amici.elenco(magazzino, giocatore, account.elencoGiocatori(magazzino)));
+            return true;
+        }
+
+        case 'POST /api/amici/cerca': {
+            const giocatore = giocatoreDaRichiesta(richiesta);
+            if (!giocatore) { rispondi(risposta, 401, { messaggio: MESSAGGIO_SESSIONE }); return true; }
+            rispondiAmici(risposta, amici.cerca(magazzino, giocatore, account.elencoGiocatori(magazzino), corpo.nick));
+            return true;
+        }
+
+        case 'POST /api/amici/chiedi': {
+            const giocatore = giocatoreDaRichiesta(richiesta);
+            if (!giocatore) { rispondi(risposta, 401, { messaggio: MESSAGGIO_SESSIONE }); return true; }
+            rispondiAmici(risposta, amici.chiedi(magazzino, giocatore, account.elencoGiocatori(magazzino), corpo.nick));
+            return true;
+        }
+
+        case 'POST /api/amici/accetta': {
+            const giocatore = giocatoreDaRichiesta(richiesta);
+            if (!giocatore) { rispondi(risposta, 401, { messaggio: MESSAGGIO_SESSIONE }); return true; }
+            rispondiAmici(risposta, amici.accetta(magazzino, giocatore, account.elencoGiocatori(magazzino), corpo.nick));
+            return true;
+        }
+
+        case 'POST /api/amici/rifiuta': {
+            const giocatore = giocatoreDaRichiesta(richiesta);
+            if (!giocatore) { rispondi(risposta, 401, { messaggio: MESSAGGIO_SESSIONE }); return true; }
+            rispondiAmici(risposta, amici.rifiuta(magazzino, giocatore, account.elencoGiocatori(magazzino), corpo.nick));
+            return true;
+        }
+
+        case 'POST /api/amici/rimuovi': {
+            const giocatore = giocatoreDaRichiesta(richiesta);
+            if (!giocatore) { rispondi(risposta, 401, { messaggio: MESSAGGIO_SESSIONE }); return true; }
+            rispondiAmici(risposta, amici.rimuovi(magazzino, giocatore, account.elencoGiocatori(magazzino), corpo.nick));
             return true;
         }
 

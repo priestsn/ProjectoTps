@@ -9,6 +9,7 @@ const VOCI_MENU = {
         { testo: 'PLAY', azione: () => apriMenu('play') },
         { testo: 'ACCOUNT', azione: () => apriAccount() },
         { testo: 'NEGOZIO', azione: () => apriNegozio() },
+        { testo: 'AMICI', azione: () => apriAmici() },
         { testo: 'SETTINGS', azione: () => apriMenu('settings') }
     ],
     play: [

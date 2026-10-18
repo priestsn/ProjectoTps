@@ -1260,7 +1260,8 @@ canvas {
    Account: iscrizione, accesso, profilo
    ========================================== */
 #account,
-#negozio {
+#negozio,
+#amici {
     gap: 12px;
     padding: 22px;
     overflow-y: auto;
@@ -1445,4 +1446,88 @@ canvas {
     color: #ffd34d;
     text-align: center;
 }
+
+/* ========================================
+   Amici
+   ========================================== */
+.amici-titolo {
+    font-size: 40px;
+    letter-spacing: 4px;
+    color: white;
+}
+
+.amici-blocco {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    max-width: 620px;
+    padding: 12px 14px;
+    border: 1px solid #333333;
+    border-radius: 6px;
+    background-color: #0d0d0d;
+}
+
+.amici-sottotitolo {
+    font-size: 17px;
+    letter-spacing: 2px;
+    color: #ffd34d;
+}
+
+.amici-riga {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.amici-riga .account-campo {
+    flex: 1;
+}
+
+.amici-risultati {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.amici-riga-amico {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    background-color: #050508;
+}
+
+.amici-nome {
+    font-size: 16px;
+    color: white;
+}
+
+.amici-azioni {
+    display: flex;
+    gap: 6px;
+}
+
+.amici-relazione {
+    font-size: 13px;
+    color: #9a9a9a;
+    letter-spacing: 1px;
+}
+
+.amici-vuoto {
+    font-size: 15px;
+    color: #9a9a9a;
+    line-height: 1.4;
+}
+
+/* Pulsante compatto, per le righe dell'elenco */
+.account-bottone.piccolo,
+.negozio-bottone.piccolo {
+    padding: 6px 12px;
+    font-size: 14px;
+    letter-spacing: 0;
+}
+
 
