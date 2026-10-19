@@ -34,10 +34,13 @@ function consuma(buffer, azione, giocatore, frame) {
         const voce = buffer.voci[i];
         if (voce.azione === azione && voce.giocatore === giocatore && frame <= voce.scade) {
             buffer.voci.splice(i, 1);
-            return true;
+            // Restituisce la voce (non `true`): chi la consuma deve poter sapere
+            // se il tasto è ancora premuto, per non lasciare in coda un comando
+            // che il giocatore ha già lasciato andare.
+            return voce;
         }
     }
-    return false;
+    return null;
 }
 
 /**

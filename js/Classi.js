@@ -114,6 +114,7 @@ class Lottatore extends Sprite {
             height: this.attacco.altezza
         };
         this.velocity = velocity;
+        this.spinta = 0;   // spostamento residuo dovuto a un colpo (si spegne da solo)
         this.isParata = false; // Stato di parata
         this.isAttacking = false; // Stato di attacco
         this.isTakingDmg = false; // Stato di danno
@@ -225,6 +226,13 @@ class Lottatore extends Sprite {
     update() {
         this.draw();
 
+        // Passi dall'inizio dell'attacco: serve alla finestra di cancellazione
+        // (js/Comandi.js -> puoCancellareAttacco). Prima il campo veniva
+        // azzerato ma mai incrementato.
+        if (this.isAttacking) {
+            this.framesAttacco++;
+        }
+
         // L'attacco termina quando l'ultimo frame e' stato disegnato.
         // Il controllo sta qui e non in index.js perche' solo il lottatore sa
         // quando la SUA animazione e' finita: cosi' uno stato verticale
@@ -254,6 +262,17 @@ class Lottatore extends Sprite {
 
             if (!takeHitFermo) {
                 this.animateFrames();
+            }
+        }
+
+        // Spinta del colpo: si somma al movimento e si spegne in pochi passi.
+        // Sta fuori da velocity perché il movimento orizzontale la sovrascrive
+        // a ogni passo (aggiornaParteComune).
+        if (this.spinta !== 0) {
+            this.position.x += this.spinta;
+            this.spinta *= 0.72;
+            if (Math.abs(this.spinta) < 0.4) {
+                this.spinta = 0;
             }
         }
 

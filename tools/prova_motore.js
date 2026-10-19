@@ -70,14 +70,14 @@ const Buffer = require('../js/Buffer.js');
 sezione('Buffer');
 const buf = Buffer.creaBuffer();
 Buffer.spingi(buf, 'attacco', 'p1', 100);
-verifica('Un comando appena premuto si consuma', Buffer.consuma(buf, 'attacco', 'p1', 103) === true);
-verifica('Un comando consumato non si consuma due volte', Buffer.consuma(buf, 'attacco', 'p1', 104) === false);
+verifica('Un comando appena premuto si consuma', Buffer.consuma(buf, 'attacco', 'p1', 103) !== null);
+verifica('Un comando consumato non si consuma due volte', Buffer.consuma(buf, 'attacco', 'p1', 104) === null);
 
 Buffer.spingi(buf, 'salto', 'p1', 100);
-verifica('Dentro la finestra vale', Buffer.consuma(buf, 'salto', 'p1', 105) === true);
+verifica('Dentro la finestra vale', Buffer.consuma(buf, 'salto', 'p1', 105) !== null);
 
 Buffer.spingi(buf, 'salto', 'p1', 100);
-verifica('Oltre la finestra scade', Buffer.consuma(buf, 'salto', 'p1', 100 + Buffer.BUFFER_FRAMI + 1) === false);
+verifica('Oltre la finestra scade', Buffer.consuma(buf, 'salto', 'p1', 100 + Buffer.BUFFER_FRAMI + 1) === null);
 
 const buf2 = Buffer.creaBuffer();
 Buffer.spingi(buf2, 'parata', 'p1', 10);

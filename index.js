@@ -6,7 +6,7 @@
 // (è successo davvero: sfondo piccolo in alto a sinistra e selezione tagliata).
 // Qui si chiede versione.json SENZA cache: se il build del server è più recente
 // di quello compilato in questo file, la pagina si ricarica da sola una volta.
-const BUILD_PAGINA = 8;
+const BUILD_PAGINA = 9;
 
 (function controlloVersione() {
     if (typeof fetch !== 'function') {
@@ -407,6 +407,7 @@ function applicaDanno(attaccante, difensore, danno, forza = false) {
     difensore.health = Math.max(0, difensore.health - danno);
 
     // Scintille del colpo: colore dell'attaccante se è un colpo pesante
+    spingiIndietro(attaccante, difensore, forza ? 7 : 4);
     particelleDiImpulso(difensore, forza ? coloreEffetti(attaccante) : '#ffffff', 12, 5,
         forza ? 'caricato' : 'colpo');
     if (!MOVIMENTO_RIDOTTO) {
@@ -662,6 +663,7 @@ function risolviImpatto(attaccante, difensore) {
         if (attaccante.attaccoCaricato) {
             applicaDanno(attaccante, difensore, danno);
             stunna(difensore);
+            spingiIndietro(attaccante, difensore, 5);
             particelleDiImpulso(difensore, '#ff5a4a', 16, 6, 'caricato', 1.9);
             if (!MOVIMENTO_RIDOTTO) {
                 scuoti(effetti, 5);
@@ -680,6 +682,7 @@ function risolviImpatto(attaccante, difensore) {
             // Perfect block: anello dorato, flash e scossa. È il momento più
             // importante della partita e prima si vedeva solo una scritta.
             const puntoPerfetto = puntoImpatto(difensore);
+            spingiIndietro(attaccante, difensore, 4);
             particelleDiImpulso(difensore, '#ffd34d', 20, 7, 'critico', 2.1);
             aggiungiOnda(effetti, puntoPerfetto.x, puntoPerfetto.y, '#fff6b0', 150, 10);
             tigni(effetti, '#ffd34d', 0.18, 10);
@@ -691,7 +694,8 @@ function risolviImpatto(attaccante, difensore) {
             return;
         }
 
-        // Blocco normale: nessun danno. La bolla azzurra dice "parata riuscita".
+        // Blocco normale: nessun danno, e i due si separano un poco
+        spingiIndietro(attaccante, difensore, 3);
         particelleDiImpulso(difensore, '#8be9fd', 8, 4, 'parata', 1.3);
         return;
     }
@@ -783,12 +787,20 @@ function tastoParataDi(lottatore) {
  * Salta, solo da terra. Saltare annulla la parata (BUG-25).
  */
 function salta(lottatore) {
+    // Si può saltare anche nel recupero di un attacco (cancellazione)
+    const inRecupero = puoCancellareAttacco(lottatore);
+
     if (lottatore.isDead || lottatore.isStunned || lottatore.isCaricando ||
-        lottatore.isTakingDmg || lottatore.congelamentoTimer > 0) {
+        lottatore.isTakingDmg || lottatore.congelamentoTimer > 0 ||
+        (lottatore.isAttacking && !inRecupero)) {
         return false;
     }
     if (lottatore.position.y + lottatore.height < ground) {
         return false;
+    }
+
+    if (inRecupero) {
+        chiudiAttaccoInCorso(lottatore);
     }
 
     lottatore.isParata = false;
@@ -826,10 +838,19 @@ function eseguiAttacco(lottatore, caricato) {
  * Durante la carica non si può muovere, saltare, parare o usare l'ultimate.
  */
 function iniziaCarica(lottatore) {
-    if (gameOver || lottatore.isDead || lottatore.isStunned || lottatore.isAttacking ||
+    // Un attacco in corso blocca il prossimo... ma solo fino alla fine del
+    // recupero: superata la finestra si può già ripartire (cancellazione).
+    const inRecupero = puoCancellareAttacco(lottatore);
+
+    if (gameOver || lottatore.isDead || lottatore.isStunned ||
         lottatore.isParata || lottatore.isCaricando || lottatore.isTakingDmg ||
-        lottatore.congelamentoTimer > 0) {
+        lottatore.congelamentoTimer > 0 ||
+        (lottatore.isAttacking && !inRecupero)) {
         return false;
+    }
+
+    if (inRecupero) {
+        chiudiAttaccoInCorso(lottatore);
     }
     if (lottatore.position.y + lottatore.height < ground) {
         return false;
@@ -842,6 +863,18 @@ function iniziaCarica(lottatore) {
     lottatore.framesCarica = 0;
     lottatore.cambiaSprite('idle');
     return true;
+}
+
+/**
+ * Chiude in modo pulito l'attacco in corso: usata dalla finestra di
+ * cancellazione (attacco interrotto da un altro attacco o da un salto).
+ */
+function chiudiAttaccoInCorso(lottatore) {
+    lottatore.isAttacking = false;
+    lottatore.attaccoCaricato = false;
+    lottatore.attaccoUltimate = false;
+    lottatore.attaccoHaColpito = false;
+    lottatore.framesAttacco = 0;
 }
 
 /**
@@ -982,6 +1015,113 @@ function disegnaAvviso() {
 }
 
 // ========================================
+// Fine partita: cerimonia
+// ==========================================
+// Il menu non compare più nello stesso istante del K.O.: prima si vedono il
+// colpo finale, la caduta e un cartello con l'esito (js/CerimoniaFine.js).
+let cerimoniaFine = null;
+
+/**
+ * Fa partire la cerimonia di fine partita. `motivo` è 'ko' oppure 'tempo'.
+ * Il menu si apre solo alla fine, o subito se il giocatore preme Invio.
+ */
+function avviaCerimoniaFine(motivo) {
+    const vincitore = (Player.health === Enemy.health)
+        ? null
+        : (Player.health > Enemy.health ? 'p1' : 'p2');
+
+    cerimoniaFine = creaCerimonia({
+        vincitore: vincitore,
+        motivo: motivo,
+        vitaP1: percentualeBarra(Player.health, Player.statistiche.vita),
+        vitaP2: percentualeBarra(Enemy.health, Enemy.statistiche.vita),
+        durata: 60 - Math.max(0, timer)
+    });
+
+    // Primo colpo di scena: flash bianco, scossa e colpo animato sul perdente
+    tigni(effetti, '#ffffff', 0.5, 8);
+    const perdente = (Player.health <= 0) ? Player : Enemy;
+    const punto = puntoImpatto(perdente);
+    avviaAnimazione(effetti, 'ultimate', punto.x, punto.y, 3);
+    if (!MOVIMENTO_RIDOTTO) {
+        scuoti(effetti, 12);
+    }
+
+    hud.displayText.style.display = 'none';
+}
+
+/**
+ * Avanza la cerimonia di fine partita e disegna la fase corrente.
+ * Quando è finita apre il menu FINE PARTITA.
+ */
+function aggiornaCerimoniaFine() {
+    if (!cerimoniaFine) {
+        return;
+    }
+
+    const fasePrima = faseCerimonia(cerimoniaFine);
+    aggiornaCerimonia(cerimoniaFine);
+    const faseDopo = faseCerimonia(cerimoniaFine);
+
+    if (faseDopo === 'caduta' && fasePrima === 'colpo') {
+        mostraAvviso('K.O.', '#ff4a6e', 70, true);
+    }
+
+    if (faseDopo === 'esito' && fasePrima === 'caduta') {
+        disegnaEsito();
+    }
+
+    if (cerimoniaFinita(cerimoniaFine)) {
+        cerimoniaFine = null;
+        apriMenu('finePartita', STATI.PAUSA);
+    }
+}
+
+/**
+ * Cartello del risultato: vincitore con il nome del personaggio, come è finita
+ * (K.O. o tempo scaduto) e due righe di contesto.
+ */
+function disegnaEsito() {
+    const esito = cerimoniaFine ? cerimoniaFine.esito : null;
+    if (!esito) {
+        return;
+    }
+
+    const nomeVincitore = (esito.vincitore === 'p2')
+        ? Enemy.personaggio.nome
+        : Player.personaggio.nome;
+    const testi = testoEsito(esito, nomeVincitore);
+
+    hud.displayText.innerHTML = '';
+
+    const riquadro = document.createElement('div');
+    riquadro.className = 'esito';
+
+    const motivo = document.createElement('div');
+    motivo.className = 'esito-motivo';
+    motivo.textContent = testi.motivo;
+    riquadro.appendChild(motivo);
+
+    const vincitore = document.createElement('div');
+    vincitore.className = 'esito-vincitore';
+    vincitore.textContent = (esito.vincitore ? testi.vincitore + ' VINCE' : testi.vincitore);
+    riquadro.appendChild(vincitore);
+
+    const dettaglio = document.createElement('div');
+    dettaglio.className = 'esito-dettaglio';
+    dettaglio.textContent = testi.dettaglio;
+    riquadro.appendChild(dettaglio);
+
+    const invito = document.createElement('div');
+    invito.className = 'esito-invito';
+    invito.textContent = 'Invio per continuare';
+    riquadro.appendChild(invito);
+
+    hud.displayText.appendChild(riquadro);
+    hud.displayText.style.display = 'flex';
+}
+
+// ========================================
 // Pianificatore: timestep fisso a 60 Hz
 // ==========================================
 // animate() gira a ogni fotogramma dello schermo, ma il gioco avanza di 60
@@ -1080,6 +1220,17 @@ function coloreEffetti(lottatore) {
 /**
  * Scintille + onda in un punto: il colpo visto da chi lo prende.
  */
+/**
+ * Spinge i due lottatori uno via dall'altro: chi para retrocede poco, chi
+ * incassa di più. Serve a "respirare" fra un colpo e l'altro e a leggere meglio
+ * cosa è successo. È simulazione: vale identica per host e ospite in online.
+ */
+function spingiIndietro(attaccante, difensore, forza) {
+    const verso = (difensore.position.x >= attaccante.position.x) ? 1 : -1;
+    difensore.spinta = verso * forza;
+    attaccante.spinta = -verso * (forza / 3);
+}
+
 function particelleDiImpulso(lottatore, colore, quante, forza, animazione, scala) {
     const punto = puntoImpatto(lottatore);
     const numero = MOVIMENTO_RIDOTTO ? Math.ceil(quante / 2) : quante;
@@ -1195,12 +1346,24 @@ function riprovaBuffer() {
         }
 
         for (const azione of ['salto', 'parata', 'attacco', 'ultimate']) {
-            if (!consuma(bufferComandi, azione, giocatore, frameGioco)) {
+            const voce = consuma(bufferComandi, azione, giocatore, frameGioco);
+            if (!voce) {
                 continue;
             }
+
+            // Il comando vale se il tasto è ancora premuto (intenzione viva)
+            // oppure se siamo dentro la finestra di 9 frame. Prima ogni
+            // tentativo fallito riazzzerava la scadenza e il comando restava in
+            // coda per sempre, partendo fuori tempo.
+            const tenuto = tastoFisicoPremuto(giocatore, azione);
+            if (!comandoAncoraValido(voce, frameGioco, tenuto)) {
+                continue;
+            }
+
             if (!eseguiAzione(azione, lottatore, true)) {
-                // ancora non si può: torna in coda e scade da sola
-                spingi(bufferComandi, azione, giocatore, frameGioco);
+                if (tenuto) {
+                    spingi(bufferComandi, azione, giocatore, frameGioco);
+                }
                 continue;
             }
 
@@ -1213,6 +1376,44 @@ function riprovaBuffer() {
             }
         }
     }
+}
+
+/**
+ * Riporta lo stato del lottatore ai tasti veri: chiude la parata e rilascia la
+ * carica quando il tasto non è più premuto, e riprende i comandi tenuti.
+ * Vale solo per i lottatori comandati da una persona: la CPU ha i suoi tempi
+ * (js/CPU.js) e non passa di qui.
+ */
+function controllaComandiFisici(lottatore, giocatore) {
+    if (!lottatore || gameOver || !comandatoDaUmano(giocatore)) {
+        return;
+    }
+
+    if (parataDaChiudere(lottatore, tastoFisicoPremuto(giocatore, 'parata'))) {
+        finisciParata(lottatore);
+    }
+
+    if (caricaDaRilasciare(lottatore, tastoFisicoPremuto(giocatore, 'attacco'))) {
+        rilasciaCarica(lottatore);
+    }
+
+    // Tasto attacco tenuto e lottatore libero (per esempio appena uscito da uno
+    // stun): riparte la carica senza dover ripremere il tasto.
+    if (!lottatore.isStunned && !lottatore.isDead && !lottatore.isAttacking &&
+        !lottatore.isParata && !lottatore.isCaricando && !lottatore.isTakingDmg &&
+        lottatore.congelamentoTimer <= 0 &&
+        tastoFisicoPremuto(giocatore, 'attacco')) {
+        iniziaCarica(lottatore);
+    }
+}
+
+/** True se quel lottatore è comandato da una persona in questa partita. */
+function comandatoDaUmano(giocatore) {
+    if (giocatore === 'p1') {
+        return true;
+    }
+    // In VS CPU il secondo lottatore lo guida l'IA: niente protezioni "fisiche"
+    return modalitaPartita !== MODALITA.CPU;
 }
 
 /**
@@ -1372,6 +1573,15 @@ function passoSimulazione() {
     // Comandi premuti troppo presto: si riprovano appena il lottatore è pronto
     riprovaBuffer();
 
+    // Parata e carica si chiudono se il tasto non è più premuto, e i comandi
+    // tenuti ripartono da soli (per esempio dopo uno stun). È quello che toglie
+    // il blocco "dopo la parata non si attacca più".
+    controllaComandiFisici(Player, 'p1');
+    controllaComandiFisici(Enemy, 'p2');
+
+    // Cerimonia di fine partita: avanza e, quando è finita, apre il menu
+    aggiornaCerimoniaFine();
+
     // In VS CPU l'IA decide gli input del giocatore 2 prima del movimento
     if (cpu) {
         aggiornaCPU(cpu);
@@ -1464,11 +1674,11 @@ function passoSimulazione() {
         if (Enemy.health <= 0) {
             Enemy.cambiaSprite('Death');
         }
-        hud.displayText.style.display = 'flex';
+        // I punti vanno al server subito; il resto è spettacolo
         determineWinner(Player, Enemy, timerId);
 
-        // A fine partita compare il menu con rivincita e cambio personaggi
-        apriMenu('finePartita', STATI.PAUSA);
+        // Non si apre il menu: parte la cerimonia (flash, caduta, cartello)
+        avviaCerimoniaFine('ko');
     }
 
     // VS ONLINE, lato host: lo stato appena calcolato va all'ospite
@@ -1481,6 +1691,19 @@ function passoSimulazione() {
 // Event Listener
 // ==========================================
 window.addEventListener('keydown', (event) => {
+    // Stato fisico del tasto: serve alle protezioni e ai comandi "tenuti"
+    if (event.key && event.key.length === 1) {
+        segnaTastoFisico(event.key.toLowerCase(), true);
+    } else if (event.key) {
+        segnaTastoFisico(event.key, true);
+    }
+
+    // Durante la cerimonia di fine partita Invio o Spazio la chiudono subito
+    if (cerimoniaFine && (event.key === 'Enter' || event.key === ' ')) {
+        concludiCerimonia(cerimoniaFine);
+        return;
+    }
+
     // Con il report bug aperto la tastiera serve solo al pannello
     if (reportAperto) {
         return;
@@ -1562,6 +1785,9 @@ window.addEventListener('keydown', (event) => {
 
 window.addEventListener('keyup', (event) => {
     const key = (event.key && event.key.length === 1) ? event.key.toLowerCase() : event.key;
+
+    // Il tasto non è più premuto: le protezioni dei comandi lo vedranno
+    segnaTastoFisico(key, false);
 
     // Il rilascio conta solo durante la partita: fuori, i menu non ne hanno bisogno
     if (statoCorrente !== STATI.PARTITA) {
@@ -1650,6 +1876,9 @@ function avviaPartita(idP1, idP2) {
     effetti.scossa = 0;
     effetti.tinta = null;
     effetti.animazioni.length = 0;
+    cerimoniaFine = null;
+    hud.displayText.style.display = 'none';
+    hud.displayText.innerHTML = '';
     effetti.aura = null;
     for (const chiave in hudPrecedente) {
         hudPrecedente[chiave] = -1;

@@ -601,3 +601,61 @@ giocatore**, sull'esempio di Tekken 8 / Street Fighter 6 / Guilty Gear Strive.
   passa sopra le voci (`column-reverse`). Il menu vive **dentro `#areaGioco`** (riquadro 16:9), quindi su
   un telefono in verticale l'area è alta solo ~219 px: lì il menu scorre (`overflow-y: auto`) invece di
   tagliare le ultime voci, e la media query `max-height: 720px` stringe tutto.
+
+## 16. Combattimento fluido e cerimonia di fine partita (19/10/2026)
+
+### I comandi non si incastrano più
+
+Tre difetti toglievano reattività, e il più grave era invisibile nel codice:
+
+1. `iniziaParata()` forza `keys.j.pressed = true`: se la parata parte **dalla coda dei comandi**
+   dopo che il tasto è già stato rilasciato, nessun `keyup` arriva più e `isParata` resta acceso —
+   e `iniziaCarica()` ha il guard `isParata`, quindi **non si può più attaccare**. Ora
+   `controllaComandiFisici()` (index.js) chiude la parata (e rilascia la carica) appena il tasto non è
+   più premuto, usando lo **stato fisico dei tasti** (`tastiFisici` in `js/Keybinds.js`).
+2. La coda riazzera la scadenza a ogni tentativo fallito: i comandi restavano vivi per sempre. Ora
+   `consuma()` restituisce la voce e vale `comandoAncoraValido(voce, frame, tenuto)` — il comando è
+   tenuto in vita **solo se il tasto è ancora giù**.
+3. `stunna()` azzera i flag dei tasti: chi teneva premuto l'attacco perdeva l'intenzione. Ora
+   `controllaComandiFisici()` riprende la carica appena il lottatore torna libero.
+
+Aggiunta la **finestra di cancellazione** (`js/Comandi.js` → `FINESTRA_RECUPERO = 16` passi, 0,27 s):
+dopo il frame d'impatto si può già riattaccare o saltare, invece di aspettare la fine dell'animazione
+(0,5 s). `framesAttacco` viene ora incrementato in `Lottatore.update()` (prima veniva azzerato e mai
+contato).
+
+Sui colpi c'è la **spinta** (`spinta` sul lottatore, `spingiIndietro()` in index.js): 3 px quando si
+para, 4 su perfect block, 5 sull'attacco caricato, 7 su un colpo pieno. È simulazione, quindi vale
+identica in VS ONLINE.
+
+### Fine partita: la cerimonia
+
+Prima il menu si apriva **nella stessa riga** in cui la vita arrivava a zero: il K.O. non si vedeva.
+Ora `js/CerimoniaFine.js` (modulo puro, 16 controlli in `tools/prova_cerimonia.js`) guida tre fasi
+contate in passi (1/60 s):
+
+| Fase | Passi | Cosa si vede |
+|---|---|---|
+| `colpo` | 12 | flash bianco, scossa, colpo animato sul perdente |
+| `caduta` | 54 | animazione di morte + scritta «K.O.» grande |
+| `esito` | 70 | cartello `.esito`: motivo, vincitore, vita rimasta, durata |
+
+Alla fine si apre il menu FINE PARTITA. **Invio o Spazio saltano la cerimonia**; in VS ONLINE l'ospite
+fa la sua cerimonia quando arriva il fotogramma con `over`. `determineWinner()` non scrive più il testo
+(`#displayText` lo riempie `disegnaEsito()`), e `avviaPartita()` azzera `cerimoniaFine`.
+
+### Sfondo del menu
+
+`assets/menu-background.png` (1920×1080, fornito dall'autore) è usato come sfondo del menu principale.
+In `assets/menu-background.jpg` c'è la stessa immagine a 300 KB: l'originale è opaco, quindi il JPEG non
+toglie niente a video e risparmia 2 MB di download a ogni visita. Il CSS usa il JPG, con una vignettatura
+interna (`box-shadow: inset`) per tenere leggibili le colonne; `#menu.pausa` non ha sfondo (lì il menu sta
+sopra la partita).
+
+### Cose da sapere per il prossimo che tocca il codice
+
+- Nel browser i moduli nuovi sono **funzioni globali**, non namespace: si chiama `puoCancellareAttacco()`,
+  non `Comandi.puoCancellareAttacco()` (un `const Comandi = {...}` non esiste e la chiamata con prefisso
+  fa ReferenceError a ogni passo del ciclo, congelando il gioco).
+- `controllaComandiFisici()` vale solo per i lottatori comandati da una persona: la CPU ha i suoi tempi in
+  `js/CPU.js` e non deve passare dalle protezioni "fisiche".

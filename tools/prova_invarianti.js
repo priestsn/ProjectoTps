@@ -47,6 +47,18 @@ verifica('Rigenerazione stamina +10 ogni 2 secondi', /stamina \+ 10/.test(utili)
 verifica('La morte blocca ogni cambio sprite', /if \(this\.image === this\.sprites\.Death\.image\) \{/.test(classi));
 verifica('Colpo dell\'ultimate una volta sola', /ultimateHaColpito/.test(classi));
 
+// Le regole nuove del combattimento: se qualcuno le cambia, il test lo dice
+verifica('La finestra di recupero è 16 passi (0,27 s)',
+    /const FINESTRA_RECUPERO = 16;/.test(sorgente('js/Comandi.js')));
+verifica('La cerimonia di fine partita dura fra 2 e 3 secondi',
+    (function () {
+        const testo = sorgente('js/CerimoniaFine.js');
+        const passi = (testo.match(/passi: (\d+)/g) || [])
+            .map((riga) => Number(riga.replace('passi: ', '')))
+            .reduce((a, b) => a + b, 0);
+        return passi >= 120 && passi <= 180;
+    })());
+
 const passate = risultati.filter(Boolean).length;
 console.log('\n' + passate + '/' + risultati.length + ' verifiche passate');
 process.exit(passate === risultati.length ? 0 : 1);

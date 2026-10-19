@@ -83,19 +83,15 @@ function percentualeBarra(valore, massimo) {
 // ==========================================
 
 /**
- * Determina il vincitore e mostra il risultato.
+ * Chiude la partita dal lato "regole": ferma il timer e manda l'esito al
+ * server. Il testo del risultato NON si scrive più qui: lo disegna il cartello
+ * della cerimonia di fine partita (disegnaEsito in index.js), altrimenti
+ * comparirebbe per un istante sotto al menu.
  * I parametri sono posizionali: così è impossibile confondere "Player" con
  * "player" (il bug nasceva dal destructuring, che lavora per NOME).
  */
 function determineWinner(player, enemy, timerId) {
     clearTimeout(timerId);
-    if (player.health === enemy.health) {
-        document.querySelector('#displayText').innerHTML = 'Pareggio!';
-    } else if (player.health > enemy.health) {
-        document.querySelector('#displayText').innerHTML = 'Giocatore 1 Vince!';
-    } else {
-        document.querySelector('#displayText').innerHTML = 'Giocatore 2 Vince!';
-    }
 
     // VS ONLINE con account: si comunica l'esito al server, che calcola i punti.
     // In locale e contro la CPU non si accredita niente.
@@ -140,12 +136,11 @@ function decreaseTimer() {
             // Allo scadere del tempo la partita è finita: gli input non devono
             // più avere effetto (prima gameOver restava false)
             gameOver = true;
-            document.querySelector('#displayText').style.display = 'flex';
             determineWinner(Player, Enemy, timerId);
 
-            // Anche chiudendo ai punti compare il menu di fine partita (BUG-32):
-            // prima il menu lo apriva solo la morte di un lottatore
-            apriMenu('finePartita', STATI.PAUSA);
+            // Anche a tempo scaduto si passa dalla cerimonia (BUG-32): il menu
+            // FINE PARTITA arriva dopo il cartello, non al posto suo
+            avviaCerimoniaFine('tempo');
         }
     }, 1000);
 }

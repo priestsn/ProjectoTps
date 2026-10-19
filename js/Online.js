@@ -605,10 +605,9 @@ function aggiornaOspite() {
     disegnaAvviso();
 
     if (stato.over) {
-        hud.displayText.style.display = 'flex';
-        hud.displayText.innerHTML = stato.testo;
-
-        // Anche l'ospite deve poter chiedere la rivincita
+        // Anche l'ospite fa la sua cerimonia: è solo disegno, quindi può andare
+        // con i suoi tempi senza toccare il protocollo. Se la funzione non c'è
+        // (versione vecchia) si comporta come prima.
         if (!onlineStato.fineMostrata && statoCorrente === STATI.PARTITA) {
             onlineStato.fineMostrata = true;
 
@@ -617,7 +616,14 @@ function aggiornaOspite() {
                 chiudiPartitaPunti(esitoInvertito(stato.esitoP1));
             }
 
-            apriMenu('finePartita', STATI.PAUSA);
+            if (typeof avviaCerimoniaFine === 'function' && typeof cerimoniaFine !== 'undefined' && !cerimoniaFine) {
+                gameOver = true;
+                avviaCerimoniaFine('ko');
+            } else {
+                hud.displayText.style.display = 'flex';
+                hud.displayText.innerHTML = stato.testo;
+                apriMenu('finePartita', STATI.PAUSA);
+            }
         }
     } else if (hud.displayText.style.display !== 'none') {
         hud.displayText.style.display = 'none';

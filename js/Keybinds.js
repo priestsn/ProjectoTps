@@ -157,6 +157,10 @@ function premiAzione(giocatore, azione, premuto) {
         return;
     }
 
+    // Copre i comandi touch (e la tastiera, che passa di qui): il tasto
+    // "fisico" risulta premuto come su una tastiera vera.
+    segnaTastoFisico(tastoDi(giocatore, azione), premuto);
+
     // Tasti di movimento: gli stessi flag letti dal game loop
     if (azione === 'sinistra' || azione === 'destra') {
         const nome = giocatore === 'p1'
@@ -406,3 +410,30 @@ function gestisciInputKeybinds(evento) {
 
 // I tasti salvati servono subito: l'handler della tastiera li legge al primo tasto
 caricaKeybinds();
+
+// ========================================
+// Stato FISICO dei tasti
+// ==========================================
+// Dice se un tasto è premuto ADESSO, a prescindere dallo stun, dalla schermata
+// e dalla coda dei comandi. I flag in `keys` (index.js) dicono invece "cosa il
+// gioco sta eseguendo": servono entrambi, e prima c'era solo il secondo.
+// Senza questo, chi tiene premuto l'attacco mentre viene colpito perde
+// l'intenzione (il keydown non arriva due volte).
+
+const tastiFisici = {};
+
+function segnaTastoFisico(tasto, premuto) {
+    if (typeof tasto !== 'string' || tasto.length === 0) {
+        return;
+    }
+    if (premuto) {
+        tastiFisici[tasto] = true;
+    } else {
+        delete tastiFisici[tasto];
+    }
+}
+
+function tastoFisicoPremuto(giocatore, azione) {
+    const tasto = tastoDi(giocatore, azione);
+    return !!tastiFisici[tasto];
+}
