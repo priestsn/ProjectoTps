@@ -180,34 +180,15 @@ function premiAzione(giocatore, azione, premuto) {
         return;
     }
 
-    switch (azione) {
-        case 'salto':
-            if (premuto) {
-                salta(lottatore);
-            }
-            break;
+    // Un'azione che non può partire adesso (recupero attacco, atterraggio,
+    // colpo subito) non si perde più: entra in coda per qualche frame e parte
+    // al primo momento utile (js/Buffer.js). È ciò che fa sentire i tasti
+    // "pronti" invece che ignorati.
+    const partita = eseguiAzione(azione, lottatore, premuto);
 
-        case 'attacco':
-            if (premuto) {
-                iniziaCarica(lottatore);
-            } else if (statoCorrente === STATI.PARTITA) {
-                rilasciaCarica(lottatore);
-            }
-            break;
-
-        case 'parata':
-            if (premuto) {
-                iniziaParata(lottatore);
-            } else {
-                finisciParata(lottatore);
-            }
-            break;
-
-        case 'ultimate':
-            if (premuto) {
-                attivaUltimate(lottatore);
-            }
-            break;
+    if (!partita && premuto && statoCorrente === STATI.PARTITA &&
+        typeof puoBufferizzare === 'function' && puoBufferizzare(lottatore)) {
+        spingi(bufferComandi, azione, giocatore, frameGioco);
     }
 }
 

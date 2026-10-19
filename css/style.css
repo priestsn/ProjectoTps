@@ -58,6 +58,10 @@ body {
     display: block;
     width: 100%;
     height: 100%;
+    /* Scossa degli impatti: le due variabili le imposta index.js
+       (applicaScossa). Se valgono 0 il canvas non si muove. */
+    transform: translate(calc(var(--scossa-x, 0) * 1px), calc(var(--scossa-y, 0) * 1px));
+    will-change: transform;
     /* il blocco dei gesti serve solo qui: sopra il canvas non si scorre */
     touch-action: none;
 }

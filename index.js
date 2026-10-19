@@ -176,6 +176,25 @@ let cpu = null;
 // Proiettili delle ultimate (Bakari, Sekou, Ayo)
 const proiettili = [];
 
+// Effetti visivi della partita (particelle, onde, scosse, tinte). Non toccano
+// la simulazione: sono solo disegno, e si azzerano a ogni nuova partita.
+const effetti = creaSistemaEffetti();
+
+// Sprite del pacchetto Kenney (assets/Effetti/): se mancano restano le forme
+// geometriche, quindi il gioco funziona anche senza la cartella.
+preparaSpriteEffetti();
+
+// Comandi premuti troppo presto: restano in coda qualche frame (js/Buffer.js)
+const bufferComandi = creaBuffer();
+
+// Chi ha chiesto meno movimento al sistema operativo vede meno effetti
+const MOVIMENTO_RIDOTTO = typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Contatore dei passi di simulazione: lo usano il buffer, le stelle dello stun
+// e window.uvsf7Debug(). Cresce di 1 ogni 1/60 di secondo.
+let frameGioco = 0;
+
 // Ultimi personaggi usati: serve alla rivincita con gli stessi lottatori
 let ultimiPersonaggi = { p1: null, p2: null };
 
@@ -346,6 +365,15 @@ function stunna(lottatore) {
     lottatore.framesParata = 0;
     lottatore.ultimate = Math.max(0, lottatore.ultimate - ULTIMATE_PERSA_PER_STUN);
 
+    // Stun: onde bianche attorno al lottatore e scossa. Le stelle che girano
+    // sopra la testa le disegna disegnaStelleStun() finché dura lo stun.
+    const puntoStun = puntoImpatto(lottatore);
+    aggiungiOnda(effetti, puntoStun.x, puntoStun.y, '#ffffff', 110, 8);
+    aggiungiParticelle(effetti, puntoStun.x, puntoStun.y, '#ffd34d', MOVIMENTO_RIDOTTO ? 6 : 14, 4);
+    if (!MOVIMENTO_RIDOTTO) {
+        scuoti(effetti, 4);
+    }
+
     // Rilascia i tasti del lottatore stunnato
     if (lottatore === Player) {
         keys.a.pressed = false;
@@ -373,6 +401,12 @@ function applicaDanno(attaccante, difensore, danno, forza = false) {
     difensore.isParata = false;
     difensore.cambiaSprite('TakeHit');
     difensore.health = Math.max(0, difensore.health - danno);
+
+    // Scintille del colpo: colore dell'attaccante se è un colpo pesante
+    particelleDiImpulso(difensore, forza ? coloreEffetti(attaccante) : '#ffffff', 12, 5);
+    if (!MOVIMENTO_RIDOTTO) {
+        scuoti(effetti, forza ? 6 : 3);
+    }
 
     const barra = difensore === Player ? hud.playerHealth : hud.enemyHealth;
     barra.style.width = percentualeBarra(difensore.health, difensore.statistiche.vita) + '%';
@@ -470,6 +504,12 @@ function aggiornaProiettili() {
         p.x += p.vx;
         p.vita--;
 
+        // Scia: qualche particella colorata come l'ultimate (non una per
+        // frame, per non mangiare il tetto delle particelle)
+        if (!MOVIMENTO_RIDOTTO && p.vita % 2 === 0) {
+            aggiungiParticelle(effetti, p.x, p.y, p.colore, 1, 0.6);
+        }
+
         const difensore = p.proprietario === Player ? Enemy : Player;
 
         const colpisce = !difensore.isDead &&
@@ -487,6 +527,8 @@ function aggiornaProiettili() {
                 danno *= 1.3;
             }
 
+            particelleDiImpulso(difensore, p.colore, 22, 7);
+            aggiungiOnda(effetti, p.x, p.y, p.colore, 130, 9);
             applicaDanno(p.proprietario, difensore, danno, true);
             applicaEffettoUltimate(p.proprietario, difensore);
             proiettili.splice(i, 1);
@@ -505,17 +547,23 @@ function aggiornaProiettili() {
 function disegnaProiettili() {
     c.save();
 
+    // Due cerchi invece di un gradiente radiale: creare un gradiente per ogni
+    // proiettile a ogni frame è una delle allocazioni più care del disegno, e
+    // il risultato a video è lo stesso.
     for (const p of proiettili) {
-        const gradiente = c.createRadialGradient(p.x, p.y, 2, p.x, p.y, p.raggio);
-        gradiente.addColorStop(0, '#ffffff');
-        gradiente.addColorStop(0.35, p.colore);
-        gradiente.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        c.fillStyle = p.colore;
 
-        c.fillStyle = gradiente;
+        c.globalAlpha = 0.35;
+        c.beginPath();
+        c.arc(p.x, p.y, p.raggio * 1.9, 0, Math.PI * 2);
+        c.fill();
+
+        c.globalAlpha = 1;
         c.beginPath();
         c.arc(p.x, p.y, p.raggio, 0, Math.PI * 2);
         c.fill();
     }
+    c.globalAlpha = 1;
 
     c.restore();
 }
@@ -554,7 +602,7 @@ function disegnaStati(lottatore) {
 
     for (const [nome, colore] of visibili) {
         c.fillStyle = 'rgba(0, 0, 0, 0.65)';
-        const larghezza = c.measureText(nome).width + 10;
+        const larghezza = larghezzaTesto(nome) + 10;
         c.fillRect(x - larghezza / 2, y - 13, larghezza, 18);
 
         c.fillStyle = colore;
@@ -601,6 +649,7 @@ function risolviImpatto(attaccante, difensore) {
             difensore.isParata = false;
             applicaDanno(attaccante, difensore, danno, true);
             applicaEffettoUltimate(attaccante, difensore);
+            particelleDiImpulso(difensore, coloreEffetti(attaccante), 24, 8);
             return;
         }
 
@@ -608,6 +657,10 @@ function risolviImpatto(attaccante, difensore) {
         if (attaccante.attaccoCaricato) {
             applicaDanno(attaccante, difensore, danno);
             stunna(difensore);
+            particelleDiImpulso(difensore, '#ff5a4a', 16, 6);
+            if (!MOVIMENTO_RIDOTTO) {
+                scuoti(effetti, 5);
+            }
             return;
         }
 
@@ -619,11 +672,22 @@ function risolviImpatto(attaccante, difensore) {
             // L'attaccante mostra l'animazione di colpo subito per tutto lo stun
             attaccante.cambiaSprite('TakeHit');
 
+            // Perfect block: anello dorato, flash e scossa. È il momento più
+            // importante della partita e prima si vedeva solo una scritta.
+            const puntoPerfetto = puntoImpatto(difensore);
+            particelleDiImpulso(difensore, '#ffd34d', 20, 7);
+            aggiungiOnda(effetti, puntoPerfetto.x, puntoPerfetto.y, '#fff6b0', 150, 10);
+            tigni(effetti, '#ffd34d', 0.18, 10);
+            if (!MOVIMENTO_RIDOTTO) {
+                scuoti(effetti, 6);
+            }
+
             mostraAvviso('PERFECT BLOCK', '#ffd34d');
             return;
         }
 
-        // Blocco normale: nessun danno
+        // Blocco normale: nessun danno. La bolla azzurra dice "parata riuscita".
+        particelleDiImpulso(difensore, '#8be9fd', 8, 4, 'parata');
         return;
     }
 
@@ -649,20 +713,33 @@ function attivaUltimate(lottatore) {
         lottatore.isAttacking || lottatore.isParata || lottatore.isCaricando ||
         lottatore.isTakingDmg || lottatore.congelamentoTimer > 0 ||
         lottatore.silenzioTimer > 0) {
-        return;
+        return false;
     }
 
     if (lottatore.ultimate < 100) {
-        return;
+        return false;
     }
 
     const dati = lottatore.datiUltimate;
+
+    // Ultimate: flash a tutto schermo del colore del personaggio, onda dal
+    // corpo e scossa. Vale per ogni tipo (mischia, proiettile, buff).
+    const puntoUltimate = puntoImpatto(lottatore);
+    segnaImpatto(effetti, puntoUltimate.x, puntoUltimate.y, 16, 'ultimate');
+    tigni(effetti, coloreEffetti(lottatore), 0.22, 14);
+    aggiungiOnda(effetti, puntoUltimate.x, puntoUltimate.y, coloreEffetti(lottatore), 200, 12);
+    aggiungiParticelle(effetti, puntoUltimate.x, puntoUltimate.y, coloreEffetti(lottatore),
+        MOVIMENTO_RIDOTTO ? 10 : 26, 8);
+    if (!MOVIMENTO_RIDOTTO) {
+        scuoti(effetti, 8);
+    }
+
     lottatore.ultimate = 0;
 
     if (dati.tipo === 'buff') {
         lottatore.buffTimer = dati.durata;
         mostraAvviso(dati.nome, dati.colore || '#7dff7d');
-        return;
+        return true;
     }
 
     lottatore.avviaAttacco({ ultimate: true });
@@ -672,6 +749,7 @@ function attivaUltimate(lottatore) {
     }
 
     mostraAvviso(dati.nome, dati.colore || '#8be9fd');
+    return true;
 }
 
 // --- Comandi condivisi tra giocatori umani e CPU ---
@@ -802,9 +880,17 @@ function finisciParata(lottatore) {
     tastoParataDi(lottatore).pressed = false;
 }
 
-/**
- * Disegna l'avviso temporaneo (perfect block o ultimate)
- */
+// Le larghezze dei testi degli stati si misurano una volta sola: c.measureText
+// a ogni frame per ogni etichetta è lavoro inutile (il font non cambia).
+const larghezzeTesti = new Map();
+
+function larghezzaTesto(nome) {
+    if (!larghezzeTesti.has(nome)) {
+        larghezzeTesti.set(nome, c.measureText(nome).width);
+    }
+    return larghezzeTesti.get(nome);
+}
+
 /**
  * Barra di carica sopra il lottatore che sta tenendo premuto l'attacco
  */
@@ -860,10 +946,352 @@ function disegnaAvviso() {
 }
 
 // ========================================
+// Pianificatore: timestep fisso a 60 Hz
+// ==========================================
+// animate() gira a ogni fotogramma dello schermo, ma il gioco avanza di 60
+// passi al secondo, sempre. Prima ogni fotogramma dello schermo valeva un
+// frame di gioco: su un monitor a 144 Hz tutto (animazioni, parate, stamina)
+// andava 2,4 volte più veloce, su un PC lento più piano. Vedi js/Tempo.js.
+let ultimoTempo = 0;
+let accumulatore = 0;
+let passiUltimoFotogramma = 0;
+
+function animate(tempo) {
+    window.requestAnimationFrame(animate);
+
+    const adesso = (typeof tempo === 'number') ? tempo : performance.now();
+    const dt = ultimoTempo ? (adesso - ultimoTempo) : (1000 / 60);
+    ultimoTempo = adesso;
+
+    // Fuori dalla partita il tempo non si accumula: altrimenti al ritorno in
+    // partita si vedrebbero raffiche di passi arretrati.
+    if (statoCorrente !== STATI.PARTITA || reportAperto) {
+        accumulatore = 0;
+        return;
+    }
+
+    const esito = avanzaAccumulatore(accumulatore, dt);
+    accumulatore = esito.resto;
+    passiUltimoFotogramma = esito.passi;
+
+    for (let i = 0; i < esito.passi; i++) {
+        passoSimulazione();
+    }
+}
+
+// Strumento di diagnosi: dalla console del browser si legge se il ritmo è
+// giusto (deve crescere di ~60 al secondo, non 144).
+window.uvsf7Debug = function () {
+    return {
+        frame: frameGioco,
+        passiUltimoFotogramma: passiUltimoFotogramma,
+        attesaMs: Math.round(accumulatore * 100) / 100,
+        comandiInCoda: bufferComandi.voci.length,
+        particelle: effetti.particelle.length,
+        scossa: Math.round(effetti.scossa * 100) / 100
+    };
+};
+
+// ========================================
+// HUD: scritture solo quando il valore cambia
+// ==========================================
+// Scrivere style.width a ogni passo fa ricalcolare lo stile al browser anche
+// quando il numero è identico: 4 barre x 60 passi = 240 scritture inutili al
+// secondo, che sui telefoni si sentono.
+const hudPrecedente = {
+    playerStamina: -1,
+    playerUltimate: -1,
+    enemyStamina: -1,
+    enemyUltimate: -1
+};
+
+function scriviBarra(chiave, elemento, valore, massimo) {
+    if (!elemento) {
+        return;
+    }
+    const percento = Math.round(percentualeBarra(valore, massimo) * 10) / 10;
+    if (hudPrecedente[chiave] === percento) {
+        return;
+    }
+    hudPrecedente[chiave] = percento;
+    elemento.style.width = percento + '%';
+}
+
+// ========================================
+// Effetti: strumenti
+// ==========================================
+
+/**
+ * Punto in cui si disegnano gli effetti di un colpo: il petto del difensore.
+ */
+function puntoImpatto(lottatore) {
+    return {
+        x: lottatore.position.x + lottatore.centroCorpo,
+        y: lottatore.position.y + lottatore.height * 0.42
+    };
+}
+
+/**
+ * Colore degli effetti di un lottatore: quello della sua ultimate, così ogni
+ * personaggio ha i suoi colori (i personaggi sono già guidati da dati).
+ */
+function coloreEffetti(lottatore) {
+    const dati = lottatore && lottatore.datiUltimate;
+    return (dati && dati.colore) || '#ff8a3d';
+}
+
+/**
+ * Scintille + onda in un punto: il colpo visto da chi lo prende.
+ */
+function particelleDiImpulso(lottatore, colore, quante, forza, sprite) {
+    const punto = puntoImpatto(lottatore);
+    const numero = MOVIMENTO_RIDOTTO ? Math.ceil(quante / 2) : quante;
+    aggiungiParticelle(effetti, punto.x, punto.y, colore, numero, forza);
+    aggiungiOnda(effetti, punto.x, punto.y, colore, 60, 4);
+    segnaImpatto(effetti, punto.x, punto.y, 10, sprite || 'impatto');
+}
+
+/**
+ * Scossa dello schermo: sposta il canvas di pochi pixel tramite due variabili
+ * CSS (css/style.css). Muovere il disegno dentro il canvas lascerebbe comunque
+ * i bordi neri attorno al campo.
+ */
+function applicaScossa() {
+    const radice = document.documentElement;
+    if (!radice) {
+        return;
+    }
+    if (MOVIMENTO_RIDOTTO || effetti.scossa <= 0) {
+        if (radice.style.getPropertyValue('--scossa-x') !== '0') {
+            radice.style.setProperty('--scossa-x', '0');
+            radice.style.setProperty('--scossa-y', '0');
+        }
+        return;
+    }
+    const angolo = Math.random() * Math.PI * 2;
+    radice.style.setProperty('--scossa-x', (Math.cos(angolo) * effetti.scossa).toFixed(2));
+    radice.style.setProperty('--scossa-y', (Math.sin(angolo) * effetti.scossa).toFixed(2));
+}
+
+/**
+ * Piccolo segnale sopra la testa quando un comando in coda viene eseguito:
+ * è la prova che il gioco ha sentito il tasto.
+ */
+function segnalaComandoEseguito(lottatore) {
+    const x = lottatore.position.x + lottatore.centroCorpo;
+    const y = lottatore.position.y - 8;
+    aggiungiParticelle(effetti, x, y, '#ffffff', 4, 1.6);
+}
+
+// Lampeggio della barra stamina: "hai premuto, ma non hai energia"
+const lampeggioTimer = { Player: 0, Enemy: 0 };
+
+function lampeggiaStamina(lottatore) {
+    const nome = lottatore === Player ? 'Player' : 'Enemy';
+    if (lampeggioTimer[nome] > 0) {
+        return;
+    }
+    lampeggioTimer[nome] = 1;
+
+    const barra = nome === 'Player' ? hud.playerStamina : hud.enemyStamina;
+    if (!barra) {
+        return;
+    }
+    barra.style.filter = 'brightness(2.2)';
+
+    setTimeout(() => {
+        barra.style.filter = '';
+        lampeggioTimer[nome] = 0;
+    }, 300);
+}
+
+// ========================================
+// Azioni dei comandi e buffer
+// ==========================================
+// Un unico posto in cui "premere un tasto" diventa un effetto di gioco: lo usano
+// sia la pressione dal vivo sia il buffer, così una regola non va scritta due
+// volte. Restituisce true se l'azione è partita.
+
+function eseguiAzione(azione, lottatore, tenuto = true) {
+    if (!lottatore) {
+        return false;
+    }
+
+    switch (azione) {
+        case 'salto':
+            return tenuto ? salta(lottatore) : false;
+
+        case 'attacco':
+            if (tenuto && lottatore.stamina < lottatore.statistiche.costoStamina) {
+                lampeggiaStamina(lottatore);
+                return false;
+            }
+            return tenuto ? iniziaCarica(lottatore) : rilasciaCarica(lottatore);
+
+        case 'parata':
+            if (!tenuto) {
+                finisciParata(lottatore);
+                return false;
+            }
+            return iniziaParata(lottatore);
+
+        case 'ultimate':
+            return tenuto ? attivaUltimate(lottatore) : false;
+
+        default:
+            return false;
+    }
+}
+
+/**
+ * Riprova i comandi rimasti in coda: va chiamata a ogni passo di simulazione,
+ * dopo le meccaniche e prima della CPU. L'ordine va dal comando più economico
+ * al più impegnativo, così uno non "mangia" lo slot di un altro.
+ */
+function riprovaBuffer() {
+    pulisci(bufferComandi, frameGioco);
+
+    for (const giocatore of ['p1', 'p2']) {
+        const lottatore = giocatore === 'p1' ? Player : Enemy;
+        if (!lottatore || !puoBufferizzare(lottatore) || gameOver) {
+            continue;
+        }
+
+        for (const azione of ['salto', 'parata', 'attacco', 'ultimate']) {
+            if (!consuma(bufferComandi, azione, giocatore, frameGioco)) {
+                continue;
+            }
+            if (!eseguiAzione(azione, lottatore, true)) {
+                // ancora non si può: torna in coda e scade da sola
+                spingi(bufferComandi, azione, giocatore, frameGioco);
+                continue;
+            }
+
+            segnalaComandoEseguito(lottatore);
+
+            // Se l'attacco parte quando il tasto è già stato rilasciato, il
+            // colpo deve partire subito invece di restare in carica per sempre.
+            if (azione === 'attacco' && !tastoAttaccoDi(lottatore).pressed) {
+                rilasciaCarica(lottatore);
+            }
+        }
+    }
+}
+
+/**
+ * Rilascia tutti i tasti e svuota la coda: serve quando il gioco cambia
+ * schermata, va in pausa o la finestra perde il fuoco. Senza questo, aprendo la
+ * pausa con un tasto giù il lottatore continuava a correre al ritorno.
+ */
+function rilasciaTuttiITasti() {
+    for (const nome in keys) {
+        keys[nome].pressed = false;
+    }
+    for (const lottatore of [Player, Enemy]) {
+        if (lottatore) {
+            lottatore.isParata = false;
+            lottatore.isCaricando = false;
+            lottatore.framesCarica = 0;
+        }
+    }
+    if (bufferComandi) {
+        bufferComandi.voci.length = 0;
+    }
+}
+
+window.addEventListener('blur', rilasciaTuttiITasti);
+
+// ========================================
+// Movimento comune ai due giocatori
+// ==========================================
+
+/**
+ * Movimento orizzontale, animazione verticale e costo della parata: valgono
+ * identici per i due lottatori (prima erano due copie identiche, una per il
+ * giocatore e una per il nemico).
+ * `tastoSinistra` e `tastoDestra` sono i nomi dei tasti in `keys`.
+ */
+function aggiornaParteComune(lottatore, tastoSinistra, tastoDestra) {
+    // Movimento orizzontale (game over, stun, carica e congelamento lo bloccano)
+    if (!gameOver && !lottatore.isStunned && !lottatore.isCaricando && lottatore.congelamentoTimer <= 0) {
+        const invertito = lottatore.inversioneTimer > 0 || lottatore.eclissiTimer > 0;
+        let direzione = 0;
+
+        if (keys[tastoSinistra].pressed && lottatore.lastKey === tastoSinistra) {
+            direzione = -1;
+        } else if (keys[tastoDestra].pressed && lottatore.lastKey === tastoDestra) {
+            direzione = 1;
+        }
+
+        if (invertito) {
+            direzione *= -1;
+        }
+
+        if (direzione !== 0) {
+            lottatore.velocity.x = direzione * lottatore.statistiche.velocita * lottatore.moltiplicatoreVelocita;
+            lottatore.facing = direzione;
+            lottatore.cambiaSprite('Run');
+        } else if (!lottatore.isParata) {
+            lottatore.cambiaSprite('idle');
+        }
+    }
+
+    // Animazione verticale
+    if (lottatore.velocity.y < 0) {
+        lottatore.cambiaSprite('Jump');
+    } else if (lottatore.velocity.y > 0) {
+        lottatore.cambiaSprite('Fall');
+    } else if ((lottatore.isStunned || lottatore.congelamentoTimer > 0) && !lottatore.isTakingDmg &&
+               lottatore.image !== lottatore.sprites.TakeHit.image) {
+        lottatore.cambiaSprite('idle');
+    }
+
+    // La parata consuma stamina ogni frame, anche in movimento (BUG-07)
+    if (!gameOver && !lottatore.isStunned && lottatore.isParata) {
+        lottatore.stamina = Math.max(0, lottatore.stamina - 0.2);
+    }
+}
+
+// ========================================
+// Collisione degli attacchi
+// ==========================================
+
+/**
+ * Controllo di collisione di un attacco, in un solo posto per entrambi i
+ * giocatori. Registra il colpo quando il frame corrente ha raggiunto il frame
+ * d'impatto del personaggio e l'attacco non ha ancora fatto centro: così un
+ * fotogramma saltato non fa più passare il colpo attraverso l'avversario.
+ */
+function controllaColpo(attaccante, difensore) {
+    if (!attaccante.isAttacking) {
+        return false;
+    }
+    if (!colpoVaRegistrato(attaccante.framesCurrent, attaccante.attacco.frame, attaccante.attaccoHaColpito)) {
+        return false;
+    }
+
+    const box = attaccante.AttackBox;
+    const colpisce = box.position.x < difensore.position.x + difensore.width &&
+        box.position.x + box.width > difensore.position.x &&
+        box.position.y + box.height >= difensore.position.y &&
+        box.position.y <= difensore.position.y + difensore.height;
+
+    if (!colpisce) {
+        return false;
+    }
+
+    attaccante.attaccoHaColpito = true;
+    risolviImpatto(attaccante, difensore);
+    return true;
+}
+
+// ========================================
 // Loop Principale del Gioco
 // ==========================================
-function animate() {
-    window.requestAnimationFrame(animate);
+function passoSimulazione() {
+    // Passo di simulazione: 1/60 di secondo. Lo usano il buffer dei comandi,
+    // le stelle dello stun e la diagnosi.
+    frameGioco++;
 
     // Fuori dalla partita non si aggiorna nulla: resta visibile il menu
     if (statoCorrente !== STATI.PARTITA) {
@@ -894,90 +1322,19 @@ function animate() {
     aggiornaMeccaniche(Player);
     aggiornaMeccaniche(Enemy);
 
+    // Comandi premuti troppo presto: si riprovano appena il lottatore è pronto
+    riprovaBuffer();
+
     // In VS CPU l'IA decide gli input del giocatore 2 prima del movimento
     if (cpu) {
         aggiornaCPU(cpu);
     }
 
-    // Movimento del giocatore (game over, stun, carica o congelamento lo bloccano)
-    if (!gameOver && !Player.isStunned && !Player.isCaricando && Player.congelamentoTimer <= 0) {
-        const invertito = Player.inversioneTimer > 0 || Player.eclissiTimer > 0;
-        let direzione = 0;
-
-        if (keys.a.pressed && lastKey === 'a') {
-            direzione = -1;
-        } else if (keys.d.pressed && lastKey === 'd') {
-            direzione = 1;
-        }
-
-        if (invertito) {
-            direzione *= -1;
-        }
-
-        if (direzione !== 0) {
-            Player.velocity.x = direzione * Player.statistiche.velocita * Player.moltiplicatoreVelocita;
-            Player.facing = direzione;
-            Player.cambiaSprite('Run');
-        } else if (!Player.isParata) {
-            Player.cambiaSprite('idle');
-        }
-    }
-
-    // Movimento verticale del giocatore
-    if (Player.velocity.y < 0) {
-        Player.cambiaSprite('Jump');
-    } else if (Player.velocity.y > 0) {
-        Player.cambiaSprite('Fall');
-    } else if ((Player.isStunned || Player.congelamentoTimer > 0) && !Player.isTakingDmg &&
-               Player.image !== Player.sprites.TakeHit.image) {
-        Player.cambiaSprite('idle');
-    }
-
-    // La parata consuma stamina ogni frame, anche in movimento (BUG-07)
-    if (!gameOver && !Player.isStunned && Player.isParata) {
-        Player.stamina = Math.max(0, Player.stamina - 0.2);
-    }
-
-    // Movimento del nemico (game over, stun, carica o congelamento lo bloccano).
-    // Il giocatore 2 usa la stessa convenzione del giocatore 1:
-    // 1 = guarda a destra, -1 = guarda a sinistra.
-    if (!gameOver && !Enemy.isStunned && !Enemy.isCaricando && Enemy.congelamentoTimer <= 0) {
-        const invertito = Enemy.inversioneTimer > 0 || Enemy.eclissiTimer > 0;
-        let direzione = 0;
-
-        if (keys.ArrowLeft.pressed && Enemy.lastKey === 'ArrowLeft') {
-            direzione = -1;
-        } else if (keys.ArrowRight.pressed && Enemy.lastKey === 'ArrowRight') {
-            direzione = 1;
-        }
-
-        if (invertito) {
-            direzione *= -1;
-        }
-
-        if (direzione !== 0) {
-            Enemy.velocity.x = direzione * Enemy.statistiche.velocita * Enemy.moltiplicatoreVelocita;
-            Enemy.facing = direzione;
-            Enemy.cambiaSprite('Run');
-        } else if (!Enemy.isParata) {
-            Enemy.cambiaSprite('idle');
-        }
-    }
-
-    // Movimento verticale del nemico
-    if (Enemy.velocity.y < 0) {
-        Enemy.cambiaSprite('Jump');
-    } else if (Enemy.velocity.y > 0) {
-        Enemy.cambiaSprite('Fall');
-    } else if ((Enemy.isStunned || Enemy.congelamentoTimer > 0) && !Enemy.isTakingDmg &&
-               Enemy.image !== Enemy.sprites.TakeHit.image) {
-        Enemy.cambiaSprite('idle');
-    }
-
-    // La parata consuma stamina ogni frame, anche in movimento (BUG-07)
-    if (!gameOver && !Enemy.isStunned && Enemy.isParata) {
-        Enemy.stamina = Math.max(0, Enemy.stamina - 0.2);
-    }
+    // Movimento, animazione verticale e costo della parata: una sola funzione
+    // per giocatore e CPU (prima erano due copie identiche, una per Player e
+    // una per Enemy, che potevano divergere senza che nessuno se ne accorgesse)
+    aggiornaParteComune(Player, 'a', 'd');
+    aggiornaParteComune(Enemy, 'ArrowLeft', 'ArrowRight');
 
     // Aggiorna e disegna
     background.update();
@@ -993,6 +1350,13 @@ function animate() {
     disegnaProiettili();
     disegnaStati(Player);
     disegnaStati(Enemy);
+
+    // Effetti sopra la scena: particelle, onde, tinte, stelle dello stun
+    aggiornaEffetti(effetti);
+    disegnaEffetti(effetti, c);
+    disegnaStelleStun(c, Player, frameGioco);
+    disegnaStelleStun(c, Enemy, frameGioco);
+    applicaScossa();
 
     // A partita finita il vincitore non deve restare in loop di attacco o parata
     if (gameOver) {
@@ -1027,10 +1391,10 @@ function animate() {
     }
 
     // Aggiorna le barre UI (elementi in cache, niente querySelector per frame)
-    hud.enemyStamina.style.width = percentualeBarra(Enemy.stamina, Enemy.statistiche.stamina) + '%';
-    hud.playerStamina.style.width = percentualeBarra(Player.stamina, Player.statistiche.stamina) + '%';
-    hud.enemyUltimate.style.width = percentualeBarra(Enemy.ultimate, 100) + '%';
-    hud.playerUltimate.style.width = percentualeBarra(Player.ultimate, 100) + '%';
+    scriviBarra('enemyStamina', hud.enemyStamina, Enemy.stamina, Enemy.statistiche.stamina);
+    scriviBarra('playerStamina', hud.playerStamina, Player.stamina, Player.statistiche.stamina);
+    scriviBarra('enemyUltimate', hud.enemyUltimate, Enemy.ultimate, 100);
+    scriviBarra('playerUltimate', hud.playerUltimate, Player.ultimate, 100);
 
     // Pannello di debug: attivo con il tasto U
     if (hitboxVisibili) {
@@ -1040,28 +1404,9 @@ function animate() {
     // Avviso centrale (PERFECT BLOCK / nome ultimate)
     disegnaAvviso();
 
-    // Rilevamento collisione attacco del giocatore.
-    // Le misure sono quelle del personaggio: ogni lottatore ha il suo riquadro.
-    if (Player.isAttacking &&
-        Player.AttackBox.position.x < Enemy.position.x + Enemy.width &&
-        Player.AttackBox.position.x + Player.AttackBox.width > Enemy.position.x &&
-        Player.AttackBox.position.y + Player.AttackBox.height >= Enemy.position.y &&
-        Player.AttackBox.position.y <= Enemy.position.y + Enemy.height &&
-        Player.framesCurrent === Player.attacco.frame) {
-
-        risolviImpatto(Player, Enemy);
-    }
-
-    // Rilevamento collisione attacco del nemico
-    if (Enemy.isAttacking &&
-        Enemy.AttackBox.position.x < Player.position.x + Player.width &&
-        Enemy.AttackBox.position.x + Enemy.AttackBox.width > Player.position.x &&
-        Enemy.AttackBox.position.y + Enemy.AttackBox.height >= Player.position.y &&
-        Enemy.AttackBox.position.y <= Player.position.y + Player.height &&
-        Enemy.framesCurrent === Enemy.attacco.frame) {
-
-        risolviImpatto(Enemy, Player);
-    }
+    // Rilevamento collisione: la regola è la stessa per i due lottatori
+    controllaColpo(Player, Enemy);
+    controllaColpo(Enemy, Player);
 
     // Condizione di fine gioco (eseguita una sola volta)
     if (!gameOver && (Player.health <= 0 || Enemy.health <= 0)) {
@@ -1247,6 +1592,21 @@ function avviaPartita(idP1, idP2) {
     // Nessun proiettile deve sopravvivere alla partita precedente
     proiettili.length = 0;
 
+    // Niente tempo arretrato, niente effetti e niente comandi in coda da prima
+    accumulatore = 0;
+    ultimoTempo = 0;
+    passiUltimoFotogramma = 0;
+    frameGioco = 0;
+    bufferComandi.voci.length = 0;
+    effetti.particelle.length = 0;
+    effetti.onde.length = 0;
+    effetti.scossa = 0;
+    effetti.tinta = null;
+    effetti.impatto = null;
+    for (const chiave in hudPrecedente) {
+        hudPrecedente[chiave] = -1;
+    }
+
     // Ripulisce l'eventuale partita precedente
     clearTimeout(timerId);
     timer = 60;
@@ -1295,6 +1655,9 @@ function apriPausa() {
     if (statoCorrente !== STATI.PARTITA) {
         return;
     }
+
+    // Nessun tasto deve restare "premuto" dietro il menu
+    rilasciaTuttiITasti();
 
     // La pausa annulla le cariche in corso: al ritorno non restano tasti "fantasma"
     for (const lottatore of [Player, Enemy]) {
@@ -1364,6 +1727,7 @@ function cambiaPersonaggi() {
  * Abbandona la partita e torna al menu principale senza ricaricare la pagina
  */
 function esciAlMenu() {
+    rilasciaTuttiITasti();
     clearTimeout(timerId);
     gameOver = false;
 

@@ -13,6 +13,56 @@ const MASSIMO_PARTICELLE = 220;
 const GRAVITA_PARTICELLA = 0.12;
 const ATTRITO_PARTICELLA = 0.98;
 
+// Immagini del pacchetto Kenney (CC0, vedi assets/Effetti/LICENZA-LICENSE.txt).
+// Se mancano o non caricano restano le forme geometriche disegnate col canvas:
+// il gioco funziona identico anche senza la cartella assets/Effetti/.
+const SPRITE_EFFETTI = {
+    impatto: 'assets/Effetti/impatto.png',
+    parata: 'assets/Effetti/parata.png',
+    stella: 'assets/Effetti/stella.png',
+    ultimate: 'assets/Effetti/ultimate.png',
+    scintilla: 'assets/Effetti/scintilla.png'
+};
+
+const immaginiEffetti = {};
+
+/**
+ * Avvia il caricamento degli sprite: si chiama una volta all'avvio e non
+ * aspetta, perché finché un'immagine non è pronta si usano le forme geometriche.
+ */
+function preparaSpriteEffetti() {
+    if (typeof Image !== 'function') {
+        return;
+    }
+    for (const nome in SPRITE_EFFETTI) {
+        const immagine = new Image();
+        immagine.loaded = false;
+        immagine.addEventListener('load', () => { immagine.loaded = true; });
+        immagine.src = SPRITE_EFFETTI[nome];
+        immaginiEffetti[nome] = immagine;
+    }
+}
+
+function spriteEffettoPronto(nome) {
+    const immagine = immaginiEffetti[nome];
+    return !!(immagine && immagine.loaded && immagine.width > 0);
+}
+
+/**
+ * Disegna lo sprite centrato in un punto. Restituisce false se l'immagine non è
+ * pronta (allora chi chiama sa che deve disegnare la forma geometrica).
+ */
+function disegnaSpriteEffetto(ctx, nome, x, y, lato, alpha) {
+    if (!spriteEffettoPronto(nome)) {
+        return false;
+    }
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+    ctx.drawImage(immaginiEffetti[nome], x - lato / 2, y - lato / 2, lato, lato);
+    ctx.restore();
+    return true;
+}
+
 function creaSistemaEffetti() {
     return {
         particelle: [],
@@ -83,8 +133,9 @@ function tigni(sistema, colore, forza, durata) {
 /**
  * Segna il punto d'impatto dove disegnare lo sprite del colpo (se c'è).
  */
-function segnaImpatto(sistema, x, y, timer) {
-    sistema.impatto = { x: x, y: y, timer: timer || 12, durata: timer || 12 };
+function segnaImpatto(sistema, x, y, timer, sprite) {
+    const durata = timer || 12;
+    sistema.impatto = { x: x, y: y, timer: durata, durata: durata, sprite: sprite || 'impatto' };
 }
 
 function aggiornaEffetti(sistema) {
@@ -137,13 +188,11 @@ function aggiornaEffetti(sistema) {
 function disegnaEffetti(sistema, ctx) {
     ctx.save();
 
-    // Sprite del colpo (opzionale, vedi assets/Effetti/)
-    if (sistema.impatto && typeof spriteImpattoPronto === 'function' && spriteImpattoPronto()) {
-        const immagine = immagineImpatto();
-        const lato = 180;
-        ctx.globalAlpha = Math.max(0, sistema.impatto.timer / sistema.impatto.durata);
-        ctx.drawImage(immagine,
-            sistema.impatto.x - lato / 2, sistema.impatto.y - lato / 2, lato, lato);
+    // Flash del colpo: sprite del pacchetto, quando l'immagine è pronta
+    if (sistema.impatto) {
+        const alpha = Math.max(0, sistema.impatto.timer / sistema.impatto.durata);
+        const lato = sistema.impatto.sprite === 'ultimate' ? 260 : 170;
+        disegnaSpriteEffetto(ctx, sistema.impatto.sprite, sistema.impatto.x, sistema.impatto.y, lato, alpha);
     }
 
     for (const p of sistema.particelle) {
@@ -184,16 +233,25 @@ function disegnaStelleStun(ctx, lottatore, frame) {
     const centro = lottatore.position.x + lottatore.centroCorpo;
     const base = lottatore.position.y - 18;
 
+    const conSprite = spriteEffettoPronto('stella');
+
     ctx.save();
-    ctx.fillStyle = '#ffd34d';
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.75)';
-    ctx.lineWidth = 2;
 
     for (let i = 0; i < 3; i++) {
         const angolo = (frame * 0.12) + (i * (Math.PI * 2 / 3));
         const x = centro + Math.cos(angolo) * 26;
         const y = base + Math.sin(angolo) * 8;
 
+        if (conSprite) {
+            ctx.globalAlpha = 0.95;
+            ctx.drawImage(immaginiEffetti.stella, x - 12, y - 12, 24, 24);
+            continue;
+        }
+
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#ffd34d';
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.75)';
+        ctx.lineWidth = 2;
         ctx.beginPath();
         for (let punta = 0; punta < 10; punta++) {
             const raggio = punta % 2 === 0 ? 6 : 2.6;
@@ -220,6 +278,9 @@ if (typeof module !== 'undefined' && module.exports) {
         tigni: tigni,
         segnaImpatto: segnaImpatto,
         aggiornaEffetti: aggiornaEffetti,
+        SPRITE_EFFETTI: SPRITE_EFFETTI,
+        disegnaSpriteEffetto: disegnaSpriteEffetto,
+        spriteEffettoPronto: spriteEffettoPronto,
         disegnaEffetti: disegnaEffetti,
         disegnaStelleStun: disegnaStelleStun
     };

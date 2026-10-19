@@ -134,6 +134,7 @@ class Lottatore extends Sprite {
         this.attaccoCaricato = false;    // colpo in corso che rompe la parata
         this.attaccoUltimate = false;    // ultimate in corso
         this.ultimateHaColpito = false;  // l'ultimate ha già fatto centro
+        this.attaccoHaColpito = false;   // questo attacco ha già fatto centro (una volta sola)
         this.framesAttacco = 0;          // frame dall'inizio dell'attacco
         this.isCaricando = false;        // tasto attacco tenuto premuto
         this.framesCarica = 0;           // frame di carica accumulati
@@ -285,6 +286,7 @@ class Lottatore extends Sprite {
         this.attaccoCaricato = caricato;
         this.attaccoUltimate = ultimate;
         this.ultimateHaColpito = false;
+        this.attaccoHaColpito = false;
         this.framesAttacco = 0;
         this.isCaricando = false;
         this.framesCarica = 0;
@@ -303,6 +305,7 @@ class Lottatore extends Sprite {
             this.isAttacking = false;
             this.attaccoCaricato = false;
             this.attaccoUltimate = false;
+            this.attaccoHaColpito = false;
             this.framesAttacco = 0;
             this.isCaricando = false;
             this.framesCarica = 0;
