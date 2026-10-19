@@ -23,7 +23,7 @@ function sorgente(relativo) {
 }
 
 const gioco = sorgente('index.js');
-const personaggi = sorgente('js/Personaggi.js');
+const personaggi = sorgente('js/Verdellinesi.js');
 const classi = sorgente('js/Classi.js');
 const utili = sorgente('js/Utili.js');
 

@@ -33,7 +33,7 @@ const VOCI_MENU = {
     // Compare da sola a fine partita: rivincita o cambio personaggi
     finePartita: [
         { testo: 'RIVINCITA', azione: () => rivincita() },
-        { testo: 'CAMBIA PERSONAGGI', azione: () => cambiaPersonaggi() },
+        { testo: 'CAMBIA VERDELLINESI', azione: () => cambiaPersonaggi() },
         { testo: 'ESCI AL MENU', azione: () => esciAlMenu() }
     ],
     impostazioniPausa: [
@@ -231,9 +231,25 @@ function disegnaPannelloGiocatore() {
     pannello.appendChild(titolo);
 
     if (!dati.dentro) {
+        // C'è sempre un'identità: quella dell'ospite, con il suo nome e il
+        // numero di partite giocate in questo browser (js/Identita.js).
+        if (dati.nome) {
+            const nome = document.createElement('div');
+            nome.className = 'pannello-nick';
+            nome.textContent = dati.nome;
+            pannello.appendChild(nome);
+
+            const nota = document.createElement('div');
+            nota.className = 'pannello-riga';
+            nota.textContent = dati.partite
+                ? dati.partite + (dati.partite === 1 ? ' partita giocata' : ' partite giocate')
+                : 'Prima partita';
+            pannello.appendChild(nota);
+        }
+
         const testo = document.createElement('div');
         testo.className = 'pannello-vuoto';
-        testo.textContent = 'Accedi per salvare punti, ELO e lottatori. Senza account restano VS LOCALE e VS CPU.';
+        testo.textContent = 'Stai giocando come ospite. Con un account punti, ELO e verdellinesi sbloccati restano salvati.';
         pannello.appendChild(testo);
         return;
     }

@@ -19,7 +19,9 @@ const onlineStato = {
     attivo: false,        // partita online in corso
     ospite: false,        // true = questo browser è il giocatore 2
     codice: null,         // codice della stanza
-    idAvversario: null,   // personaggio scelto dall'altro
+    idAvversario: null,   // verdellinese scelto dall'altro
+    nomeMio: null,        // nome del giocatore su questo browser
+    nomeAvversario: null, // nome dell'altro (account o ospite)
     fotogramma: null,     // ultimo stato ricevuto (solo ospite)
     contatoreInvio: 0,    // usato per mandare un fotogramma ogni due frame
     fineMostrata: false   // il menu di fine partita è già comparso (solo ospite)
@@ -114,15 +116,20 @@ function aggiornaBadgeOnline() {
         return;
     }
 
+    // Il nome dell'altro si conosce dallo scambio in stanza (account o ospite)
+    const contro = onlineStato.nomeAvversario ? ' contro ' + onlineStato.nomeAvversario : '';
+
     if (onlineStato.attivo) {
         mostraBadgeOnline('STANZA ' + onlineStato.codice + ' - ' +
-            (onlineStato.ospite ? 'GIOCATORE 2' : 'GIOCATORE 1'));
+            (onlineStato.ospite ? 'GIOCATORE 2' : 'GIOCATORE 1') + contro);
     } else if (onlineStato.ospite) {
-        // L'ospite sceglie il proprio personaggio: non aspetta nessuno
-        mostraBadgeOnline('STANZA ' + onlineStato.codice + ' - SCEGLI IL PERSONAGGIO');
+        // L'ospite sceglie il proprio verdellinese: non aspetta nessuno
+        mostraBadgeOnline('STANZA ' + onlineStato.codice + ' - SCEGLI IL VERDELLINESE' + contro);
     } else {
         mostraBadgeOnline('STANZA ' + onlineStato.codice +
-            (onlineStato.idAvversario ? ' - AVVERSARIO COLLEGATO' : ' - IN ATTESA DELL\'AVVERSARIO'));
+            (onlineStato.nomeAvversario
+                ? ' - CONTRO ' + onlineStato.nomeAvversario
+                : ' - IN ATTESA DELL\'AVVERSARIO'));
     }
 }
 
@@ -147,7 +154,10 @@ function creaStanzaOnline() {
             }, 2500);
             return;
         }
-        Rete.invia({ t: 'crea' });
+        Rete.invia({
+            t: 'crea',
+            nome: (typeof nomeGiocatore === 'function') ? nomeGiocatore('p1') : null
+        });
     });
 }
 
@@ -171,7 +181,11 @@ function entraStanzaOnline() {
             messaggioPannelloOnline('Server non raggiungibile. Riprova tra poco.');
             return;
         }
-        Rete.invia({ t: 'entra', codice: codice });
+        Rete.invia({
+            t: 'entra',
+            codice: codice,
+            nome: (typeof nomeGiocatore === 'function') ? nomeGiocatore('p1') : null
+        });
     });
 }
 
@@ -243,6 +257,8 @@ function gestisciMessaggioOnline(dati) {
             onlineStato.codice = dati.codice;
             onlineStato.ospite = false;
             onlineStato.idAvversario = null;
+            onlineStato.nomeMio = (typeof nomeGiocatore === 'function') ? nomeGiocatore('p1') : null;
+            onlineStato.nomeAvversario = null;
 
             // Se la stanza nasce dalla coda ranked, il codice va comunicato al
             // server: l'avversario lo sta aspettando per entrare da solo.
@@ -260,6 +276,8 @@ function gestisciMessaggioOnline(dati) {
             onlineStato.codice = dati.codice;
             onlineStato.ospite = true;
             onlineStato.idAvversario = null;
+            onlineStato.nomeMio = (typeof nomeGiocatore === 'function') ? nomeGiocatore('p1') : null;
+            onlineStato.nomeAvversario = dati.avversario || null;
             chiudiPannelloOnline();
             aggiornaBadgeOnline();
             apriSelezione(MODALITA.ONLINE);
@@ -272,7 +290,12 @@ function gestisciMessaggioOnline(dati) {
         }
 
         case 'avversario': {
-            // L'host sa che l'ospite è entrato: si può scegliere il personaggio
+            // L'host sa che l'ospite è entrato: si può scegliere il verdellinese
+            // e ora sa anche con chi sta giocando
+            if (dati.nome) {
+                onlineStato.nomeAvversario = dati.nome;
+            }
+            onlineStato.idAvversario = null;
             aggiornaBadgeOnline();
             return;
         }
@@ -280,7 +303,7 @@ function gestisciMessaggioOnline(dati) {
         case 'scelta': {
             // Il personaggio scelto dall'altro giocatore
             onlineStato.idAvversario = dati.id;
-            const indice = PERSONAGGI.findIndex(personaggio => personaggio.id === dati.id);
+            const indice = VERDELLINESI.findIndex(personaggio => personaggio.id === dati.id);
 
             if (indice >= 0) {
                 if (onlineStato.ospite) {
@@ -304,8 +327,8 @@ function gestisciMessaggioOnline(dati) {
 
         case 'avvia': {
             // L'host ha avviato: l'ospite adotta le scelte e le misure del campo
-            const indiceP1 = PERSONAGGI.findIndex(personaggio => personaggio.id === dati.p1);
-            const indiceP2 = PERSONAGGI.findIndex(personaggio => personaggio.id === dati.p2);
+            const indiceP1 = VERDELLINESI.findIndex(personaggio => personaggio.id === dati.p1);
+            const indiceP2 = VERDELLINESI.findIndex(personaggio => personaggio.id === dati.p2);
 
             if (indiceP1 >= 0) sceltaP1 = indiceP1;
             if (indiceP2 >= 0) sceltaP2 = indiceP2;
@@ -364,8 +387,8 @@ function inviaSceltaOnline(id) {
  * L'host avvia la partita e comunica all'ospite personaggi e misure del campo
  */
 function inviaAvvioOnline() {
-    const idP1 = PERSONAGGI[sceltaP1].id;
-    const idP2 = PERSONAGGI[sceltaP2].id;
+    const idP1 = VERDELLINESI[sceltaP1].id;
+    const idP2 = VERDELLINESI[sceltaP2].id;
 
     Rete.invia({
         t: 'avvia',

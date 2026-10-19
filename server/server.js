@@ -568,6 +568,15 @@ class Connessione {
 // Server -> client:  creata | entrato | errore | avversario | avversarioUscito
 // Il server inoltra al compagno di stanza tutto quello che non gestisce.
 
+/**
+ * Nome da mostrare all'altro giocatore: solo testo, massimo 24 caratteri.
+ * Non è un dato di fiducia, serve solo a leggere con chi si gioca.
+ */
+function pulisciNome(nome) {
+    const testo = String(nome || '').replace(/[\r\n\t]/g, ' ').trim().slice(0, 24);
+    return testo || 'Giocatore';
+}
+
 function gestisciMessaggio(connessione, dati) {
     switch (dati.t) {
         case 'crea': {
@@ -584,7 +593,15 @@ function gestisciMessaggio(connessione, dati) {
                 connessione.invia({ t: 'errore', msg: 'Impossibile creare la stanza' });
                 return;
             }
-            stanze.set(codice, { padrone: connessione, ospite: null, creata: Date.now() });
+            stanze.set(codice, {
+                padrone: connessione,
+                ospite: null,
+                creata: Date.now(),
+                // Nome leggibile del giocatore (account o ospite). Il client
+                // vecchio non lo manda: in quel caso resta "Giocatore".
+                nomePadrone: pulisciNome(dati.nome),
+                nomeOspite: null
+            });
             connessione.codiceStanza = codice;
             connessione.ruolo = 'padrone';
             connessione.invia({ t: 'creata', codice: codice });
@@ -609,11 +626,14 @@ function gestisciMessaggio(connessione, dati) {
             }
 
             stanza.ospite = connessione;
+            stanza.nomeOspite = pulisciNome(dati.nome);
             connessione.codiceStanza = codice;
             connessione.ruolo = 'ospite';
 
-            connessione.invia({ t: 'entrato', codice: codice });
-            stanza.padrone.invia({ t: 'avversario', stato: 'arrivato' });
+            // Ognuno dei due riceve il nome dell'altro: così la schermata
+            // d'attesa e il cartello di fine partita sanno chi ha giocato.
+            connessione.invia({ t: 'entrato', codice: codice, avversario: stanza.nomePadrone });
+            stanza.padrone.invia({ t: 'avversario', stato: 'arrivato', nome: stanza.nomeOspite });
             return;
         }
 

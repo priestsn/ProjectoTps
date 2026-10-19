@@ -27,6 +27,13 @@
 // Durata dell'animazione di attacco, in frame di gioco (a 60 fps: 30 = mezzo secondo).
 // Serve perché i personaggi hanno da 4 a 13 frame di attacco: senza questo,
 // l'attacco più corto durerebbe 0,7 s e il più lungo 2,2 s.
+// Nome ufficiale dei lottatori: "verdellinesi". Le scritte dell'interfaccia
+// usano queste costanti; la chiave tecnica `personaggio` (dati/negozio.json,
+// API e lottatore.personaggio) resta invariata: e' un identificativo salvato,
+// non una parola da leggere.
+const NOME_VERDELLINESE = 'verdellinese';
+const NOME_VERDELLINESI = 'verdellinesi';
+
 const ATTACCO_FRAME = 30;
 
 // `attacco` descrive l'area del colpo al frame d'impatto, misurata sui pixel
@@ -36,7 +43,7 @@ const ATTACCO_FRAME = 30;
 // Prima dy e altezza erano uguali per tutti (42 / 126): ora seguono l'arma
 // o l'effetto effettivamente disegnato nel frame d'impatto.
 
-const PERSONAGGI = [
+const VERDELLINESI = [
     {
         id: 'OusmaneDiouf',
         nome: 'Ousmane Diouf',
@@ -232,7 +239,7 @@ const PERSONAGGI = [
  * Cerca un personaggio per id
  */
 function trovaPersonaggio(id) {
-    return PERSONAGGI.find(personaggio => personaggio.id === id);
+    return VERDELLINESI.find(personaggio => personaggio.id === id);
 }
 
 /**
@@ -329,7 +336,7 @@ function creaLottatore(personaggio, x, facing) {
  * ritardi quando si sceglie un personaggio.
  */
 function precaricaPersonaggi() {
-    for (const personaggio of PERSONAGGI) {
+    for (const personaggio of VERDELLINESI) {
         const sprites = spriteDelPersonaggio(personaggio);
         for (const chiave in sprites) {
             creaImmagine(sprites[chiave].imageSrc);

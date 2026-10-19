@@ -1105,6 +1105,14 @@ canvas {
     color: #ff7a4a;
 }
 
+/* Chi sta scegliendo, sotto il titolo della griglia */
+#selezioneChiSceglie {
+    font-size: 15px;
+    letter-spacing: 3px;
+    color: #ffd34d;
+    margin-bottom: 10px;
+}
+
 /* ========================================
    Cartello del risultato (fine partita)
    ========================================== */
@@ -1126,11 +1134,18 @@ canvas {
     margin-bottom: 8px;
 }
 
-.esito-vincitore {
-    font-size: 58px;
+.esito-giocatore {
+    font-size: 48px;
     color: #ffffff;
     line-height: 1.1;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
+}
+
+.esito-verdellinese {
+    font-size: 24px;
+    letter-spacing: 3px;
+    color: #8ab4ff;
+    margin-bottom: 12px;
 }
 
 .esito-dettaglio {
@@ -1251,8 +1266,13 @@ canvas {
         letter-spacing: 3px;
     }
 
-    .esito-vincitore {
-        font-size: 30px;
+    .esito-giocatore {
+        font-size: 26px;
+    }
+
+    .esito-verdellinese {
+        font-size: 15px;
+        letter-spacing: 2px;
     }
 
     .esito-dettaglio {

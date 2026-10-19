@@ -98,6 +98,13 @@ function determineWinner(player, enemy, timerId) {
     if (typeof chiudiPartitaPunti === 'function' && typeof esitoPerP1 === 'function') {
         chiudiPartitaPunti(esitoPerP1());
     }
+
+    // Chi gioca senza account non ha un profilo sul server, ma la partita gli
+    // viene contata lo stesso: il numero resta nel browser (js/Identita.js).
+    if (typeof statoAccount !== 'undefined' && !statoAccount.dentro &&
+        typeof contaPartitaOspite === 'function') {
+        contaPartitaOspite();
+    }
 }
 
 let timer = 60;

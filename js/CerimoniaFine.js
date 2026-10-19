@@ -72,18 +72,25 @@ function passiTotali() {
 }
 
 /**
- * Testi del cartello finale. `nomeVincitore` è il nome del personaggio.
- * In pareggio non c'è vincitore e il motivo è il tempo scaduto.
+ * Testi del cartello finale: il nome del giocatore e, sotto, il verdellinese
+ * che ha usato. L'esito porta i nomi di tutti e due fin dalla creazione, così
+ * il modulo non deve sapere chi ha vinto "guardando fuori".
  */
-function testoEsito(esito, nomeVincitore) {
-    const vita = (esito && typeof esito.vitaP1 === 'number')
-        ? Math.max(0, Math.round(esito.vitaP1)) + '%'
+function testoEsito(esito) {
+    const dati = esito || {};
+    const vincitore = dati.vincitore || null;
+    const nome = (vincitore === 'p2') ? dati.nomeP2 : dati.nomeP1;
+    const verdellinese = (vincitore === 'p2') ? dati.verdellineseP2 : dati.verdellineseP1;
+    const vita = (typeof dati.vitaP1 === 'number')
+        ? Math.max(0, Math.round(dati.vitaP1)) + '%'
         : '—';
 
     return {
-        vincitore: (esito && esito.vincitore) ? nomeVincitore : 'PAREGGIO',
-        motivo: (esito && esito.motivo === 'tempo') ? 'TEMPO SCADUTO' : 'K.O.',
-        dettaglio: 'Vita rimasta ' + vita + ' · ' + ((esito && esito.durata) || 0) + ' s di partita'
+        motivo: (dati.motivo === 'tempo') ? 'TEMPO SCADUTO' : 'K.O.',
+        giocatore: vincitore ? String(nome || 'GIOCATORE') : 'PAREGGIO',
+        verdellinese: vincitore ? String(verdellinese || '') : '',
+        dettaglio: 'Vita rimasta ' + vita + ' · ' + (dati.durata || 0) + ' s di partita',
+        invito: 'Invio per continuare'
     };
 }
 

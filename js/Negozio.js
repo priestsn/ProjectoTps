@@ -34,7 +34,7 @@ function negozioCrea(tag, classe, testo) {
 
 /** Il personaggio del gioco che corrisponde a un id del catalogo. */
 function lottatoreDelCatalogo(id) {
-    return PERSONAGGI.find((p) => p.id === id) || null;
+    return VERDELLINESI.find((p) => p.id === id) || null;
 }
 
 /** Apre il negozio: senza account non si compra niente. */
@@ -88,7 +88,7 @@ function disegnaNegozio(messaggio, tipo) {
 
     contenitore.innerHTML = '';
 
-    contenitore.appendChild(negozioCrea('div', 'negozio-titolo', 'NEGOZIO DEI LOTTATORI'));
+    contenitore.appendChild(negozioCrea('div', 'negozio-titolo', 'NEGOZIO DEI VERDELLINESI'));
     contenitore.appendChild(negozioCrea('div', 'negozio-punti', 'Punti disponibili: ' + statoAccount.punti));
 
     const griglia = negozioCrea('div', 'negozio-griglia');

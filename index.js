@@ -1033,6 +1033,11 @@ function avviaCerimoniaFine(motivo) {
     cerimoniaFine = creaCerimonia({
         vincitore: vincitore,
         motivo: motivo,
+        // Il cartello mostra il giocatore e, sotto, il verdellinese che ha usato
+        nomeP1: (typeof nomeGiocatore === 'function') ? nomeGiocatore('p1') : 'GIOCATORE 1',
+        nomeP2: (typeof nomeGiocatore === 'function') ? nomeGiocatore('p2') : 'GIOCATORE 2',
+        verdellineseP1: Player.personaggio.nome,
+        verdellineseP2: Enemy.personaggio.nome,
         vitaP1: percentualeBarra(Player.health, Player.statistiche.vita),
         vitaP2: percentualeBarra(Enemy.health, Enemy.statistiche.vita),
         durata: 60 - Math.max(0, timer)
@@ -1087,11 +1092,7 @@ function disegnaEsito() {
         return;
     }
 
-    const nomeVincitore = (esito.vincitore === 'p2')
-        ? Enemy.personaggio.nome
-        : Player.personaggio.nome;
-    const testi = testoEsito(esito, nomeVincitore);
-
+    const testi = testoEsito(esito);
     hud.displayText.innerHTML = '';
 
     const riquadro = document.createElement('div');
@@ -1102,10 +1103,18 @@ function disegnaEsito() {
     motivo.textContent = testi.motivo;
     riquadro.appendChild(motivo);
 
-    const vincitore = document.createElement('div');
-    vincitore.className = 'esito-vincitore';
-    vincitore.textContent = (esito.vincitore ? testi.vincitore + ' VINCE' : testi.vincitore);
-    riquadro.appendChild(vincitore);
+    // Sopra il giocatore, sotto il verdellinese che ha usato
+    const giocatore = document.createElement('div');
+    giocatore.className = 'esito-giocatore';
+    giocatore.textContent = esito.vincitore ? testi.giocatore + ' VINCE' : testi.giocatore;
+    riquadro.appendChild(giocatore);
+
+    if (testi.verdellinese) {
+        const verdellinese = document.createElement('div');
+        verdellinese.className = 'esito-verdellinese';
+        verdellinese.textContent = testi.verdellinese;
+        riquadro.appendChild(verdellinese);
+    }
 
     const dettaglio = document.createElement('div');
     dettaglio.className = 'esito-dettaglio';
@@ -1114,7 +1123,7 @@ function disegnaEsito() {
 
     const invito = document.createElement('div');
     invito.className = 'esito-invito';
-    invito.textContent = 'Invio per continuare';
+    invito.textContent = testi.invito;
     riquadro.appendChild(invito);
 
     hud.displayText.appendChild(riquadro);

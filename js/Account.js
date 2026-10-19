@@ -167,7 +167,7 @@ function moduloProfilo() {
         ['Punteggio (ELO)', statoAccount.elo],
         ['Partite giocate', statoAccount.partiteGiocate || 0],
         ['Vittorie / Sconfitte', (statoAccount.vittorie || 0) + ' / ' + (statoAccount.sconfitte || 0)],
-        ['Lottatori posseduti', statoAccount.lottatori.length]
+        ['Verdellinesi posseduti', statoAccount.lottatori.length]
     ];
     for (const riga of righe) {
         const linea = accountCrea('div', 'account-riga');
@@ -310,7 +310,14 @@ function applicaProfilo(profilo) {
  */
 function datiPannelloGiocatore() {
     if (!statoAccount.dentro) {
-        return { dentro: false };
+        // Anche senza account sappiamo chi sta giocando: l'ospite ha un id e un
+        // nome (js/Identita.js), così il pannello non resta vuoto.
+        const datiOspite = (typeof ospite === 'function') ? ospite() : null;
+        return {
+            dentro: false,
+            nome: datiOspite ? datiOspite.nome : null,
+            partite: datiOspite ? datiOspite.partite : 0
+        };
     }
     return {
         dentro: true,

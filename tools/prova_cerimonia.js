@@ -47,14 +47,37 @@ const saltata = Cerimonia.creaCerimonia({ vincitore: 'p2', motivo: 'ko' });
 Cerimonia.concludiCerimonia(saltata);
 verifica('Concludi la chiude subito', Cerimonia.cerimoniaFinita(saltata) === true);
 
-const testo = Cerimonia.testoEsito({ vincitore: 'p1', motivo: 'ko', vitaP1: 30, vitaP2: 0, durata: 47 }, 'Ousmane Diouf');
-verifica('L\'esito nomina il vincitore', testo.vincitore === 'Ousmane Diouf', testo.vincitore);
-verifica('L\'esito dice come è finita', testo.motivo === 'K.O.', testo.motivo);
-verifica('L\'esito riporta la vita rimasta', testo.dettaglio.indexOf('30') !== -1, testo.dettaglio);
+const testi = Cerimonia.testoEsito({
+    vincitore: 'p1',
+    nomeP1: 'Tacco69', verdellineseP1: 'Ousmane Diouf',
+    nomeP2: 'CPU', verdellineseP2: 'Amara Diallo',
+    motivo: 'ko', vitaP1: 30, vitaP2: 0, durata: 47
+});
+verifica('Sopra c\'e\' il nome del giocatore', testi.giocatore === 'Tacco69', testi.giocatore);
+verifica('Sotto c\'e\' il verdellinese usato', testi.verdellinese === 'Ousmane Diouf', testi.verdellinese);
+verifica('Il motivo resta K.O.', testi.motivo === 'K.O.', testi.motivo);
+verifica('Il dettaglio riporta la vita rimasta', testi.dettaglio.indexOf('30') !== -1, testi.dettaglio);
+verifica('C\'e\' l\'invito a continuare', /Invio/.test(testi.invito), testi.invito);
 
-const pareggio = Cerimonia.testoEsito({ vincitore: null, motivo: 'tempo', vitaP1: 40, vitaP2: 40, durata: 60 }, 'Ousmane Diouf');
-verifica('In pareggio non c\'è un vincitore', pareggio.vincitore === 'PAREGGIO', pareggio.vincitore);
-verifica('A tempo scaduto il motivo è chiaro', pareggio.motivo === 'TEMPO SCADUTO', pareggio.motivo);
+const testiP2 = Cerimonia.testoEsito({
+    vincitore: 'p2',
+    nomeP1: 'Tacco69', verdellineseP1: 'Ousmane Diouf',
+    nomeP2: 'Ospite 3F2A', verdellineseP2: 'Amara Diallo',
+    motivo: 'ko', vitaP1: 12, vitaP2: 40, durata: 52
+});
+verifica('Se vince P2 si leggono i suoi nomi',
+    testiP2.giocatore === 'Ospite 3F2A' && testiP2.verdellinese === 'Amara Diallo',
+    testiP2.giocatore + ' / ' + testiP2.verdellinese);
+
+const pareggio = Cerimonia.testoEsito({
+    vincitore: null,
+    nomeP1: 'Tacco69', verdellineseP1: 'Ousmane Diouf',
+    nomeP2: 'CPU', verdellineseP2: 'Amara Diallo',
+    motivo: 'tempo', vitaP1: 40, vitaP2: 40, durata: 60
+});
+verifica('In pareggio non c\'e\' vincitore', pareggio.giocatore === 'PAREGGIO', pareggio.giocatore);
+verifica('In pareggio niente verdellinese', pareggio.verdellinese === '', pareggio.verdellinese);
+verifica('A tempo scaduto il motivo e\' chiaro', pareggio.motivo === 'TEMPO SCADUTO', pareggio.motivo);
 
 const passate = risultati.filter(Boolean).length;
 console.log('\n' + passate + '/' + risultati.length + ' verifiche passate');

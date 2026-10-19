@@ -10,7 +10,7 @@
 //   giocatore 2: frecce sinistra / destra per scorrere, ù per confermare
 //   Esc per tornare al menu
 
-// Cursore dei due giocatori: indice dentro PERSONAGGI
+// Cursore dei due giocatori: indice dentro VERDELLINESI
 let sceltaP1 = 0;
 let sceltaP2 = 1;
 
@@ -26,12 +26,12 @@ function apriSelezione(modalita = MODALITA.LOCALE) {
     modalitaPartita = modalita;
 
     sceltaP1 = 0;
-    sceltaP2 = PERSONAGGI.length > 1 ? 1 : 0;
+    sceltaP2 = VERDELLINESI.length > 1 ? 1 : 0;
     confermatoP1 = false;
     confermatoP2 = false;
 
     if (modalitaPartita === MODALITA.CPU) {
-        sceltaP2 = Math.floor(Math.random() * PERSONAGGI.length);
+        sceltaP2 = Math.floor(Math.random() * VERDELLINESI.length);
         confermatoP2 = true;
     }
 
@@ -52,7 +52,13 @@ function disegnaSelezione() {
     const griglia = document.querySelector('#selezioneGriglia');
     griglia.innerHTML = '';
 
-    PERSONAGGI.forEach((personaggio, indice) => {
+    // Chi sta scegliendo: nick dell'account oppure nome dell'ospite
+    const chiSceglie = document.querySelector('#selezioneChiSceglie');
+    if (chiSceglie && typeof nomeGiocatore === 'function') {
+        chiSceglie.textContent = nomeGiocatore('p1');
+    }
+
+    VERDELLINESI.forEach((personaggio, indice) => {
         const cella = document.createElement('div');
         cella.className = 'cella';
 
@@ -118,9 +124,11 @@ function disegnaSelezione() {
 function toccaCella(indice) {
     // Un lottatore non posseduto non sposta nemmeno il cursore: si vede il
     // blocco e il prezzo, e il tocco spiega dove sbloccarlo.
-    if (!lottatorePosseduto(PERSONAGGI[indice].id)) {
+    if (!lottatorePosseduto(VERDELLINESI[indice].id)) {
         if (typeof mostraAvviso === 'function') {
-            mostraAvviso('Lottatore bloccato: si sblocca nel negozio', '#e0a020');
+            mostraAvviso(statoAccount.dentro
+                ? NOME_VERDELLINESE + ' bloccato: si sblocca nel negozio'
+                : NOME_VERDELLINESE + ' bloccato: crea un account e sbloccalo nel negozio', '#e0a020');
         }
         return;
     }
@@ -246,7 +254,7 @@ function stileRitratto(personaggio) {
  * Mostra nome, archetipo e statistiche del personaggio sotto il cursore
  */
 function aggiornaSchedaGiocatore(selettore, indice, confermato, extra = '') {
-    const personaggio = PERSONAGGI[indice];
+    const personaggio = VERDELLINESI[indice];
     const stat = personaggio.statistiche;
     const scheda = document.querySelector(selettore);
 
@@ -279,7 +287,7 @@ function aggiornaSchedeSelezione() {
         aggiornaSchedaGiocatore('#infoP1', sceltaP1, confermatoP1);
         aggiornaSchedaGiocatore('#infoP2', sceltaP2, true, 'CPU ' + NOMI_DIFFICOLTA[difficoltaCPU]);
         if (istruzioni) {
-            istruzioni.innerHTML = 'Scegli il tuo personaggio: A / D per scorrere, H per confermare' +
+            istruzioni.innerHTML = 'Scegli il tuo ' + NOME_VERDELLINESE + ': A / D per scorrere, H per confermare' +
                 ' &nbsp;&middot;&nbsp; l\'avversario è scelto dalla CPU &nbsp;&middot;&nbsp; Esc per tornare indietro';
         }
         return;
@@ -322,7 +330,7 @@ function aggiornaSchedaAvversario(selettore, indice, confermato) {
         return;
     }
 
-    const personaggio = PERSONAGGI[indice];
+    const personaggio = VERDELLINESI[indice];
     const stat = personaggio.statistiche;
 
     scheda.innerHTML =
@@ -338,7 +346,7 @@ function aggiornaSchedaAvversario(selettore, indice, confermato) {
  * Sposta il cursore di un giocatore di `passo` posizioni, girando intorno
  */
 function spostaCursore(giocatore, passo) {
-    const totale = PERSONAGGI.length;
+    const totale = VERDELLINESI.length;
 
     if (giocatore === 1) {
         if (confermatoP1) return;
@@ -356,12 +364,12 @@ function spostaCursore(giocatore, passo) {
  * bloccati, così il cursore non si ferma mai su chi non si possiede.
  */
 function prossimoSelezionabile(indicePartenza, passo) {
-    const totale = PERSONAGGI.length;
+    const totale = VERDELLINESI.length;
     let indice = indicePartenza;
 
     for (let giro = 0; giro < totale; giro++) {
         indice = (indice + passo + totale) % totale;
-        if (lottatorePosseduto(PERSONAGGI[indice].id)) {
+        if (lottatorePosseduto(VERDELLINESI[indice].id)) {
             return indice;
         }
     }
@@ -373,13 +381,15 @@ function prossimoSelezionabile(indicePartenza, passo) {
  */
 function confermaScelta(giocatore) {
     const indiceScelto = giocatore === 1 ? sceltaP1 : sceltaP2;
-    const personaggioScelto = PERSONAGGI[indiceScelto];
+    const personaggioScelto = VERDELLINESI[indiceScelto];
 
     // Un lottatore non posseduto non si può confermare: il blocco vale anche
     // per la CPU, che sceglierebbe un personaggio non acquistato.
     if (!lottatorePosseduto(personaggioScelto.id)) {
         if (typeof mostraAvviso === 'function') {
-            mostraAvviso('Lottatore bloccato: si sblocca nel negozio', '#e0a020');
+            mostraAvviso(statoAccount.dentro
+                ? NOME_VERDELLINESE + ' bloccato: si sblocca nel negozio'
+                : NOME_VERDELLINESE + ' bloccato: crea un account e sbloccalo nel negozio', '#e0a020');
         }
         return;
     }
@@ -394,7 +404,7 @@ function confermaScelta(giocatore) {
 
     // In VS ONLINE la scelta va comunicata all'altro giocatore
     if (modalitaPartita === MODALITA.ONLINE) {
-        inviaSceltaOnline(giocatore === 1 ? PERSONAGGI[sceltaP1].id : PERSONAGGI[sceltaP2].id);
+        inviaSceltaOnline(giocatore === 1 ? VERDELLINESI[sceltaP1].id : VERDELLINESI[sceltaP2].id);
     }
 
     // Si parte solo quando entrambi hanno confermato
@@ -405,7 +415,7 @@ function confermaScelta(giocatore) {
                 inviaAvvioOnline();
             }
         } else {
-            avviaPartita(PERSONAGGI[sceltaP1].id, PERSONAGGI[sceltaP2].id);
+            avviaPartita(VERDELLINESI[sceltaP1].id, VERDELLINESI[sceltaP2].id);
         }
     }
 }
