@@ -18,13 +18,16 @@
 </p>
 
 <p align="center">
-  <a href="https://priestsn.github.io/uvstf7/"><strong>▶ GIOCA ORA: priestsn.github.io/uvstf7</strong></a>
+  <a href="https://priestsn.github.io/uvstf7/"><strong>▶ GIOCA ORA: priestsn.github.io/uvstf7</strong></a><br>
+  <a href="https://webcast-compared-for-briefing.trycloudflare.com/"><strong>🌐 VS ONLINE (stanze, account, ranked): webcast-compared-for-briefing.trycloudflare.com</strong></a>
 </p>
 
 <p align="center">
-  <sub>Questa è la versione pubblicata direttamente da questo repository (GitHub Pages): si aggiorna a ogni push.
-  Il <strong>VS ONLINE</strong> ha bisogno anche del server delle stanze, il cui indirizzo non è qui dentro —
-  si configura sul VPS (vedi <a href="#server-e-messa-online">Server e messa online</a>).</sub>
+  <sub>La prima è la versione statica pubblicata da questo repository (GitHub Pages): si aggiorna a ogni push.
+  La seconda è lo <strong>stesso gioco servito dal server delle stanze</strong>, dietro un tunnel Cloudflare:
+  è lì che funzionano <strong>VS ONLINE</strong>, account, punti, ELO e classifica.
+  L'indirizzo del tunnel è <em>temporaneo</em> e cambia quando il tunnel viene riavviato — come leggerlo
+  e come renderlo fisso è spiegato in <a href="#indirizzo-pubblico">Indirizzo pubblico</a>.</sub>
 </p>
 
 ![Schermata del gioco](screenshot.png)
@@ -117,19 +120,34 @@ Apri `http://localhost:8080`. Controllo immediato: `http://localhost:8080/stato`
 
 ### Indirizzo pubblico
 
-**L'indirizzo del server non è versionato in questo repository**: né l'IP della VPS né il dominio
-compaiono qui, quindi clonare il repo non espone l'infrastruttura. L'indirizzo vive solo sul server,
-in due punti:
+Il gioco è raggiungibile da un **tunnel Cloudflare** (`cloudflared`) aperto sulla VPS verso il server
+Node, che ascolta solo su `127.0.0.1:8090`. Il tunnel non richiede account né DNS: Cloudflare assegna
+un indirizzo `https://<nome>.trycloudflare.com` e inoltra il traffico, **WebSocket compresi**, quindi
+funziona anche il VS ONLINE.
 
 | Dove | Cosa contiene |
 |---|---|
-| `/etc/caddy/Caddyfile` | il nome pubblico e il reverse proxy verso Node |
-| unità `systemd` del servizio | `PORTA=8090` e `HOST=127.0.0.1` |
+| `cloudflared-uvsf7.service` | il tunnel verso `http://127.0.0.1:8090` |
+| `uvsf7.service` | il server Node del gioco (`PORTA=8090`, `HOST=127.0.0.1`) |
+| `/etc/caddy/Caddyfile` | reverse proxy interno di riserva (nip.io), non è l'indirizzo pubblico |
 
-Il nome pubblico può essere un dominio tuo, un sottodominio DuckDNS, oppure un nome `nip.io`
-(`<nome>.<ip-del-server>.nip.io`) che risolve da solo senza registrare nulla. In tutti i casi il
-gioco non cambia: il client parla con lo **stesso host da cui ha caricato la pagina**
-(`location.host` in `js/Rete.js`), quindi nessun indirizzo è cablato nel codice.
+**L'indirizzo del tunnel è temporaneo**: Cloudflare ne assegna uno nuovo a ogni riavvio del servizio
+(riavvio della macchina, aggiornamento di `cloudflared`). Per leggere quello attivo:
+
+```bash
+uvsf7-indirizzo                      # sulla VPS
+# oppure, da qualsiasi macchina con accesso SSH:
+ssh root@<vps> 'journalctl -u cloudflared-uvsf7 --no-pager | grep -oE "https://[a-z0-9-]+\.trycloudflare\.com" | tail -1'
+```
+
+Se l'indirizzo cambia, va aggiornato qui nel README: il gioco invece non cambia, perché il client
+parla con lo **stesso host da cui ha caricato la pagina** (`location.host` in `js/Rete.js`), quindi
+nessun indirizzo è cablato nel codice.
+
+**Per avere un indirizzo fisso** serve un tunnel *con nome* (`cloudflared tunnel create`), che
+Cloudflare concede solo per un dominio gestito dal proprio account: in quel caso il nome diventa
+qualcosa come `uvsf7.<tuo-dominio>` e non cambia più. Alternativa senza Cloudflare: Caddy con un
+sottodominio DuckDNS, ma quel nome punta direttamente all'IP della VPS e lo espone.
 
 **La versione giocabile senza server è su GitHub Pages**: `https://priestsn.github.io/uvstf7/`
 (pubblica questo repository, si aggiorna a ogni push, e la usa anche l'app Android come
@@ -360,6 +378,52 @@ curl http://<ip-pubblico>/stato
 ```
 
 Sul server servono solo `index.html`, `index.js`, `css/`, `js/`, `server/` e gli asset davvero usati (`assets/Background.png`, `assets/UVSF7-logo.png`, `assets/Personaggi/`): circa 1,5 MB.
+
+### Tunnel Cloudflare (l'indirizzo pubblico attuale)
+
+È il modo usato oggi: nessun account, nessun DNS, e **l'IP della VPS non compare** nell'indirizzo.
+`cloudflared` apre un tunnel verso il server Node (che resta su `127.0.0.1:8090`) e Cloudflare
+pubblica l'indirizzo `https://<nome>.trycloudflare.com`.
+
+```bash
+# 1. cloudflared (Ubuntu/Debian, pacchetto ufficiale)
+curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg -o /usr/share/keyrings/cloudflare-main.gpg
+echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main" \
+  > /etc/apt/sources.list.d/cloudflared.list
+apt update && apt install -y cloudflared
+
+# 2. servizio del tunnel verso il gioco
+cat > /etc/systemd/system/cloudflared-uvsf7.service <<'EOF'
+[Unit]
+Description=Tunnel Cloudflare per UVSF7 (indirizzo pubblico del gioco)
+After=network-online.target uvsf7.service
+Wants=network-online.target uvsf7.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/cloudflared tunnel --no-autoupdate --url http://127.0.0.1:8090
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload && systemctl enable --now cloudflared-uvsf7
+
+# 3. leggere l'indirizzo assegnato (cambia a ogni riavvio)
+journalctl -u cloudflared-uvsf7 --no-pager | grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' | tail -1
+```
+
+Il percorso di `cloudflared` nel servizio è `/usr/local/bin/cloudflared` (binario scaricato a mano);
+con il pacchetto Debian il comando sta in `/usr/bin/cloudflared` — controllare con `which cloudflared`.
+
+Controllo veloce che il tunnel inoltri tutto, WebSocket compresi:
+
+```bash
+node -e "const w=new WebSocket('wss://<nome>.trycloudflare.com/ws');w.onopen=()=>w.send(JSON.stringify({t:'crea'}));w.onmessage=e=>{console.log(e.data);process.exit(0)}"
+# atteso: {"t":"creata","codice":"XXXX"}
+```
 
 ### HTTPS con un nome fisso (Caddy + dominio)
 
