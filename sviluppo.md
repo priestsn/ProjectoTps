@@ -511,3 +511,68 @@ curl "http://<server>/reports/file?chiave=<CHIAVE>&nome=report-2026-10-17.md"
 ```
 
 La chiave si imposta con `REPORT_CHIAVE` nel servizio systemd; la cartella con `REPORT_DIR` (default `/var/lib/uvsf7/reports`).
+
+## 14. Reattività, ritmo stabile ed effetti (19/10/2026)
+
+Il racconto completo — diagnosi, scelte, misure — sta in `gameplay_rework.md`.
+Qui solo le regole da non dimenticare.
+
+### Ritmo: timestep fisso a 60 Hz
+
+`js/Tempo.js` + il pianificatore in `index.js`: `animate()` gira a ogni
+fotogramma dello schermo, ma la simulazione fa **60 passi al secondo sempre**
+(tetto di 5 passi per fotogramma, `dt` massimo 250 ms). Prima ogni fotogramma
+dello schermo valeva un frame di gioco: a 144 Hz il gioco andava 2,4 volte più
+veloce del previsto. **Un frame di gioco vale 1/60 di secondo**: le costanti in
+frame (`STUN_FRAMI`, `CARICA_ATTACCO_FRAMI`, …) sono veritiere così come sono, non
+vanno convertite in secondi.
+
+Il vecchio corpo del loop si chiama ora `passoSimulazione()`: chi aggiunge una
+meccanica la mette lì dentro, e sa che vale 1/60 di secondo.
+
+### Input: coda dei comandi da 9 frame
+
+`js/Buffer.js`: un'azione che non può partire (recupero attacco, atterraggio,
+colpo subito) entra in coda per 150 ms e `riprovaBuffer()` la esegue al primo
+momento utile. **Lo stun non è coperto** (`js/Regole.js` → `puoBufferizzare`) e la
+CPU non passa dalla coda: chiama `iniziaParata` / `iniziaCarica` direttamente.
+
+Ogni nuova azione passa da `eseguiAzione()` in `index.js`: è il punto unico in cui
+un tasto diventa gioco. Non aggiungere `salta()` o `iniziaCarica()` direttamente
+in `premiAzione()`.
+
+### Colpo: finestra, non uguaglianza
+
+`js/Regole.js` → `colpoVaRegistrato()` + campo `attaccoHaColpito` sul lottatore
+(azzerato in `avviaAttacco()` e quando si viene colpiti). Un attacco fa centro una
+volta sola, anche se il frame d'impatto viene saltato.
+
+### Effetti
+
+`js/Effetti.js`: particelle, onde, tinte, scosse e le stelle dello stun. **Non
+toccano la simulazione**: si aggiornano per passo e si disegnano sopra la scena.
+Colori da `personaggio.ultimate.colore`. Gli sprite stanno in `assets/Effetti/`
+(Kenney Particle Pack, CC0): se mancano, `spriteEffettoPronto()` è `false` e si
+disegnano forme geometriche — il gioco funziona identico.
+
+Libri contabili: `MASSIMO_PARTICELLE = 220`; con `prefers-reduced-motion` le
+particelle dimezzano e la scossa si spegne.
+
+### Verifiche nuove (sempre, prima di dire «fatto»)
+
+```bash
+node tools/prova_motore.js        # 33 verifiche: timestep, coda, finestra, effetti
+node tools/prova_invarianti.js    # 16 verifiche: il bilanciamento non si è mosso
+```
+
+`prova_invarianti.js` è il guardiano: se qualcuno tocca una costante di gioco, il
+test diventa rosso. Quando si cambia **davvero** una regola, si aggiorna il test
+nello stesso commit e si scrive il perché.
+
+Per misurare il ritmo nel browser vero:
+
+```js
+uvsf7Debug()   // { frame, passiUltimoFotogramma, attesaMs, comandiInCoda, particelle, scossa }
+```
+
+`frame` deve crescere di ~60 al secondo, non di 144.
