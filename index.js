@@ -6,7 +6,7 @@
 // (è successo davvero: sfondo piccolo in alto a sinistra e selezione tagliata).
 // Qui si chiede versione.json SENZA cache: se il build del server è più recente
 // di quello compilato in questo file, la pagina si ricarica da sola una volta.
-const BUILD_PAGINA = 4;
+const BUILD_PAGINA = 5;
 
 (function controlloVersione() {
     if (typeof fetch !== 'function') {
@@ -1777,6 +1777,14 @@ avviaGiocoQuandoPronto(() => {
     aggiornaScalaSchermo();
     adattaSfondo();
     apriMenu('principale');
+
+    // Catalogo del negozio: parte dalla copia di riserva (dentro js/Negozio.js)
+    // e viene sostituito da quello del server appena risponde. Senza questa
+    // chiamata chi non ha ancora aperto il negozio vedrebbe TUTTI i lottatori
+    // bloccati, anche i sei gratuiti.
+    if (typeof caricaCatalogo === 'function') {
+        caricaCatalogo();
+    }
 
     // Se c'è un token salvato si riprende la sessione senza chiedere niente:
     // se è scaduto, il primo errore la dimentica e si resta fuori.

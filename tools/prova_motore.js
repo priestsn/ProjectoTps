@@ -139,6 +139,20 @@ verifica('L\'impatto conta alla rovescia', sistema.impatto !== null && sistema.i
 for (let i = 0; i < 5; i++) { Effetti.aggiornaEffetti(sistema); }
 verifica('L\'impatto finisce', sistema.impatto === null);
 
+// --- Catalogo del negozio: senza server il gioco deve restare giocabile ---
+const Negozio = require('../js/Negozio.js');
+
+sezione('Negozio');
+const gratuiti = Negozio.CATALOGO_PREDEFINITO.filter((v) => v.prezzo === 0);
+const aPagamento = Negozio.CATALOGO_PREDEFINITO.filter((v) => v.prezzo > 0);
+verifica('Il catalogo di riserva ha nove lottatori', Negozio.CATALOGO_PREDEFINITO.length === 9,
+    String(Negozio.CATALOGO_PREDEFINITO.length));
+verifica('Sei lottatori sono gratuiti dall\'inizio', gratuiti.length === 6, String(gratuiti.length));
+verifica('Tre lottatori si sbloccano nel negozio', aPagamento.length === 3, String(aPagamento.length));
+verifica('I prezzi sono quelli decisi dal server',
+    aPagamento.map((v) => v.prezzo).join(',') === '2500,3500,4000',
+    aPagamento.map((v) => v.personaggio + ' ' + v.prezzo).join(' | '));
+
 const passate = risultati.filter(Boolean).length;
 console.log('\n' + passate + '/' + risultati.length + ' verifiche passate');
 process.exit(passate === risultati.length ? 0 : 1);

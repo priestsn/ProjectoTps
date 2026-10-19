@@ -4,9 +4,25 @@
 // Il catalogo lo decide il server (dati/negozio.json): il browser non inventa
 // prezzi né decide cosa è posseduto. Qui si disegna e si manda l'acquisto.
 
-// Ultimo catalogo letto dal server: lo usa anche Account.js per sapere
-// quali lottatori sono gratuiti.
-let CATALOGO_NEGOZIO = [];
+// Catalogo di riserva, identico a dati/negozio.json. Serve perché il gioco
+// deve funzionare anche SENZA server (GitHub Pages, app aperta da file, server
+// spento): senza questa copia il client non saprebbe quali lottatori sono
+// gratuiti e li considererebbe bloccati TUTTI, invece dei tre da sbloccare.
+// Appena il server risponde, il catalogo vero prende il suo posto.
+const CATALOGO_PREDEFINITO = [
+    { personaggio: 'OusmaneDiouf', prezzo: 0, ottenutoAllInizio: true },
+    { personaggio: 'KwameMensah', prezzo: 0, ottenutoAllInizio: true },
+    { personaggio: 'ChidiOkonkwo', prezzo: 0, ottenutoAllInizio: true },
+    { personaggio: 'AmaraDiallo', prezzo: 0, ottenutoAllInizio: true },
+    { personaggio: 'TarisaiMoyo', prezzo: 0, ottenutoAllInizio: true },
+    { personaggio: 'ZuriNkosi', prezzo: 0, ottenutoAllInizio: true },
+    { personaggio: 'BakariTraore', prezzo: 2500, ottenutoAllInizio: false },
+    { personaggio: 'SekouCamara', prezzo: 3500, ottenutoAllInizio: false },
+    { personaggio: 'AyoAdebayo', prezzo: 4000, ottenutoAllInizio: false }
+];
+
+// Catalogo attivo: parte dalla copia di riserva, il server può aggiornarlo.
+let CATALOGO_NEGOZIO = CATALOGO_PREDEFINITO.map((voce) => Object.assign({}, voce));
 
 /** Crea un elemento con classe e testo. */
 function negozioCrea(tag, classe, testo) {
@@ -34,16 +50,35 @@ async function apriNegozio() {
     await caricaNegozio();
 }
 
-/** Chiede il catalogo al server e ridisegna. */
-async function caricaNegozio() {
+/**
+ * Chiede il catalogo al server senza disegnare niente e senza far fallire
+ * nulla: se il server non risponde resta la copia di riserva.
+ * Restituisce true se il catalogo è stato aggiornato davvero.
+ */
+async function caricaCatalogo() {
     try {
         const dati = await api.chiama('/api/negozio');
-        CATALOGO_NEGOZIO = dati.voci || [];
-        statoAccount.punti = dati.punti;
-        disegnaNegozio('');
+        if (dati && Array.isArray(dati.voci) && dati.voci.length > 0) {
+            CATALOGO_NEGOZIO = dati.voci;
+        }
+        if (dati && typeof dati.punti === 'number') {
+            statoAccount.punti = dati.punti;
+        }
+        return true;
     } catch (errore) {
-        disegnaNegozio(errore.message, 'errore');
+        // offline, senza account o server spento: vale la copia di riserva
+        return false;
     }
+}
+
+/** Chiede il catalogo al server e ridisegna la schermata. */
+async function caricaNegozio() {
+    const caricato = await caricaCatalogo();
+    if (!caricato) {
+        disegnaNegozio('Catalogo non raggiungibile: si usano i prezzi predefiniti.', 'errore');
+        return;
+    }
+    disegnaNegozio('');
 }
 
 /** Disegna la schermata del negozio. */
@@ -125,4 +160,10 @@ async function acquistaLottatore(idLottatore) {
             nuovaRiga.className = 'negozio-stato-riga errore';
         }
     }
+}
+
+// Doppia modalità: nel browser è uno script classico, nei test Node il catalogo
+// di riserva si può controllare con require.
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { CATALOGO_PREDEFINITO: CATALOGO_PREDEFINITO };
 }
