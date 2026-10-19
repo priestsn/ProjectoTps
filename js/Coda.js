@@ -51,7 +51,13 @@ function disegnaCoda() {
 
     const riga = codaCrea('div', 'coda-riga');
     riga.appendChild(codaCrea('span', 'coda-etichetta', 'Il tuo ELO'));
-    riga.appendChild(codaCrea('span', 'coda-valore', String(statoAccount.elo || 1000)));
+    const valore = codaCrea('span', 'coda-valore');
+    valore.appendChild(document.createTextNode(String(statoAccount.elo || 1000) + ' '));
+    const distintivo = codaCrea('span', 'lega-badge piccolo', statoAccount.lega || '');
+    distintivo.style.color = statoAccount.legaColore || '#9a9a9a';
+    distintivo.style.borderColor = statoAccount.legaColore || '#9a9a9a';
+    valore.appendChild(distintivo);
+    riga.appendChild(valore);
     contenitore.appendChild(riga);
 
     const cerca = codaCrea('button', 'account-bottone', 'CERCA AVVERSARIO');

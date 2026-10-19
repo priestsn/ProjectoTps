@@ -8,6 +8,7 @@
 const crypto = require('crypto');
 const path = require('path');
 const { leggi } = require('./dati.js');
+const leghe = require('./leghe.js');
 
 const RADICE = path.resolve(__dirname, '..');
 
@@ -61,12 +62,19 @@ function nickAccettabile(nick) {
 
 /** Quello che il client può vedere di un giocatore: niente sale, niente hash. */
 function pubblico(giocatore) {
+    const lega = leghe.legaDi(giocatore.elo || 0);
+
     return {
         id: giocatore.id,
         nick: giocatore.nick,
         ruolo: giocatore.ruolo,
         punti: giocatore.punti,
         elo: giocatore.elo,
+        lega: lega.nome,
+        legaColore: lega.colore,
+        legaProssima: lega.prossima,
+        legaMancano: lega.mancano,
+        protezioneUsata: !!giocatore.protezioneUsata,
         personaggi: giocatore.personaggi,
         vittorie: giocatore.vittorie,
         sconfitte: giocatore.sconfitte,

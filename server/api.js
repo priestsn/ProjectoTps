@@ -192,6 +192,8 @@ async function gestisciApi(richiesta, risposta) {
                 limiteGiornaliero: esito.limiteGiornaliero,
                 elo: esito.elo,
                 eloGuadagnato: esito.eloGuadagnato,
+                lega: esito.lega,
+                protetto: esito.protetto,
                 avversario: esito.avversario
             });
             return true;

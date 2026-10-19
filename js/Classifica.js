@@ -64,9 +64,17 @@ function disegnaClassifica(voci, messaggio, tipo) {
             voce.nick.toLowerCase() === String(statoAccount.nick).toLowerCase();
 
         const riga = classificaCrea('div', 'classifica-riga' + (mia ? ' mia' : '') + (voce.provvisorio ? ' provvisoria' : ''));
+
+        const cellaNick = classificaCrea('span', 'classifica-nick');
+        cellaNick.appendChild(document.createTextNode(voce.nick + (voce.provvisorio ? ' ·' : ' ')));
+        const distintivo = classificaCrea('span', 'lega-badge piccolo', voce.lega || '');
+        distintivo.style.color = voce.legaColore || '#9a9a9a';
+        distintivo.style.borderColor = voce.legaColore || '#9a9a9a';
+        cellaNick.appendChild(distintivo);
+
         riga.append(
             classificaCrea('span', 'classifica-pos', String(voce.posizione)),
-            classificaCrea('span', 'classifica-nick', voce.nick + (voce.provvisorio ? ' ·' : '')),
+            cellaNick,
             classificaCrea('span', 'classifica-numero', String(voce.elo)),
             classificaCrea('span', 'classifica-numero', String(voce.partite)),
             classificaCrea('span', 'classifica-numero', voce.vittorie + '/' + voce.sconfitte)

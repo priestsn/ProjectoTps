@@ -10,6 +10,7 @@
 const crypto = require('crypto');
 const { accoda } = require('./dati.js');
 const elo = require('./elo.js');
+const leghe = require('./leghe.js');
 
 const DURATA_MASSIMA_MINUTI = 60;
 const PARTITE_CONTATE_AL_GIORNO = 15;
@@ -134,21 +135,37 @@ function concludiPartita(magazzino, giocatore, corpo, regole) {
     let variazioneElo = 0;
     let eloAvversario = null;
     let puntiAvversario = 0;
+    let legaMia = null;
+    let legaSua = null;
+    let protetto = false;
 
     if (ranked) {
         const esitoAvversario = esito === 'vittoria' ? 'sconfitta' : esito === 'sconfitta' ? 'vittoria' : 'pareggio';
         const premioAvversario = esitoAvversario === 'vittoria' ? tabella.rankedVinta
             : esitoAvversario === 'sconfitta' ? tabella.rankedPersa : tabella.rankedPari;
 
+        const eloPrimaMio = giocatore.elo || regole.elo.iniziale;
+        const eloPrimaSuo = avversario.elo || regole.elo.iniziale;
+
         const calcolo = elo.nuoviElo(
-            giocatore.elo || regole.elo.iniziale,
-            avversario.elo || regole.elo.iniziale,
+            eloPrimaMio,
+            eloPrimaSuo,
             esito,
             { k: regole.elo.k, minimo: regole.elo.minimo }
         );
-        giocatore.elo = calcolo.eloUno;
-        avversario.elo = calcolo.eloAltro;
-        variazioneElo = calcolo.variazione;
+
+        // Protezione dalla retrocessione: la prima volta che si scenderebbe di
+        // lega l'ELO si ferma alla soglia, quindi qui la somma degli ELO non è
+        // più esattamente costante. È voluto, ed è una tantum per fascia.
+        const protezioneMia = leghe.applicaProtezione(giocatore, eloPrimaMio, calcolo.eloUno);
+        const protezioneSua = leghe.applicaProtezione(avversario, eloPrimaSuo, calcolo.eloAltro);
+
+        giocatore.elo = protezioneMia.elo;
+        avversario.elo = protezioneSua.elo;
+        variazioneElo = Math.round(giocatore.elo - eloPrimaMio);
+        legaMia = protezioneMia.lega.nome;
+        legaSua = protezioneSua.lega.nome;
+        protetto = protezioneMia.protetto;
 
         // Anche all'avversario i punti seguono il tetto giornaliero: nessuno
         // deve poter gonfiare il punteggio di un amico facendosi battere.
@@ -214,9 +231,12 @@ function concludiPartita(magazzino, giocatore, corpo, regole) {
     if (ranked) {
         risposta.elo = giocatore.elo;
         risposta.eloGuadagnato = variazioneElo;
+        risposta.lega = legaMia;
+        risposta.protetto = protetto;
         risposta.avversario = {
             nick: avversario.nick,
             elo: eloAvversario,
+            lega: legaSua,
             puntiGuadagnati: puntiAvversario
         };
     }

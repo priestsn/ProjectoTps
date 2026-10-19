@@ -8,6 +8,7 @@
 // segnato come provvisorio: il suo ELO c'è, ma non è ancora una misura stabile.
 
 const { PARTITE_PER_USCIRE_DA_PROVVISORIO } = require('./elo.js');
+const leghe = require('./leghe.js');
 
 const QUANTI_PREDEFINITO = 50;
 
@@ -45,6 +46,8 @@ function classifica(magazzino, quante) {
             posizione: indice + 1,
             nick: giocatore.nick,
             elo: giocatore.elo || 0,
+            lega: leghe.legaDi(giocatore.elo || 0).nome,
+            legaColore: leghe.legaDi(giocatore.elo || 0).colore,
             punti: giocatore.punti || 0,
             partite: giocatore.partiteGiocate || 0,
             partiteRanked: giocatore.partiteRanked || 0,

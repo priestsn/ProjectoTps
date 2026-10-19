@@ -12,6 +12,10 @@ const statoAccount = {
     nick: null,
     punti: 0,
     elo: 1000,
+    lega: 'Bronzo',
+    legaColore: '#b07a4a',
+    legaProssima: 'Argento',
+    legaMancano: 100,
     lottatori: [],
     partiteGiocate: 0,
     vittorie: 0,
@@ -172,6 +176,21 @@ function moduloProfilo() {
         modulo.appendChild(linea);
     }
 
+    // Lega: nome colorato e quanto manca alla successiva
+    const lineaLega = accountCrea('div', 'account-riga');
+    const distintivo = accountCrea('span', 'lega-badge', statoAccount.lega);
+    distintivo.style.color = statoAccount.legaColore;
+    distintivo.style.borderColor = statoAccount.legaColore;
+    lineaLega.append(accountCrea('span', 'account-etichetta', 'Lega'), distintivo);
+    modulo.appendChild(lineaLega);
+
+    if (statoAccount.legaProssima) {
+        modulo.appendChild(accountCrea('div', 'account-nota',
+            'Ti mancano ' + statoAccount.legaMancano + ' punti ELO per passare a ' + statoAccount.legaProssima + '.'));
+    } else {
+        modulo.appendChild(accountCrea('div', 'account-nota', 'Sei nella lega più alta.'));
+    }
+
     const negozio = accountCrea('button', 'account-bottone', 'NEGOZIO');
     negozio.addEventListener('click', () => apriNegozio());
 
@@ -273,6 +292,10 @@ function applicaProfilo(profilo) {
     statoAccount.partiteGiocate = profilo.partiteGiocate || 0;
     statoAccount.vittorie = profilo.vittorie || 0;
     statoAccount.sconfitte = profilo.sconfitte || 0;
+    statoAccount.lega = profilo.lega || 'Bronzo';
+    statoAccount.legaColore = profilo.legaColore || '#b07a4a';
+    statoAccount.legaProssima = profilo.legaProssima || null;
+    statoAccount.legaMancano = profilo.legaMancano || 0;
 }
 
 /** All'avvio: se c'è un token salvato si prova a riprendere la sessione. */

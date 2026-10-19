@@ -1644,5 +1644,24 @@ canvas {
     color: #ffd34d;
 }
 
+/* ========================================
+   Distintivo della lega
+   ========================================== */
+.lega-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    font-size: 14px;
+    letter-spacing: 1px;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    text-transform: uppercase;
+}
+
+.lega-badge.piccolo {
+    padding: 1px 7px;
+    font-size: 11px;
+    letter-spacing: 0;
+}
+
 
 

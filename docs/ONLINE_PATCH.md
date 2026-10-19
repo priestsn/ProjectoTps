@@ -65,10 +65,10 @@ copre passa.** Niente caselle spuntate "a occhio".
 - [x] Passaggio automatico del codice stanza dal padrone all'ospite (`/api/coda/codice`)
 - [x] Esito della partita deciso dal server (ELO e punti calcolati lì, uno solo accredito per partita)
 - [x] Classifica per ELO e per punti (schermata CLASSIFICA nel gioco, pubblica)
-- [ ] Fascia visibile (Bronzo, Argento, Oro, Platino, Diamante, Maestro)
+- [x] Fascia visibile (Bronzo, Argento, Oro, Platino, Diamante, Maestro) — `server/leghe.js`, distintivo in ACCOUNT/CLASSIFICA/CODA
 - [ ] ELO separato per lottatore
 - [x] Prime 10 partite di piazzamento e stato "in valutazione" (campo `provvisorio`)
-- [ ] Protezione dalla retrocessione una volta per fascia
+- [x] Protezione dalla retrocessione una volta per fascia (`protezioneUsata`, si ricarica salendo di lega)
 - [x] Bonus della serie di vittorie (campi `serie` e `miglioreSerie` aggiornati)
 - [ ] Coda delle partite non ranked
 - [ ] Partita abbandonata: sconfitta e coda sospesa
