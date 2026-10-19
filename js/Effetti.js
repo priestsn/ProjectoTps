@@ -1,77 +1,104 @@
 // ========================================
 // Effetti visivi
 // ==========================================
-// Particelle, onde e tinte disegnate col canvas: niente immagini obbligatorie,
-// niente dipendenze. Il colore arriva dal personaggio
-// (`personaggio.ultimate.colore`), così ogni lottatore "suona" con il suo.
+// Effetti animati (fogli di sprite) + particelle + onde + tinte + scosse.
 //
-// Gli effetti NON toccano la simulazione: si aggiornano una volta per passo e
-// si disegnano sopra la scena. Se si cancellassero tutti, il gioco sarebbe
-// identico.
+// Gli sprite vengono da due pacchetti gratuiti di itch.io, licenza CC BY 4.0
+// (credito obbligatorio, vedi assets/Effetti/CREDITI.md):
+//   - "Combat FX Free" di heyheythere: colpo, parata, critico, caricato
+//   - "Explosion FX Free" di heyheythere: ultimate, proiettile, fumo
+// Ogni foglio è una griglia di fotogrammi (colonne x righe) con celle quadrate;
+// metadata ricavati da effects.json dei pacchetti.
+//
+// REGOLA: gli effetti NON toccano la simulazione. Avanzano una volta per passo
+// (1/60 di secondo) e si disegnano sopra la scena. Se sparissero tutti, il gioco
+// sarebbe identico: solo più povero da guardare.
+//
+// Se le immagini non caricano (rete lenta, cartella spostata), restano le forme
+// geometriche disegnate col canvas: nessun errore, nessun blocco.
 
 const MASSIMO_PARTICELLE = 220;
+const MASSIMO_ANIMAZIONI = 14;
 const GRAVITA_PARTICELLA = 0.12;
 const ATTRITO_PARTICELLA = 0.98;
 
-// Immagini del pacchetto Kenney (CC0, vedi assets/Effetti/LICENZA-LICENSE.txt).
-// Se mancano o non caricano restano le forme geometriche disegnate col canvas:
-// il gioco funziona identico anche senza la cartella assets/Effetti/.
-const SPRITE_EFFETTI = {
-    impatto: 'assets/Effetti/impatto.png',
-    parata: 'assets/Effetti/parata.png',
-    stella: 'assets/Effetti/stella.png',
-    ultimate: 'assets/Effetti/ultimate.png',
-    scintilla: 'assets/Effetti/scintilla.png'
+// Un passo di simulazione vale 1/60 di secondo: un effetto a 30 fps avanza ogni
+// due passi (60 / fps).
+const PASSI_PER_SECONDO = 60;
+
+// Fogli di sprite disponibili. `scala` è quanto viene ingrandita la cella da
+// 128 px: un colpo si vede a 192 px, un'ultimate a oltre 400.
+const ANIMAZIONI_EFFETTI = {
+    colpo: { file: 'assets/Effetti/colpo.png', fotogrammi: 12, fps: 30, colonne: 8, righe: 2, cella: 128, scala: 1.5 },
+    parata: { file: 'assets/Effetti/parata.png', fotogrammi: 16, fps: 30, colonne: 8, righe: 2, cella: 128, scala: 1.3 },
+    critico: { file: 'assets/Effetti/critico.png', fotogrammi: 20, fps: 30, colonne: 8, righe: 3, cella: 128, scala: 2.0 },
+    caricato: { file: 'assets/Effetti/caricato.png', fotogrammi: 16, fps: 30, colonne: 8, righe: 2, cella: 128, scala: 1.8 },
+    ultimate: { file: 'assets/Effetti/ultimate.png', fotogrammi: 32, fps: 30, colonne: 8, righe: 4, cella: 128, scala: 3.2 },
+    proiettile: { file: 'assets/Effetti/proiettile.png', fotogrammi: 16, fps: 30, colonne: 8, righe: 2, cella: 128, scala: 2.2 },
+    fumo: { file: 'assets/Effetti/fumo.png', fotogrammi: 16, fps: 30, colonne: 8, righe: 2, cella: 128, scala: 1.6 }
 };
 
 const immaginiEffetti = {};
 
 /**
- * Avvia il caricamento degli sprite: si chiama una volta all'avvio e non
- * aspetta, perché finché un'immagine non è pronta si usano le forme geometriche.
+ * Avvia il caricamento dei fogli di sprite: si chiama una volta all'avvio e non
+ * aspetta. Finché un'immagine non è pronta si usano le forme geometriche.
  */
-function preparaSpriteEffetti() {
+function preparaAnimazioniEffetti() {
     if (typeof Image !== 'function') {
         return;
     }
-    for (const nome in SPRITE_EFFETTI) {
+    for (const nome in ANIMAZIONI_EFFETTI) {
         const immagine = new Image();
         immagine.loaded = false;
         immagine.addEventListener('load', () => { immagine.loaded = true; });
-        immagine.src = SPRITE_EFFETTI[nome];
+        immagine.src = ANIMAZIONI_EFFETTI[nome].file;
         immaginiEffetti[nome] = immagine;
     }
 }
 
-function spriteEffettoPronto(nome) {
+function animazionePronta(nome) {
     const immagine = immaginiEffetti[nome];
     return !!(immagine && immagine.loaded && immagine.width > 0);
-}
-
-/**
- * Disegna lo sprite centrato in un punto. Restituisce false se l'immagine non è
- * pronta (allora chi chiama sa che deve disegnare la forma geometrica).
- */
-function disegnaSpriteEffetto(ctx, nome, x, y, lato, alpha) {
-    if (!spriteEffettoPronto(nome)) {
-        return false;
-    }
-    ctx.save();
-    ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
-    ctx.drawImage(immaginiEffetti[nome], x - lato / 2, y - lato / 2, lato, lato);
-    ctx.restore();
-    return true;
 }
 
 function creaSistemaEffetti() {
     return {
         particelle: [],
         onde: [],
+        animazioni: [],
         scossa: 0,
         tinta: null,   // { colore, forza, timer, durata }
-        impatto: null, // { x, y, timer, durata, sprite } per lo sprite del colpo
         aura: null     // { lottatore, colore, timer, durata }
     };
+}
+
+/**
+ * Fa partire un effetto animato in un punto. `scala` moltiplica la dimensione
+ * della cella (128 px): 1 = 128 px, 3 = 384 px.
+ */
+function avviaAnimazione(sistema, nome, x, y, scala) {
+    const dati = ANIMAZIONI_EFFETTI[nome];
+    if (!dati) {
+        return null;
+    }
+    if (sistema.animazioni.length >= MASSIMO_ANIMAZIONI) {
+        sistema.animazioni.shift();
+    }
+
+    const istanza = {
+        nome: nome,
+        x: x,
+        y: y,
+        scala: scala || dati.scala,
+        fotogramma: 0,
+        attesa: 0,
+        passiPerFotogramma: Math.max(1, Math.round(PASSI_PER_SECONDO / dati.fps)),
+        dati: dati
+    };
+
+    sistema.animazioni.push(istanza);
+    return istanza;
 }
 
 /**
@@ -139,15 +166,21 @@ function accendiAura(sistema, lottatore, colore, durata) {
     sistema.aura = { lottatore: lottatore, colore: colore, timer: durata, durata: durata };
 }
 
-/**
- * Segna il punto d'impatto dove disegnare lo sprite del colpo (se c'è).
- */
-function segnaImpatto(sistema, x, y, timer, sprite) {
-    const durata = timer || 12;
-    sistema.impatto = { x: x, y: y, timer: durata, durata: durata, sprite: sprite || 'impatto' };
-}
-
 function aggiornaEffetti(sistema) {
+    // Effetti animati: avanzano di un fotogramma ogni 60/fps passi
+    for (let i = sistema.animazioni.length - 1; i >= 0; i--) {
+        const a = sistema.animazioni[i];
+        a.attesa++;
+        if (a.attesa < a.passiPerFotogramma) {
+            continue;
+        }
+        a.attesa = 0;
+        a.fotogramma++;
+        if (a.fotogramma >= a.dati.fotogrammi) {
+            sistema.animazioni.splice(i, 1);
+        }
+    }
+
     for (let i = sistema.particelle.length - 1; i >= 0; i--) {
         const p = sistema.particelle[i];
         p.x += p.vx;
@@ -181,13 +214,6 @@ function aggiornaEffetti(sistema) {
         }
     }
 
-    if (sistema.impatto) {
-        sistema.impatto.timer--;
-        if (sistema.impatto.timer <= 0) {
-            sistema.impatto = null;
-        }
-    }
-
     if (sistema.aura) {
         sistema.aura.timer--;
         if (sistema.aura.timer <= 0) {
@@ -197,15 +223,35 @@ function aggiornaEffetti(sistema) {
 }
 
 /**
+ * Disegna un fotogramma di un effetto animato, centrato in (x, y).
+ * Restituisce false se l'immagine non è ancora pronta.
+ */
+function disegnaAnimazione(ctx, istanza) {
+    if (!animazionePronta(istanza.nome)) {
+        return false;
+    }
+
+    const dati = istanza.dati;
+    const colonna = istanza.fotogramma % dati.colonne;
+    const riga = Math.floor(istanza.fotogramma / dati.colonne);
+    const cella = dati.cella;
+    const lato = cella * istanza.scala;
+
+    ctx.drawImage(
+        immaginiEffetti[istanza.nome],
+        colonna * cella, riga * cella, cella, cella,
+        istanza.x - lato / 2, istanza.y - lato / 2, lato, lato
+    );
+    return true;
+}
+
+/**
  * Disegna tutto sopra la scena. `ctx` è il contesto del canvas.
- * Se la pagina ha caricato gli sprite degli effetti (assets/Effetti/) li usa
- * al posto delle forme geometriche; se non ci sono, tutto funziona lo stesso.
  */
 function disegnaEffetti(sistema, ctx) {
     ctx.save();
 
-    // Alone addosso al lottatore: disegnato in "lighter" così si somma al
-    // personaggio invece di coprirlo
+    // Alone addosso al lottatore: in "lighter" si somma al personaggio
     if (sistema.aura && sistema.aura.lottatore && sistema.aura.lottatore.position) {
         const lottatore = sistema.aura.lottatore;
         const frazione = sistema.aura.timer / sistema.aura.durata;
@@ -228,11 +274,9 @@ function disegnaEffetti(sistema, ctx) {
         ctx.restore();
     }
 
-    // Flash del colpo: sprite del pacchetto, quando l'immagine è pronta
-    if (sistema.impatto) {
-        const alpha = Math.max(0, sistema.impatto.timer / sistema.impatto.durata);
-        const lato = sistema.impatto.sprite === 'ultimate' ? 260 : 170;
-        disegnaSpriteEffetto(ctx, sistema.impatto.sprite, sistema.impatto.x, sistema.impatto.y, lato, alpha);
+    // Effetti animati (colpi, parate, ultimate)
+    for (const a of sistema.animazioni) {
+        disegnaAnimazione(ctx, a);
     }
 
     for (const p of sistema.particelle) {
@@ -273,25 +317,16 @@ function disegnaStelleStun(ctx, lottatore, frame) {
     const centro = lottatore.position.x + lottatore.centroCorpo;
     const base = lottatore.position.y - 18;
 
-    const conSprite = spriteEffettoPronto('stella');
-
     ctx.save();
+    ctx.fillStyle = '#ffd34d';
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.75)';
+    ctx.lineWidth = 2;
 
     for (let i = 0; i < 3; i++) {
         const angolo = (frame * 0.12) + (i * (Math.PI * 2 / 3));
         const x = centro + Math.cos(angolo) * 26;
         const y = base + Math.sin(angolo) * 8;
 
-        if (conSprite) {
-            ctx.globalAlpha = 0.95;
-            ctx.drawImage(immaginiEffetti.stella, x - 12, y - 12, 24, 24);
-            continue;
-        }
-
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = '#ffd34d';
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.75)';
-        ctx.lineWidth = 2;
         ctx.beginPath();
         for (let punta = 0; punta < 10; punta++) {
             const raggio = punta % 2 === 0 ? 6 : 2.6;
@@ -311,18 +346,18 @@ function disegnaStelleStun(ctx, lottatore, frame) {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         MASSIMO_PARTICELLE: MASSIMO_PARTICELLE,
+        MASSIMO_ANIMAZIONI: MASSIMO_ANIMAZIONI,
+        ANIMAZIONI_EFFETTI: ANIMAZIONI_EFFETTI,
         creaSistemaEffetti: creaSistemaEffetti,
+        avviaAnimazione: avviaAnimazione,
         aggiungiParticelle: aggiungiParticelle,
         aggiungiOnda: aggiungiOnda,
         scuoti: scuoti,
         tigni: tigni,
         accendiAura: accendiAura,
-        segnaImpatto: segnaImpatto,
         aggiornaEffetti: aggiornaEffetti,
-        SPRITE_EFFETTI: SPRITE_EFFETTI,
-        disegnaSpriteEffetto: disegnaSpriteEffetto,
-        spriteEffettoPronto: spriteEffettoPronto,
         disegnaEffetti: disegnaEffetti,
-        disegnaStelleStun: disegnaStelleStun
+        disegnaStelleStun: disegnaStelleStun,
+        animazionePronta: animazionePronta
     };
 }

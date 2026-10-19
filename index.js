@@ -6,7 +6,7 @@
 // (è successo davvero: sfondo piccolo in alto a sinistra e selezione tagliata).
 // Qui si chiede versione.json SENZA cache: se il build del server è più recente
 // di quello compilato in questo file, la pagina si ricarica da sola una volta.
-const BUILD_PAGINA = 6;
+const BUILD_PAGINA = 7;
 
 (function controlloVersione() {
     if (typeof fetch !== 'function') {
@@ -180,9 +180,9 @@ const proiettili = [];
 // la simulazione: sono solo disegno, e si azzerano a ogni nuova partita.
 const effetti = creaSistemaEffetti();
 
-// Sprite del pacchetto Kenney (assets/Effetti/): se mancano restano le forme
-// geometriche, quindi il gioco funziona anche senza la cartella.
-preparaSpriteEffetti();
+// Fogli di sprite degli effetti (assets/Effetti/, pacchetti CC BY di itch.io):
+// se mancano restano le forme geometriche, quindi il gioco funziona lo stesso.
+preparaAnimazioniEffetti();
 
 // Comandi premuti troppo presto: restano in coda qualche frame (js/Buffer.js)
 const bufferComandi = creaBuffer();
@@ -371,6 +371,7 @@ function stunna(lottatore) {
     // Stun: onde bianche attorno al lottatore e scossa. Le stelle che girano
     // sopra la testa le disegna disegnaStelleStun() finché dura lo stun.
     const puntoStun = puntoImpatto(lottatore);
+    avviaAnimazione(effetti, 'fumo', puntoStun.x, puntoStun.y, 1.8);
     aggiungiOnda(effetti, puntoStun.x, puntoStun.y, '#ffffff', 110, 8);
     aggiungiParticelle(effetti, puntoStun.x, puntoStun.y, '#ffd34d', MOVIMENTO_RIDOTTO ? 6 : 14, 4);
     if (!MOVIMENTO_RIDOTTO) {
@@ -406,7 +407,8 @@ function applicaDanno(attaccante, difensore, danno, forza = false) {
     difensore.health = Math.max(0, difensore.health - danno);
 
     // Scintille del colpo: colore dell'attaccante se è un colpo pesante
-    particelleDiImpulso(difensore, forza ? coloreEffetti(attaccante) : '#ffffff', 12, 5);
+    particelleDiImpulso(difensore, forza ? coloreEffetti(attaccante) : '#ffffff', 12, 5,
+        forza ? 'caricato' : 'colpo');
     if (!MOVIMENTO_RIDOTTO) {
         scuoti(effetti, forza ? 6 : 3);
     }
@@ -530,7 +532,7 @@ function aggiornaProiettili() {
                 danno *= 1.3;
             }
 
-            particelleDiImpulso(difensore, p.colore, 22, 7);
+            particelleDiImpulso(difensore, p.colore, 22, 7, 'proiettile');
             aggiungiOnda(effetti, p.x, p.y, p.colore, 130, 9);
             applicaDanno(p.proprietario, difensore, danno, true);
             applicaEffettoUltimate(p.proprietario, difensore);
@@ -652,7 +654,7 @@ function risolviImpatto(attaccante, difensore) {
             difensore.isParata = false;
             applicaDanno(attaccante, difensore, danno, true);
             applicaEffettoUltimate(attaccante, difensore);
-            particelleDiImpulso(difensore, coloreEffetti(attaccante), 24, 8);
+            particelleDiImpulso(difensore, coloreEffetti(attaccante), 24, 8, 'ultimate', 2.4);
             return;
         }
 
@@ -660,7 +662,7 @@ function risolviImpatto(attaccante, difensore) {
         if (attaccante.attaccoCaricato) {
             applicaDanno(attaccante, difensore, danno);
             stunna(difensore);
-            particelleDiImpulso(difensore, '#ff5a4a', 16, 6);
+            particelleDiImpulso(difensore, '#ff5a4a', 16, 6, 'caricato', 1.9);
             if (!MOVIMENTO_RIDOTTO) {
                 scuoti(effetti, 5);
             }
@@ -678,7 +680,7 @@ function risolviImpatto(attaccante, difensore) {
             // Perfect block: anello dorato, flash e scossa. È il momento più
             // importante della partita e prima si vedeva solo una scritta.
             const puntoPerfetto = puntoImpatto(difensore);
-            particelleDiImpulso(difensore, '#ffd34d', 20, 7);
+            particelleDiImpulso(difensore, '#ffd34d', 20, 7, 'critico', 2.1);
             aggiungiOnda(effetti, puntoPerfetto.x, puntoPerfetto.y, '#fff6b0', 150, 10);
             tigni(effetti, '#ffd34d', 0.18, 10);
             if (!MOVIMENTO_RIDOTTO) {
@@ -690,7 +692,7 @@ function risolviImpatto(attaccante, difensore) {
         }
 
         // Blocco normale: nessun danno. La bolla azzurra dice "parata riuscita".
-        particelleDiImpulso(difensore, '#8be9fd', 8, 4, 'parata');
+        particelleDiImpulso(difensore, '#8be9fd', 8, 4, 'parata', 1.3);
         return;
     }
 
@@ -730,7 +732,7 @@ function attivaUltimate(lottatore) {
     // una scritta: qui ci sono flash a tutto schermo, due onde, un alone
     // addosso al lottatore, detriti e una scossa vera.
     const puntoUltimate = puntoImpatto(lottatore);
-    segnaImpatto(effetti, puntoUltimate.x, puntoUltimate.y, 20, 'ultimate');
+    avviaAnimazione(effetti, 'ultimate', puntoUltimate.x, puntoUltimate.y, 3.2);
     tigni(effetti, colore, 0.34, 24);
     aggiungiOnda(effetti, puntoUltimate.x, puntoUltimate.y, '#ffffff', 320, 16);
     aggiungiOnda(effetti, puntoUltimate.x, puntoUltimate.y, colore, 240, 12);
@@ -1022,6 +1024,7 @@ window.uvsf7Debug = function () {
         attesaMs: Math.round(accumulatore * 100) / 100,
         comandiInCoda: bufferComandi.voci.length,
         particelle: effetti.particelle.length,
+        animazioni: effetti.animazioni.length,
         scossa: Math.round(effetti.scossa * 100) / 100
     };
 };
@@ -1077,12 +1080,12 @@ function coloreEffetti(lottatore) {
 /**
  * Scintille + onda in un punto: il colpo visto da chi lo prende.
  */
-function particelleDiImpulso(lottatore, colore, quante, forza, sprite) {
+function particelleDiImpulso(lottatore, colore, quante, forza, animazione, scala) {
     const punto = puntoImpatto(lottatore);
     const numero = MOVIMENTO_RIDOTTO ? Math.ceil(quante / 2) : quante;
     aggiungiParticelle(effetti, punto.x, punto.y, colore, numero, forza);
     aggiungiOnda(effetti, punto.x, punto.y, colore, 60, 4);
-    segnaImpatto(effetti, punto.x, punto.y, 10, sprite || 'impatto');
+    avviaAnimazione(effetti, animazione || 'colpo', punto.x, punto.y, scala);
 }
 
 /**
@@ -1646,7 +1649,7 @@ function avviaPartita(idP1, idP2) {
     effetti.onde.length = 0;
     effetti.scossa = 0;
     effetti.tinta = null;
-    effetti.impatto = null;
+    effetti.animazioni.length = 0;
     effetti.aura = null;
     for (const chiave in hudPrecedente) {
         hudPrecedente[chiave] = -1;

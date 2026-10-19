@@ -553,6 +553,9 @@ Controlli tipici dopo una modifica:
 
 - **Sprite dei personaggi**: pacchetti [luizmelo](https://luizmelo.itch.io/) (Hero Knight, Huntress, Martial Hero, Evil Wizard e altri), **CC0** — uso libero, anche commerciale.
 - **Sprite di riserva** in `assets/sprite-gratuiti/`: AutoSprite Free Asset Library, **CC0**.
+- **Effetti animati** in `assets/Effetti/`: [Combat FX Free](https://heyheythere.itch.io/combat-fx-free) e
+  [Explosion FX Free](https://heyheythere.itch.io/explosion-fx-free) di **heyheythere**, **CC BY 4.0** —
+  uso commerciale consentito con credito (vedi `assets/Effetti/CREDITI.md`).
 - **Font**: Bitcount Prop Double Ink di Google Fonts.
 - **Sfondo, logo e screenshot**: realizzati per il progetto.
 - **Codice**: scritto dall'autore del repository; pubblicato per consultazione e uso didattico.

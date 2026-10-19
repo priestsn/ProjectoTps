@@ -133,11 +133,62 @@ Effetti.aggiornaEffetti(sistema);
 Effetti.aggiornaEffetti(sistema);
 verifica('La tinta scade', sistema.tinta === null);
 
-Effetti.segnaImpatto(sistema, 50, 50, 5);
+// --- Effetti animati (fogli di sprite dei pacchetti itch.io) ---
+const fs = require('fs');
+const path = require('path');
+
+function dimensioniPng(percorso) {
+    const intestazione = fs.readFileSync(percorso);
+    return { larghezza: intestazione.readUInt32BE(16), altezza: intestazione.readUInt32BE(20) };
+}
+
+const nomiFogli = Object.keys(Effetti.ANIMAZIONI_EFFETTI);
+verifica('Ci sono sette effetti animati', nomiFogli.length === 7, String(nomiFogli.length));
+verifica('Ogni foglio dichiara una griglia sensata', nomiFogli.every((nome) => {
+    const d = Effetti.ANIMAZIONI_EFFETTI[nome];
+    return d.fotogrammi > 0 && d.colonne > 0 && d.righe > 0 && d.fotogrammi <= d.colonne * d.righe;
+}));
+
+let fogliCoerenti = true;
+let dettaglioFogli = [];
+for (const nome of nomiFogli) {
+    const d = Effetti.ANIMAZIONI_EFFETTI[nome];
+    const percorso = path.join(__dirname, '..', d.file);
+    if (!fs.existsSync(percorso)) {
+        fogliCoerenti = false;
+        dettaglioFogli.push('manca ' + nome);
+        continue;
+    }
+    const misure = dimensioniPng(percorso);
+    const atteso = { larghezza: d.colonne * d.cella, altezza: d.righe * d.cella };
+    if (misure.larghezza !== atteso.larghezza || misure.altezza !== atteso.altezza) {
+        fogliCoerenti = false;
+        dettaglioFogli.push(nome + ' ' + misure.larghezza + 'x' + misure.altezza + ' invece di ' +
+            atteso.larghezza + 'x' + atteso.altezza);
+    }
+}
+verifica('I file dei fogli esistono e hanno la griglia dichiarata', fogliCoerenti,
+    dettaglioFogli.join('; ') || 'tutti coerenti');
+
+Effetti.avviaAnimazione(sistema, 'colpo', 100, 100, 1.5);
+verifica('Un effetto animato parte', sistema.animazioni.length === 1);
+
 Effetti.aggiornaEffetti(sistema);
-verifica('L\'impatto conta alla rovescia', sistema.impatto !== null && sistema.impatto.timer === 4);
-for (let i = 0; i < 5; i++) { Effetti.aggiornaEffetti(sistema); }
-verifica('L\'impatto finisce', sistema.impatto === null);
+verifica('Il primo passo non cambia fotogramma', sistema.animazioni[0].fotogramma === 0);
+Effetti.aggiornaEffetti(sistema);
+verifica('A 30 fps avanza un fotogramma ogni due passi', sistema.animazioni[0].fotogramma === 1,
+    'fotogramma ' + sistema.animazioni[0].fotogramma);
+
+for (let i = 0; i < 40; i++) { Effetti.aggiornaEffetti(sistema); }
+verifica('L\'effetto finisce da solo', sistema.animazioni.length === 0);
+
+for (let i = 0; i < Effetti.MASSIMO_ANIMAZIONI + 5; i++) {
+    Effetti.avviaAnimazione(sistema, 'colpo', 10, 10, 1);
+}
+verifica('Le animazioni hanno un tetto', sistema.animazioni.length === Effetti.MASSIMO_ANIMAZIONI,
+    String(sistema.animazioni.length));
+
+verifica('Un nome sconosciuto non crea niente', Effetti.avviaAnimazione(sistema, 'inesistente', 0, 0, 1) === null);
 
 // --- Catalogo del negozio: senza server il gioco deve restare giocabile ---
 const Negozio = require('../js/Negozio.js');

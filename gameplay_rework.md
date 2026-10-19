@@ -222,26 +222,37 @@ distingue «il gioco non mi ha sentito» da «non ho energia».
 
 ---
 
-## 4. Il pacchetto di effetti
+## 4. I pacchetti di effetti (sprite animati)
 
-`assets/Effetti/` contiene cinque immagini derivate dal **Kenney Particle Pack**
-(CC0 — uso libero anche commerciale, credito gradito ma non obbligatorio):
+`assets/Effetti/` contiene **sette fogli di sprite animati** presi da due pacchetti gratuiti di
+itch.io, entrambi **CC BY 4.0** (uso commerciale consentito con credito — vedi
+`assets/Effetti/CREDITI.md`, obbligatorio):
 
-| File | Da | Uso |
-|---|---|---|
-| `impatto.png` | `muzzle_01.png` | flash dei colpi |
-| `parata.png` | `circle_01.png` | bolla della parata |
-| `stella.png` | `star_01.png` | stelle dello stun |
-| `ultimate.png` | `magic_05.png` | esplosione dell'ultimate |
-| `scintilla.png` | `spark_01.png` | disponibile per scintille puntuali |
+| Foglio | Effetto del gioco | Fotogrammi | Da |
+|---|---|---|---|
+| `colpo.png` | colpo normale | 12 | Combat FX Free — `white_hit` |
+| `parata.png` | parata riuscita | 16 | Combat FX Free — `white_spark` |
+| `critico.png` | perfect block | 20 | Combat FX Free — `gold_crit` |
+| `caricato.png` | attacco caricato | 16 | Combat FX Free — `red_claw` |
+| `ultimate.png` | ultimate (attivazione e colpo) | 32 | Explosion FX Free — `fire_explosion` |
+| `proiettile.png` | impatto del proiettile | 16 | Explosion FX Free — `fire_blast` |
+| `fumo.png` | stun | 16 | Explosion FX Free — `white_puff` |
 
-Ridimensionate con PIL (160/128/96/192/64 px): **66 KB in tutto**, contro i 15 MB
-del pacchetto originale. Il testo di licenza è copiato accanto alle immagini in
-`assets/Effetti/LICENZA-LICENSE.txt`.
+Griglia di celle 128 × 128 px, fotogrammi da sinistra a destra e poi in basso, 30 fps, una sola
+riproduzione. Gli effetti avanzano di un fotogramma ogni 2 passi di simulazione (60 / 30) e si
+tolgono da soli alla fine. Massimo 14 animazioni insieme; massimo 220 particelle.
 
-Se la cartella viene cancellata, `spriteEffettoPronto()` restituisce `false` e
-tutto torna a essere disegnato con forme geometriche: **nessun errore, nessuna
-riga da cambiare**.
+`tools/prova_motore.js` verifica che i sette fogli esistano davvero e che le misure reali dei PNG
+corrispondano alla griglia dichiarata (`colonne × cella` in larghezza, `righe × cella` in altezza):
+un foglio sostituito con uno sbagliato diventa un test rosso, non un effetto rotto in partita.
+
+**Nota storica.** La prima versione usava cinque PNG *statici* del Kenney Particle Pack (CC0).
+Andavano bene per un lampo, ma un effetto fermo in un picchiaduro si nota subito: sono stati
+sostituiti dai fogli animati sopra, e i file Kenney sono stati rimossi.
+
+Se la cartella `assets/Effetti/` viene cancellata, `animazionePronta()` restituisce `false` e tutto
+torna a essere disegnato con le particelle e le forme geometriche: **nessun errore, nessuna riga da
+cambiare**.
 
 ---
 
