@@ -726,3 +726,74 @@ vinto (nick dell'account, nome dell'ospite, `GIOCATORE 1/2` o `CPU`) e **sotto**
 ha usato. I nomi di entrambi viaggiano dentro l'esito (`nomeP1`, `nomeP2`, `verdellineseP1`,
 `verdellineseP2`) fin dalla creazione della cerimonia, così `js/CerimoniaFine.js` resta un modulo puro
 e `disegnaEsito()` in `index.js` non deve indovinare niente.
+
+## 21. Il colpo che "non veniva preso" (19/10/2026)
+
+Lamentele ricorrenti dei giocatori: «certe volte l'attacco non viene preso». Misurato nel browser
+invece di indovinare: sei secondi di tasto attacco martellato contro un avversario fermo a tiro davano
+**21 colpi andati a segno, di cui 9 senza nessun effetto — il 43%**. Tre cause, tutte chiuse.
+
+### 1. Il danno veniva scartato durante lo stato «colpo subito»
+
+`applicaDanno()` cominciava con `if (difensore.isTakingDmg && !forza) return;`. Quello stato dura
+`DANNO_FRAMI` passi (erano 24 = 400 ms): per tutto quel tempo **ogni altro colpo veniva buttato via**
+senza danno, senza effetti, senza avviso — e l'attacco consumava comunque il suo unico centro
+(`attaccoHaColpito`). Il colpo doppio dello stesso attacco era già impedito da `attaccoHaColpito` (e
+dalla ultimate da `ultimateHaColpito`), quindi la guardia non proteggeva da niente: toglieva solo i
+colpi legittimi.
+
+Dopo la correzione, stesso scenario: **21 colpi, 0 scartati**. Misurato nel browser.
+
+Con i colpi che fanno sempre danno, però, 400 ms di blocco diventavano un fermo immagine:
+l'avversario colpito riusciva ad agire **1 volta su 29 tentativi**. `DANNO_FRAMI` è quindi passato da
+24 a **12** (200 ms): ora risponde **14 volte su 29**. È l'unico numero di bilanciamento toccato, ed è
+scritto in `tools/prova_invarianti.js` così non può cambiare per sbaglio.
+
+### 2. La fine dell'attacco la decideva l'ultimo fotogramma disegnato
+
+`colpoVaRegistrato()` confrontava il **fotogramma dello sprite** con il frame d'impatto. Due guai:
+
+- l'animazione dell'attacco **riparte da capo** quando finisce, quindi il contatore torna a zero e la
+  finestra d'impatto si chiudeva da sola;
+- l'attacco si spegneva nel momento in cui veniva disegnato l'ultimo fotogramma, che è **prima** del
+  controllo di collisione (che avviene a fine passo): l'ultimo passo utile non veniva mai valutato.
+
+Risultato: finestre d'impatto da **2 a 13 passi** secondo il verdellinese. Ayo Adebayo (impatto all'11°
+fotogramma su 13) aveva **2 passi = 33 ms** per far centro. Ora:
+
+| | prima | dopo |
+|---|---|---|
+| finestra più corta (Ayo Adebayo) | 2 passi (33 ms) | **9 passi (150 ms)** |
+| finestra più lunga | 13 passi | 17 passi |
+
+Il conto ora si fa in **passi di gioco**: `avviaAttacco()` salva `this.passoImpatto` (frame d'impatto ×
+passi per fotogramma) e `this.fineAttacco`, calcolato da `fineAttaccoPassi()` in `js/Regole.js`, che
+garantisce almeno `FINESTRA_IMPATTO_MINIMA = 8` passi dopo l'impatto. Superata la durata
+dell'animazione il fotogramma resta fermo sull'ultimo, invece di ripartire da capo.
+
+### 3. Si attaccava nella direzione dell'ultimo movimento
+
+`lottatore.facing` cambiava **solo** quando si premeva un tasto direzionale. Dopo un incrocio, un salto
+sopra o un passo indietro, il colpo partiva girato dall'altra parte — con lo sprite che sembrava
+colpire l'avversario. Ora:
+
+- il colpo parte **sempre verso l'avversario** (`versoAvversario()` applicato in `eseguiAttacco`);
+- la parata si apre verso chi attacca;
+- da fermi ci si gira automaticamente verso l'avversario (mentre si corre la direzione resta quella del
+  movimento, così l'animazione di corsa non si ribalta).
+
+Verificato nel browser: colpo con i lottatori a posizione invertita e direzioni sbagliate → colpisce
+(facing corretto a -1, 8 di danno).
+
+### 4. La carica che si perdeva in silenzio
+
+`iniziaCarica()` controllava la stamina per il colpo normale, `rilasciaCarica()` per quello caricato
+(costo × 1,5): chi restava con la stamina a metà caricava per un secondo e **non usciva niente**. Ora
+se il caricato non è pagabile parte il colpo normale, e la stamina davvero insufficiente lo dice a
+schermo («STAMINA»).
+
+### Verifica
+
+`tools/prova_impatto.js` (24 controlli: regole, finestre, e le invarianti che impediscono di
+reintrodurre i difetti) + misure nel browser (martellata di 6 s, scambio, incrocio, partita VS CPU di
+15 s senza errori). Tutte le altre suite restano verdi.

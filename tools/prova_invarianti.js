@@ -33,7 +33,12 @@ verifica('CARICA_ATTACCO_FRAMI resta 60', /const CARICA_ATTACCO_FRAMI = 60;/.tes
 verifica('ULTIMATE_CARICA_FRAME invariata', /const ULTIMATE_CARICA_FRAME = 100 \/ \(60 \* 20\);/.test(gioco));
 verifica('ULTIMATE_PER_PARATA_PERFETTA resta 15', /const ULTIMATE_PER_PARATA_PERFETTA = 15;/.test(gioco));
 verifica('ULTIMATE_PERSA_PER_STUN resta 25', /const ULTIMATE_PERSA_PER_STUN = 25;/.test(gioco));
-verifica('DANNO_FRAMI resta 24', /const DANNO_FRAMI = 24;/.test(gioco));
+// 24 -> 12 il 19/10/2026: con i colpi che ora fanno sempre danno (non vengono
+// più scartati durante lo stato "colpo subito"), 400 ms di blocco diventavano
+// un fermo immagine — l'avversario colpito riusciva ad agire 1 volta su 29
+// tentativi. A 200 ms risponde fra un colpo e l'altro. Il numero è cambiato di
+// proposito: se qualcuno lo rimette a 24, questo test lo dice.
+verifica('DANNO_FRAMI resta 12 (fermo immagine del colpo subito)', /const DANNO_FRAMI = 12;/.test(gioco));
 verifica('Mondo 1280x720', /MONDO_LARGHEZZA = 1280/.test(gioco) && /MONDO_ALTEZZA = 720/.test(gioco));
 verifica('ATTACCO_FRAME resta 30', /const ATTACCO_FRAME = 30;/.test(personaggi));
 verifica('Nove personaggi', (personaggi.match(/^\s{8}id: '/gm) || []).length === 9,

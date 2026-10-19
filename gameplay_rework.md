@@ -318,3 +318,14 @@ Verifica nel browser vero (Chrome su CDP, pagina servita da `node server/server.
 
 Se gli effetti sembrano troppo forti o troppo timidi, si cambiano solo questi
 numeri: la simulazione non c'entra.
+
+---
+
+## Appendice (19/10/2026) — il colpo che non veniva preso
+
+Il rework aveva chiuso il caso del fotogramma saltato, ma restava un buco più grosso: i colpi che
+arrivavano durante lo stato «colpo subito» venivano **scartati senza danno** (43% dei colpi in una
+prova di martellata di 6 secondi), la fine dell'attacco dipendeva dall'ultimo fotogramma disegnato
+(finestre d'impatto da 2 passi = 33 ms) e la direzione del colpo era quella dell'ultimo movimento,
+non quella dell'avversario. Misure, correzioni e nuove invarianti sono in `sviluppo.md` §21 e in
+`tools/prova_impatto.js`.

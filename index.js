@@ -6,7 +6,7 @@
 // (è successo davvero: sfondo piccolo in alto a sinistra e selezione tagliata).
 // Qui si chiede versione.json SENZA cache: se il build del server è più recente
 // di quello compilato in questo file, la pagina si ricarica da sola una volta.
-const BUILD_PAGINA = 10;
+const BUILD_PAGINA = 11;
 
 (function controlloVersione() {
     if (typeof fetch !== 'function') {
@@ -68,10 +68,15 @@ const ULTIMATE_CARICA_FRAME = 100 / (60 * 20); // barra piena in circa 20 second
 const ULTIMATE_PER_PARATA_PERFETTA = 15; // carica guadagnata dal perfect block
 const ULTIMATE_PERSA_PER_STUN = 25;      // carica persa quando si viene stunnati
 
-// Durata dello stato "colpo subito" in frame (24 = 400 ms a 60 fps).
+// Durata dello stato "colpo subito" in frame (12 = 200 ms a 60 fps).
+// Era 24 (400 ms) quando i colpi in questa finestra venivano scartati: se li
+// scarti non ci sono più (vedi applicaDanno), 400 ms di blocco diventano un
+// fermo immagine — con un attacco che dura 470-530 ms l'avversario colpito non
+// riusciva più a fare niente (misurato: 1 azione su 29 tentativi). Con 200 ms
+// l'avversario ha il tempo di rispondere fra un colpo e l'altro.
 // Sostituisce il setTimeout che non era tracciato (BUG-20): lo stato si chiude
 // contando i frame, come il resto delle meccaniche.
-const DANNO_FRAMI = 24;
+const DANNO_FRAMI = 12;
 
 // Elementi dell'HUD letti una sola volta (niente querySelector nel game loop)
 const hud = {
@@ -396,10 +401,14 @@ function stunna(lottatore) {
  * Applica danno e animazione di colpo subito, con clamp della vita.
  */
 function applicaDanno(attaccante, difensore, danno, forza = false) {
-    if (difensore.isTakingDmg && !forza) {
-        return;
-    }
-
+    // Prima qui c'era `if (difensore.isTakingDmg && !forza) return;`: per i
+    // 400 ms dello stato "colpo subito" OGNI altro colpo veniva scartato senza
+    // danno e senza avviso — l'attacco consumava il suo unico centro e non
+    // succedeva niente. Misurato martellando il tasto per 6 secondi contro un
+    // avversario fermo: 9 colpi su 21 non facevano danno.
+    // Il colpo doppio dello STESSO attacco è già impedito da attaccoHaColpito
+    // (e dalla ultimate da ultimateHaColpito), quindi questa guardia non
+    // serviva a niente: toglieva solo i colpi legittimi.
     difensore.isTakingDmg = true;
     difensore.framesDanno = 0;
     difensore.isParata = false;
@@ -827,6 +836,13 @@ function eseguiAttacco(lottatore, caricato) {
     }
 
     lottatore.stamina -= costo;
+
+    // Il colpo parte SEMPRE verso l'avversario. Prima la direzione era quella
+    // dell'ultimo movimento: dopo un incrocio, un salto sopra o un passo
+    // indietro si attaccava a vuoto dall'altra parte — e per il giocatore era
+    // "l'attacco non viene preso".
+    lottatore.facing = versoAvversario(lottatore);
+
     lottatore.avviaAttacco({ caricato });
     return true;
 }
@@ -856,6 +872,11 @@ function iniziaCarica(lottatore) {
         return false;
     }
     if (lottatore.stamina < lottatore.statistiche.costoStamina) {
+        // Senza stamina l'attacco non parte: prima succedeva in silenzio e
+        // sembrava che il tasto non rispondesse.
+        if (typeof mostraAvviso === 'function') {
+            mostraAvviso('STAMINA', '#ff5a4a');
+        }
         return false;
     }
 
@@ -889,7 +910,22 @@ function rilasciaCarica(lottatore) {
     lottatore.isCaricando = false;
     lottatore.framesCarica = 0;
 
-    return eseguiAttacco(lottatore, caricato);
+    // Il colpo caricato costa una volta e mezza: chi resta con la stamina a
+    // metà vedeva il tasto rilasciato non produrre NIENTE, senza una parola.
+    // Se il caricato non è pagabile si parte col colpo normale: la carica non
+    // si perde, e l'unico caso in cui l'attacco non parte è la stamina a zero,
+    // che ora viene detto a schermo.
+    if (caricato && lottatore.stamina < lottatore.statistiche.costoStamina * 1.5 &&
+        lottatore.stamina >= lottatore.statistiche.costoStamina) {
+        return eseguiAttacco(lottatore, false);
+    }
+
+    const partito = eseguiAttacco(lottatore, caricato);
+    if (!partito && lottatore.stamina < lottatore.statistiche.costoStamina &&
+        typeof mostraAvviso === 'function') {
+        mostraAvviso('STAMINA', '#ff5a4a');
+    }
+    return partito;
 }
 
 /**
@@ -911,6 +947,7 @@ function iniziaParata(lottatore) {
     lottatore.attaccoCaricato = false;
     lottatore.attaccoUltimate = false;
     lottatore.framesAttacco = 0;
+    lottatore.facing = versoAvversario(lottatore);   // si para verso chi colpisce
     lottatore.velocity.x = 0;      // parare ferma il lottatore
     lottatore.cambiaSprite('ParataIdle');
     lottatore.isParata = true;
@@ -1230,6 +1267,23 @@ function coloreEffetti(lottatore) {
  * Scintille + onda in un punto: il colpo visto da chi lo prende.
  */
 /**
+ * Verso in cui STA l'avversario rispetto a questo lottatore: +1 a destra,
+ * -1 a sinistra.
+ */
+function versoAvversario(lottatore) {
+    const avversario = (lottatore === Player) ? Enemy : Player;
+    if (!avversario) {
+        return lottatore.facing;
+    }
+    const centro = lottatore.position.x + lottatore.width / 2;
+    const centroAltro = avversario.position.x + avversario.width / 2;
+    if (Math.abs(centroAltro - centro) < 1) {
+        return lottatore.facing;
+    }
+    return centroAltro > centro ? 1 : -1;
+}
+
+/**
  * Spinge i due lottatori uno via dall'altro: chi para retrocede poco, chi
  * incassa di più. Serve a "respirare" fra un colpo e l'altro e a leggere meglio
  * cosa è successo. È simulazione: vale identica per host e ospite in online.
@@ -1488,6 +1542,11 @@ function aggiornaParteComune(lottatore, tastoSinistra, tastoDestra) {
                 lottatore.facing = direzione;
                 lottatore.cambiaSprite('Run');
             } else {
+                // Fermi: ci si gira verso l'avversario. Prima la direzione
+                // restava quella dell'ultimo movimento, quindi dopo un incrocio
+                // si restava girati dall'altra parte finché non si ripremeva il
+                // tasto — e ogni attacco da fermo andava a vuoto.
+                lottatore.facing = versoAvversario(lottatore);
                 lottatore.cambiaSprite('idle');
             }
         }
@@ -1523,7 +1582,10 @@ function controllaColpo(attaccante, difensore) {
     if (!attaccante.isAttacking) {
         return false;
     }
-    if (!colpoVaRegistrato(attaccante.framesCurrent, attaccante.attacco.frame, attaccante.attaccoHaColpito)) {
+    // Si confrontano i PASSI dall'inizio dell'attacco con il passo d'impatto,
+    // non il fotogramma dello sprite: quello riparte da zero a fine animazione
+    // e la finestra si chiudeva da sola.
+    if (!colpoVaRegistrato(attaccante.framesAttacco, attaccante.passoImpatto || 0, attaccante.attaccoHaColpito)) {
         return false;
     }
 

@@ -170,6 +170,19 @@ class Lottatore extends Sprite {
         }
     }
 
+    /**
+     * Durante l'attacco, superata la durata dell'animazione, il fotogramma
+     * resta fermo sull'ultimo: prima ripartiva da capo, e negli ultimi passi
+     * della finestra d'impatto si vedeva il colpo ricominciare.
+     */
+    animateFrames() {
+        if (this.isAttacking && this.framesAttacco >= (this.durataAttaccoSprite || 0)) {
+            this.framesCurrent = this.sprites.Attack1.framesMax - 1;
+            return;
+        }
+        super.animateFrames();
+    }
+
     draw() {
         super.draw();
 
@@ -233,13 +246,16 @@ class Lottatore extends Sprite {
             this.framesAttacco++;
         }
 
-        // L'attacco termina quando l'ultimo frame e' stato disegnato.
-        // Il controllo sta qui e non in index.js perche' solo il lottatore sa
-        // quando la SUA animazione e' finita: cosi' uno stato verticale
-        // (Jump/Fall) non puo' sostituire Attack1 lasciando isAttacking a true.
+        // L'attacco dura i passi decisi in avviaAttacco (animazione, ma con la
+        // finestra d'impatto minima garantita). Prima si chiudeva quando veniva
+        // disegnato l'ultimo fotogramma: chi ha l'impatto in fondo
+        // all'animazione perdeva il colpo, perché la collisione si controlla
+        // DOPO update() e su quel passo l'attacco era già spento.
+        // `>` e non `>=`: framesAttacco è già stato incrementato qui sopra, e
+        // la collisione si controlla dopo update(). Con `>=` l'ultimo passo
+        // utile della finestra veniva spento prima di poterlo valutare.
         if (this.isAttacking &&
-            this.image === this.sprites.Attack1.image &&
-            this.framesCurrent === this.sprites.Attack1.framesMax - 1) {
+            this.framesAttacco > (this.fineAttacco || 0)) {
             this.isAttacking = false;
             this.attaccoCaricato = false;
             this.attaccoUltimate = false;
@@ -300,6 +316,23 @@ class Lottatore extends Sprite {
      * l'animazione.
      */
     avviaAttacco({ caricato = false, ultimate = false } = {}) {
+        // Durata dell'attacco in passi: l'animazione, ma con una finestra
+        // d'impatto minima garantita (js/Regole.js). Prima la fine la decideva
+        // l'ultimo fotogramma disegnato, quindi chi ha l'impatto in fondo
+        // all'animazione aveva pochi passi per far centro.
+        const spriteAttacco = this.sprites.Attack1;
+        const hold = spriteAttacco.framesHold || 30;
+        this.durataAttaccoSprite = spriteAttacco.framesMax * hold;
+        // Il frame d'impatto è un FOTOGRAMMA dell'animazione: qui diventa un
+        // momento in passi di gioco. Serve perché dopo l'ultimo fotogramma
+        // l'animazione riparte da capo e il contatore dei fotogrammi torna a
+        // zero: confrontare quello faceva "sparire" la finestra d'impatto
+        // proprio nei passi in cui l'attacco è ancora in corso.
+        this.passoImpatto = this.attacco.frame * hold;
+        this.fineAttacco = (typeof fineAttaccoPassi === 'function')
+            ? fineAttaccoPassi(this.passoImpatto, this.durataAttaccoSprite)
+            : this.durataAttaccoSprite;
+
         this.cambiaSprite('Attack1');
         this.isAttacking = true;
         this.attaccoCaricato = caricato;
