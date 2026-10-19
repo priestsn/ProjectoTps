@@ -6,7 +6,7 @@
 // (è successo davvero: sfondo piccolo in alto a sinistra e selezione tagliata).
 // Qui si chiede versione.json SENZA cache: se il build del server è più recente
 // di quello compilato in questo file, la pagina si ricarica da sola una volta.
-const BUILD_PAGINA = 5;
+const BUILD_PAGINA = 6;
 
 (function controlloVersione() {
     if (typeof fetch !== 'function') {
@@ -250,11 +250,14 @@ let hitboxVisibili = false;
 let avvisoTimer = 0;
 let avvisoTesto = '';
 let avvisoColore = 'white';
+// Le ultimate meritano un cartello più grande: il perfect block resta com'era
+let avvisoGrande = false;
 
-function mostraAvviso(testo, colore) {
+function mostraAvviso(testo, colore, durata, grande) {
     avvisoTesto = testo;
-    avvisoColore = colore;
-    avvisoTimer = 60; // circa 1 secondo
+    avvisoColore = colore || 'white';
+    avvisoTimer = durata || 60; // 60 frame = circa 1 secondo
+    avvisoGrande = !!grande;
 }
 
 /**
@@ -721,26 +724,36 @@ function attivaUltimate(lottatore) {
     }
 
     const dati = lottatore.datiUltimate;
+    const colore = coloreEffetti(lottatore);
 
-    // Ultimate: flash a tutto schermo del colore del personaggio, onda dal
-    // corpo e scossa. Vale per ogni tipo (mischia, proiettile, buff).
+    // Ultimate: deve SENTIRSI. Prima erano un flash di un quinto di secondo e
+    // una scritta: qui ci sono flash a tutto schermo, due onde, un alone
+    // addosso al lottatore, detriti e una scossa vera.
     const puntoUltimate = puntoImpatto(lottatore);
-    segnaImpatto(effetti, puntoUltimate.x, puntoUltimate.y, 16, 'ultimate');
-    tigni(effetti, coloreEffetti(lottatore), 0.22, 14);
-    aggiungiOnda(effetti, puntoUltimate.x, puntoUltimate.y, coloreEffetti(lottatore), 200, 12);
-    aggiungiParticelle(effetti, puntoUltimate.x, puntoUltimate.y, coloreEffetti(lottatore),
-        MOVIMENTO_RIDOTTO ? 10 : 26, 8);
+    segnaImpatto(effetti, puntoUltimate.x, puntoUltimate.y, 20, 'ultimate');
+    tigni(effetti, colore, 0.34, 24);
+    aggiungiOnda(effetti, puntoUltimate.x, puntoUltimate.y, '#ffffff', 320, 16);
+    aggiungiOnda(effetti, puntoUltimate.x, puntoUltimate.y, colore, 240, 12);
+    aggiungiParticelle(effetti, puntoUltimate.x, puntoUltimate.y, colore,
+        MOVIMENTO_RIDOTTO ? 16 : 46, 11);
+    aggiungiParticelle(effetti, puntoUltimate.x, puntoUltimate.y, '#ffffff',
+        MOVIMENTO_RIDOTTO ? 8 : 20, 7);
     if (!MOVIMENTO_RIDOTTO) {
-        scuoti(effetti, 8);
+        scuoti(effetti, 12);
     }
 
     lottatore.ultimate = 0;
 
     if (dati.tipo === 'buff') {
         lottatore.buffTimer = dati.durata;
-        mostraAvviso(dati.nome, dati.colore || '#7dff7d');
+        // Il buff si vede per tutta la sua durata: alone addosso al lottatore
+        accendiAura(effetti, lottatore, colore, dati.durata);
+        mostraAvviso(dati.nome, colore, 110, true);
         return true;
     }
+
+    // L'alone resta acceso per tutta l'animazione dell'attacco
+    accendiAura(effetti, lottatore, colore, 60);
 
     lottatore.avviaAttacco({ ultimate: true });
 
@@ -748,7 +761,7 @@ function attivaUltimate(lottatore) {
         creaProiettile(lottatore);
     }
 
-    mostraAvviso(dati.nome, dati.colore || '#8be9fd');
+    mostraAvviso(dati.nome, colore, 110, true);
     return true;
 }
 
@@ -863,6 +876,7 @@ function iniziaParata(lottatore) {
     lottatore.attaccoCaricato = false;
     lottatore.attaccoUltimate = false;
     lottatore.framesAttacco = 0;
+    lottatore.velocity.x = 0;      // parare ferma il lottatore
     lottatore.cambiaSprite('ParataIdle');
     lottatore.isParata = true;
     lottatore.framesParata = 0;
@@ -935,13 +949,33 @@ function disegnaAvviso() {
 
     c.save();
     c.globalAlpha = Math.min(1, avvisoTimer / 20);
-    c.font = 'bold 46px sans-serif';
     c.textAlign = 'center';
-    c.lineWidth = 8;
-    c.strokeStyle = 'black';
-    c.fillStyle = avvisoColore;
-    c.strokeText(avvisoTesto, canvas.width / 2, 180);
-    c.fillText(avvisoTesto, canvas.width / 2, 180);
+
+    if (avvisoGrande) {
+        // Ultimate: scritta grande, con alone del colore del personaggio e
+        // comparsa "a colpo" nei primi frame
+        c.font = 'bold 78px sans-serif';
+        c.lineWidth = 14;
+        c.strokeStyle = 'black';
+        c.shadowColor = avvisoColore;
+        c.shadowBlur = 40;
+        c.fillStyle = '#ffffff';
+        c.strokeText(avvisoTesto, canvas.width / 2, 210);
+        c.fillText(avvisoTesto, canvas.width / 2, 210);
+
+        c.shadowBlur = 0;
+        c.font = 'bold 22px sans-serif';
+        c.fillStyle = avvisoColore;
+        c.fillText('ULTIMATE', canvas.width / 2, 248);
+    } else {
+        c.font = 'bold 46px sans-serif';
+        c.lineWidth = 8;
+        c.strokeStyle = 'black';
+        c.fillStyle = avvisoColore;
+        c.strokeText(avvisoTesto, canvas.width / 2, 180);
+        c.fillText(avvisoTesto, canvas.width / 2, 180);
+    }
+
     c.restore();
 }
 
@@ -1214,25 +1248,35 @@ window.addEventListener('blur', rilasciaTuttiITasti);
 function aggiornaParteComune(lottatore, tastoSinistra, tastoDestra) {
     // Movimento orizzontale (game over, stun, carica e congelamento lo bloccano)
     if (!gameOver && !lottatore.isStunned && !lottatore.isCaricando && lottatore.congelamentoTimer <= 0) {
-        const invertito = lottatore.inversioneTimer > 0 || lottatore.eclissiTimer > 0;
-        let direzione = 0;
+        if (lottatore.isParata) {
+            // Parando ci si ferma: prima si continuava a correre con la parata
+            // attiva e senza l'animazione di parata. In più il cambio sprite va
+            // richiesto ogni frame: se la parata parte durante l'animazione di
+            // colpo subito, il primo tentativo viene scartato e senza questa
+            // chiamata il lottatore restava fermo sull'ultimo frame di TakeHit.
+            lottatore.velocity.x = 0;
+            lottatore.cambiaSprite('ParataIdle');
+        } else {
+            const invertito = lottatore.inversioneTimer > 0 || lottatore.eclissiTimer > 0;
+            let direzione = 0;
 
-        if (keys[tastoSinistra].pressed && lottatore.lastKey === tastoSinistra) {
-            direzione = -1;
-        } else if (keys[tastoDestra].pressed && lottatore.lastKey === tastoDestra) {
-            direzione = 1;
-        }
+            if (keys[tastoSinistra].pressed && lottatore.lastKey === tastoSinistra) {
+                direzione = -1;
+            } else if (keys[tastoDestra].pressed && lottatore.lastKey === tastoDestra) {
+                direzione = 1;
+            }
 
-        if (invertito) {
-            direzione *= -1;
-        }
+            if (invertito) {
+                direzione *= -1;
+            }
 
-        if (direzione !== 0) {
-            lottatore.velocity.x = direzione * lottatore.statistiche.velocita * lottatore.moltiplicatoreVelocita;
-            lottatore.facing = direzione;
-            lottatore.cambiaSprite('Run');
-        } else if (!lottatore.isParata) {
-            lottatore.cambiaSprite('idle');
+            if (direzione !== 0) {
+                lottatore.velocity.x = direzione * lottatore.statistiche.velocita * lottatore.moltiplicatoreVelocita;
+                lottatore.facing = direzione;
+                lottatore.cambiaSprite('Run');
+            } else {
+                lottatore.cambiaSprite('idle');
+            }
         }
     }
 
@@ -1603,6 +1647,7 @@ function avviaPartita(idP1, idP2) {
     effetti.scossa = 0;
     effetti.tinta = null;
     effetti.impatto = null;
+    effetti.aura = null;
     for (const chiave in hudPrecedente) {
         hudPrecedente[chiave] = -1;
     }

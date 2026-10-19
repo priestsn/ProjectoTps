@@ -69,7 +69,8 @@ function creaSistemaEffetti() {
         onde: [],
         scossa: 0,
         tinta: null,   // { colore, forza, timer, durata }
-        impatto: null  // { x, y, angolo, timer } per lo sprite del colpo
+        impatto: null, // { x, y, timer, durata, sprite } per lo sprite del colpo
+        aura: null     // { lottatore, colore, timer, durata }
     };
 }
 
@@ -131,6 +132,14 @@ function tigni(sistema, colore, forza, durata) {
 }
 
 /**
+ * Alone luminoso addosso a un lottatore: dice "l'ultimate è in corso" (o che un
+ * buff è attivo). Tiene il riferimento al lottatore, quindi lo segue da solo.
+ */
+function accendiAura(sistema, lottatore, colore, durata) {
+    sistema.aura = { lottatore: lottatore, colore: colore, timer: durata, durata: durata };
+}
+
+/**
  * Segna il punto d'impatto dove disegnare lo sprite del colpo (se c'è).
  */
 function segnaImpatto(sistema, x, y, timer, sprite) {
@@ -178,6 +187,13 @@ function aggiornaEffetti(sistema) {
             sistema.impatto = null;
         }
     }
+
+    if (sistema.aura) {
+        sistema.aura.timer--;
+        if (sistema.aura.timer <= 0) {
+            sistema.aura = null;
+        }
+    }
 }
 
 /**
@@ -187,6 +203,30 @@ function aggiornaEffetti(sistema) {
  */
 function disegnaEffetti(sistema, ctx) {
     ctx.save();
+
+    // Alone addosso al lottatore: disegnato in "lighter" così si somma al
+    // personaggio invece di coprirlo
+    if (sistema.aura && sistema.aura.lottatore && sistema.aura.lottatore.position) {
+        const lottatore = sistema.aura.lottatore;
+        const frazione = sistema.aura.timer / sistema.aura.durata;
+        const x = lottatore.position.x + lottatore.centroCorpo;
+        const y = lottatore.position.y + lottatore.height * 0.5;
+        const raggio = lottatore.height * (0.55 + (1 - frazione) * 0.35);
+
+        const gradiente = ctx.createRadialGradient(x, y, raggio * 0.15, x, y, raggio);
+        gradiente.addColorStop(0, sistema.aura.colore);
+        gradiente.addColorStop(0.55, sistema.aura.colore);
+        gradiente.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = 0.5 * Math.min(1, frazione * 2.5);
+        ctx.fillStyle = gradiente;
+        ctx.beginPath();
+        ctx.arc(x, y, raggio, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
 
     // Flash del colpo: sprite del pacchetto, quando l'immagine è pronta
     if (sistema.impatto) {
@@ -276,6 +316,7 @@ if (typeof module !== 'undefined' && module.exports) {
         aggiungiOnda: aggiungiOnda,
         scuoti: scuoti,
         tigni: tigni,
+        accendiAura: accendiAura,
         segnaImpatto: segnaImpatto,
         aggiornaEffetti: aggiornaEffetti,
         SPRITE_EFFETTI: SPRITE_EFFETTI,

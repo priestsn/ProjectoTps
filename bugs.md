@@ -1279,3 +1279,50 @@ Gli altri input restano fissi: la conferma nella selezione (`H` / `Ù`) e la nav
 | BUG-20: 10 frame in danno, 30 frame -> stato chiuso | OK |
 | BUG-14: AttackBox a destra con `facing = 1`, a sinistra con `facing = -1` | OK |
 | Nessun errore JavaScript | OK |
+
+## Report dal server — 19/10/2026 (BUG-33, BUG-34, BUG-35)
+
+Report arrivato dal pannello dopo la pubblicazione: «l'animazione di parata non viene presa in corsa …
+servirebbe che quando si corre e si preme la parata ci si fermi … le ulti sono super underwhelming, c'è
+solo la scritta e niente di speciale … quando si viene attaccati e si preme parata si rimane bloccati
+nell'animazione di danno ricevuto».
+
+### BUG-33 — parare mentre si corre non fermava il lottatore
+
+- **Causa**: `aggiornaParteComune` applicava il movimento anche con `isParata` a true, quindi il lottatore
+  continuava a scorrere e `cambiaSprite('Run')` sostituiva `ParataIdle`: la parata era attiva ma non si
+  vedeva, e il personaggio correva lo stesso.
+- **Correzione**: con la parata attiva la velocità orizzontale va a zero e lo sprite richiesto è sempre
+  `ParataIdle`; anche `iniziaParata()` azzera `velocity.x` (parare ferma, come in ogni picchiaduro).
+- **Verifica**: in corsa (`Run`, vx 5) premendo parata si legge `ParataIdle`, `parata: true`, `vx: 0`.
+
+### BUG-34 — parata premuta durante il colpo subito: animazione bloccata
+
+- **Causa**: `cambiaSprite` rifiuta i cambi mentre `TakeHit` non è finito; con la parata attiva il ramo
+  che riportava a `idle` veniva saltato, quindi nessuno richiedeva più il cambio e il lottatore restava
+  sull'ultimo frame di `TakeHit` per sempre.
+- **Correzione**: con la parata attiva il cambio a `ParataIdle` viene richiesto a ogni frame; i primi
+  tentativi vengono scartati da `cambiaSprite`, il primo utile (a fine animazione di danno) passa.
+- **Verifica**: colpito e con parata premuta, lo sprite passa da `TakeHit` a `ParataIdle` senza restare
+  incastrato; la parata parte appena il colpo subito è finito.
+
+### BUG-35 — le ultimate erano poco appariscenti
+
+- **Causa**: il flash durava 14 frame a 0,22 di opacità, un'onda e 26 particelle: si vedeva quasi solo la
+  scritta.
+- **Correzione**: flash del colore del personaggio a 0,34 per 24 frame, due onde (bianca 320 px e colorata
+  240 px), alone addosso al lottatore (`accendiAura`, 60 frame sull'attacco e per tutta la durata dei buff),
+  66 particelle, scossa 12 al posto di 8, cartello grande (78 px) con la parola `ULTIMATE` sotto e alone
+  colorato, per 110 frame invece di 60. In VS ONLINE il campo `avviso.grande` viaggia nel fotogramma, così
+  l'ospite vede il cartello grande come l'host.
+- **Verifica dal browser**: `aura #d29bff` per 60 frame, tinta 0,34 per 24, 2 onde, 66 particelle, scossa 12,
+  `avvisoGrande: true`, durata 110; screenshot con alone, anelli, particelle e titolo grande.
+
+### Verifiche eseguite (browser, gioco reale)
+
+| Controllo | Esito |
+|---|---|
+| Parata in corsa: `Run` vx 5 -> `ParataIdle`, parata attiva, vx 0 | OK |
+| Parata premuta durante `TakeHit`: sprite passa a `ParataIdle`, nessun blocco | OK |
+| Ultimate: alone, tinta, 2 onde, 66 particelle, scossa 12, cartello grande | OK |
+| Nessun errore JavaScript | OK |

@@ -502,7 +502,7 @@ function inviaFotogramma() {
         esitoP1: gameOver && typeof esitoPerP1 === 'function' ? esitoPerP1() : null,
         testo: hud.displayText.innerHTML,
         testoVisibile: hud.displayText.style.display !== 'none' ? 1 : 0,
-        avviso: { testo: avvisoTesto, colore: avvisoColore, timer: avvisoTimer }
+        avviso: { testo: avvisoTesto, colore: avvisoColore, timer: avvisoTimer, grande: avvisoGrande ? 1 : 0 }
     });
 }
 
@@ -601,6 +601,7 @@ function aggiornaOspite() {
     avvisoTesto = stato.avviso.testo;
     avvisoColore = stato.avviso.colore;
     avvisoTimer = stato.avviso.timer;
+    avvisoGrande = !!(stato.avviso && stato.avviso.grande);
     disegnaAvviso();
 
     if (stato.over) {
