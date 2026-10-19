@@ -576,3 +576,28 @@ uvsf7Debug()   // { frame, passiUltimoFotogramma, attesaMs, comandiInCoda, parti
 ```
 
 `frame` deve crescere di ~60 al secondo, non di 144.
+
+## 15. Menu principale a griglia (19/10/2026)
+
+Il menu principale non è più un elenco unico: è **tre colonne raggruppate** più una **scheda del
+giocatore**, sull'esempio di Tekken 8 / Street Fighter 6 / Guilty Gear Strive.
+
+- **Il modello sta in `js/MenuModello.js`** (`GRUPPI_PRINCIPALE`): colonne GIOCA / SOCIALE / IL TUO
+  PROFILO, nove voci in tutto. Le azioni sono **stringhe**, non funzioni: la mappa stringa → funzione
+  è `AZIONI_MENU_PRINCIPALE` in `js/Menu.js`. Così il modello si prova con Node
+  (`node tools/prova_menu.js`, 17 controlli: colonne, voci, movimento, voci non duplicate).
+- **Movimento**: su/giù dentro la colonna (in tondo, saltando i `wip`), sinistra/destra fra le colonne
+  con l'indice riportato dentro i limiti della nuova colonna. `window.uvsf7MenuDebug()` dice dove sta la
+  selezione, e serve alle verifiche nel browser.
+- **La scheda** (`disegnaPannelloGiocatore` in `js/Menu.js`) mostra nick, lega con il suo colore, ELO e
+  i punti che mancano alla lega dopo; da sloggati mostra l'invito ad accedere. I dati arrivano da
+  `datiPannelloGiocatore()` in `js/Account.js`, e `aggiornaSchedaMenu()` la ridisegna dopo accesso e
+  uscita — chiamata **in fondo** ad `applicaProfilo`, dopo aver copiato tutto il profilo.
+- **Il sottomenu `PLAY` non esiste più**: le tre modalità stanno nel menu principale. I ritorni da
+  `js/Selezione.js` e `js/Online.js` puntano a `principale`. Se qualcuno reintroduce `apriMenu('play')`
+  la schermata resta vuota: il controllo `grep -rn "apriMenu('play')" js/ index.js` deve uscire vuoto.
+- **Layout**: `#menuCorpo` (flex) con `#menuVoci` a griglia 3 colonne su desktop; su telefono la griglia
+  diventa `repeat(auto-fit, minmax(180px, 1fr))` (3 colonne in orizzontale, 1 in verticale) e la scheda
+  passa sopra le voci (`column-reverse`). Il menu vive **dentro `#areaGioco`** (riquadro 16:9), quindi su
+  un telefono in verticale l'area è alta solo ~219 px: lì il menu scorre (`overflow-y: auto`) invece di
+  tagliare le ultime voci, e la media query `max-height: 720px` stringe tutto.
