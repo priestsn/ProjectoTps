@@ -966,62 +966,6 @@ canvas {
 
 /* Schermi stretti (telefono): comandi più piccoli e, con due giocatori,
    due file per non farli uscire dallo schermo */
-@media (max-width: 700px) {
-    .comandi-touch {
-        padding: 8px 10px 12px;
-    }
-
-    .leva-touch {
-        width: 112px;
-        height: 112px;
-    }
-
-    .leva-pomello {
-        width: 48px;
-        height: 48px;
-    }
-
-    .riga-tasti {
-        gap: 10px;
-    }
-
-    .tasto-touch {
-        width: 64px;
-        height: 64px;
-        font-size: 13px;
-    }
-
-    .tasto-touch.ultimate {
-        width: 56px;
-        height: 56px;
-        font-size: 11px;
-    }
-
-    .comandi-touch.due-giocatori {
-        flex-wrap: wrap;
-        row-gap: 6px;
-    }
-
-    .comandi-touch.due-giocatori .leva-touch {
-        width: 84px;
-        height: 84px;
-    }
-
-    .comandi-touch.due-giocatori .leva-pomello {
-        width: 36px;
-        height: 36px;
-    }
-
-    .comandi-touch.due-giocatori .tasto-touch {
-        width: 48px;
-        height: 48px;
-        font-size: 10px;
-    }
-
-    .comandi-touch.due-giocatori .riga-tasti {
-        gap: 6px;
-    }
-}
 
 /* ========================================
    Keybinds
@@ -1515,14 +1459,6 @@ canvas {
 @keyframes ruotaIcona {
     0%, 35%   { transform: rotate(0deg); }
     60%, 100% { transform: rotate(90deg); }
-}
-
-/* Compare solo su un telefono/tablet in verticale, e solo se l'utente non
-   ha detto "gioca lo stesso" (classe su <html> messa da js/Touch.js) */
-@media (orientation: portrait) and (max-width: 900px) and (pointer: coarse) {
-    html:not(.ruota-ignorata) #ruotaTelefono {
-        display: flex;
-    }
 }
 
 /* ========================================

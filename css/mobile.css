@@ -1,0 +1,119 @@
+/* ========================================
+   Solo telefono e tablet
+   ==========================================
+   Qui ci stanno SOLO le regole che dipendono dal dito (`pointer: coarse`,
+   `hover: none`) e dalla forma del telefono. Le regole che dipendono soltanto
+   dalla dimensione dello schermo (per esempio `max-height: 720px`, che vale
+   anche per una finestra desktop ridotta) restano in css/style.css: se le
+   spostassimo qui cambieremmo il desktop senza volerlo.
+
+   Questo file si carica DOPO style.css e viene applicato anche lui a tutti,
+   ma le sue regole toccano solo i comandi a schermo, la safe area del notch e
+   l'avviso "ruota il telefono": elementi che sul desktop non esistono.
+   ========================================== */
+
+/* ---------- Comandi a schermo ---------- */
+/* Su un telefono orizzontale i pollici stanno sopra i lottatori: leva e tasti
+   restano quindi semitrasparenti finché non li si tocca, così il combattimento
+   si vede lo stesso. */
+.comandi-touch {
+    padding-left: calc(16px + env(safe-area-inset-left, 0px));
+    padding-right: calc(16px + env(safe-area-inset-right, 0px));
+    padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Comandi spenti = mezzi trasparenti (vedi sopra); appena li tocchi tornano
+   pieni. L'opacità sta sui singoli comandi e non sul contenitore, così non
+   serve `:has()` (che le WebView vecchie di Android 7-8 non conoscono). */
+.leva-touch,
+.tasto-touch {
+    opacity: 0.72;
+}
+
+.leva-touch.attiva,
+.tasto-touch.premuto {
+    opacity: 1;
+}
+
+.leva-touch,
+.tasto-touch {
+    min-width: 64px;              /* un dito ci sta dentro comodo */
+    min-height: 64px;
+    touch-action: none;           /* niente zoom o scorrimento col dito sopra */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ---------- HUD: via dalla tacca ---------- */
+#hud {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* ---------- Telefono piccolo: comandi più compatti ---------- */
+@media (max-width: 700px) {
+    .comandi-touch {
+        padding: 8px 10px 12px;
+    }
+
+    .leva-touch {
+        width: 112px;
+        height: 112px;
+    }
+
+    .leva-pomello {
+        width: 48px;
+        height: 48px;
+    }
+
+    .riga-tasti {
+        gap: 10px;
+    }
+
+    .tasto-touch {
+        width: 64px;
+        height: 64px;
+        font-size: 13px;
+    }
+
+    .tasto-touch.ultimate {
+        width: 56px;
+        height: 56px;
+        font-size: 11px;
+    }
+
+    .comandi-touch.due-giocatori {
+        flex-wrap: wrap;
+        row-gap: 6px;
+    }
+
+    .comandi-touch.due-giocatori .leva-touch {
+        width: 84px;
+        height: 84px;
+    }
+
+    .comandi-touch.due-giocatori .leva-pomello {
+        width: 36px;
+        height: 36px;
+    }
+
+    .comandi-touch.due-giocatori .tasto-touch {
+        width: 48px;
+        height: 48px;
+        font-size: 10px;
+    }
+
+    .comandi-touch.due-giocatori .riga-tasti {
+        gap: 6px;
+    }
+}
+
+/* ---------- Telefono in verticale: invito a ruotare ---------- */
+/* Compare solo se l'utente non ha detto "gioca lo stesso" (classe su <html>
+   messa da js/Mobile.js). */
+@media (orientation: portrait) and (max-width: 900px) and (pointer: coarse) {
+    html:not(.ruota-ignorata) #ruotaTelefono {
+        display: flex;
+    }
+}

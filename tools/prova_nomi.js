@@ -45,9 +45,9 @@ function stringheVisibili(sorgente) {
     return trovate;
 }
 
-const FILE_UI = ['js/Menu.js', 'js/Selezione.js', 'js/Online.js', 'js/Negozio.js',
-                 'js/Account.js', 'js/Classifica.js', 'js/Coda.js', 'js/Amici.js',
-                 'js/CerimoniaFine.js', 'index.html'];
+const FILE_UI = ['js/Menu.js', 'js/MenuModello.js', 'js/Selezione.js', 'js/Online.js',
+                 'js/Negozio.js', 'js/Account.js', 'js/Classifica.js', 'js/Coda.js',
+                 'js/Amici.js', 'js/CerimoniaFine.js', 'index.html'];
 
 FILE_UI.forEach((file) => {
     const trovate = stringheVisibili(leggi(file));

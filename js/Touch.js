@@ -12,6 +12,9 @@
 //
 // In VS ONLINE i comandi sono quelli del giocatore che sta usando il telefono:
 // l'host manda i tasti del giocatore 1, l'ospite quelli del giocatore 2.
+//
+// Qui c'è SOLO il disegno dei comandi: il rilevamento del dispositivo, la
+// rotazione e la safe area stanno in js/Mobile.js.
 
 // Azioni dei tre tasti a destra: gli stessi nomi usati dai keybinds
 const AZIONI_TASCHE = [
@@ -28,20 +31,6 @@ const comandiTouch = {
     disposizione: null,   // firma della disposizione costruita
     visibile: false
 };
-
-/**
- * True su telefono e tablet: dito come puntatore principale e nessun mouse.
- * Un PC con schermo touch (che ha `hover: hover`) resta a tastiera.
- */
-function dispositivoTouch() {
-    if (!navigator.maxTouchPoints) {
-        return false;
-    }
-    if (window.matchMedia && window.matchMedia('(hover: none)').matches) {
-        return true;
-    }
-    return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
-}
 
 /**
  * Chi comanda questo schermo: 'p1' oppure 'p2' in base alla modalità.
@@ -292,7 +281,7 @@ function aggiornaComandiTouch() {
     }
 
     const inPartita = statoCorrente === STATI.PARTITA && !reportAperto;
-    const visibile = inPartita && dispositivoTouch();
+    const visibile = inPartita && comandiTouchUtili();
 
     if (visibile) {
         costruisciComandiTouch();
@@ -308,8 +297,15 @@ function aggiornaComandiTouch() {
     comandiTouch.visibile = visibile;
 }
 
-// La rotazione del telefono cambia l'avviso "gira il telefono"
-window.addEventListener('resize', aggiornaComandiTouch);
+// Rotazione e ridimensionamento passano da aggiornaMobile (js/Mobile.js): così
+// la scala dell'HUD e i comandi si aggiornano nello stesso momento.
+window.addEventListener('resize', () => {
+    if (typeof aggiornaMobile === 'function') {
+        aggiornaMobile();
+    } else {
+        aggiornaComandiTouch();
+    }
+});
 
 // Un tocco prolungato non deve aprire il menu contestuale del browser
 document.addEventListener('contextmenu', (evento) => {
@@ -338,12 +334,12 @@ document.addEventListener('contextmenu', (evento) => {
     });
 })();
 
-// Ruotando il telefono cambia lo spazio disponibile: la scala dell'HUD va
-// ricalcolata (aggiornaComandiTouch da solo non la tocca).
+// Ruotando il telefono cambia lo spazio disponibile: si aspetta che il browser
+// abbia finito di cambiare le misure, poi si ricalcola tutto.
 window.addEventListener('orientationchange', () => {
     setTimeout(() => {
-        if (typeof aggiornaScalaSchermo === 'function') {
-            aggiornaScalaSchermo();
+        if (typeof aggiornaMobile === 'function') {
+            aggiornaMobile();
         }
     }, 250);
 });

@@ -32,7 +32,7 @@ const GRUPPI_PRINCIPALE = [
         titolo: 'IL TUO PROFILO',
         voci: [
             { id: 'account', testo: 'ACCOUNT', nota: 'accesso e progressi', azione: 'account' },
-            { id: 'negozio', testo: 'NEGOZIO', nota: 'sblocca i lottatori', azione: 'negozio' },
+            { id: 'negozio', testo: 'NEGOZIO', nota: 'sblocca i verdellinesi', azione: 'negozio' },
             { id: 'settings', testo: 'IMPOSTAZIONI', nota: 'schermo e tasti', azione: 'settings' }
         ]
     }

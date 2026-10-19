@@ -1700,6 +1700,11 @@ function passoSimulazione() {
 // Event Listener
 // ==========================================
 window.addEventListener('keydown', (event) => {
+    // Tastiera vera su un dispositivo touch: i comandi a schermo si tolgono
+    if (typeof segnaTastieraFisica === 'function') {
+        segnaTastieraFisica();
+    }
+
     // Stato fisico del tasto: serve alle protezioni e ai comandi "tenuti"
     if (event.key && event.key.length === 1) {
         segnaTastoFisico(event.key.toLowerCase(), true);
