@@ -16,7 +16,7 @@
          il telefono può tenere in cache il CSS vecchio insieme al JS nuovo e la
          pagina si rompe in modi difficili da spiegare (è successo: sfondo
          piccolo in alto a sinistra, selezione tagliata). -->
-    <link rel="stylesheet" href="css/style.css?v=12">
+    <link rel="stylesheet" href="css/style.css?v=14">
 </head>
 <body>
     <div id="areaGioco">
@@ -60,7 +60,14 @@
         <div id="menu" class="schermata">
             <img id="menuLogo" src="assets/UVSF7-logo.png" alt="Ultra Verdello Street Fight 7">
             <div id="menuTitolo">Ultra Verdello Street Fight 7</div>
-            <div id="menuVoci"></div>
+
+            <!-- Corpo a due zone: a sinistra le colonne delle voci (js/Menu.js),
+                 a destra la scheda del giocatore. Su telefono la scheda va sotto. -->
+            <div id="menuCorpo">
+                <div id="menuVoci"></div>
+                <aside id="menuPannello"></aside>
+            </div>
+
             <div id="menuSuggerimento" class="menu-suggerimento"></div>
 
             <!-- Visibile solo nel menu di pausa -->
@@ -156,29 +163,30 @@
 
     <!-- Script: l'ordine conta (Utili -> Stato -> Keybinds -> Report -> Menu -> Classi -> Personaggi -> Selezione -> CPU -> Rete -> Online -> Touch -> index).
          Il ?v= è la stessa versione del CSS: si aumenta a ogni rilascio. -->
-    <script src="js/Utili.js?v=12"></script>
-    <script src="js/Stato.js?v=12"></script>
-    <script src="js/Api.js?v=12"></script>
-    <script src="js/Keybinds.js?v=12"></script>
-    <script src="js/Report.js?v=12"></script>
-    <script src="js/Menu.js?v=12"></script>
-    <script src="js/Account.js?v=12"></script>
-    <script src="js/Punti.js?v=12"></script>
-    <script src="js/Negozio.js?v=12"></script>
-    <script src="js/Amici.js?v=12"></script>
-    <script src="js/Classifica.js?v=12"></script>
-    <script src="js/Coda.js?v=12"></script>
-    <script src="js/Classi.js?v=12"></script>
-    <script src="js/Personaggi.js?v=12"></script>
-    <script src="js/Selezione.js?v=12"></script>
-    <script src="js/CPU.js?v=12"></script>
-    <script src="js/Rete.js?v=12"></script>
-    <script src="js/Online.js?v=12"></script>
-    <script src="js/Touch.js?v=12"></script>
-    <script src="js/Tempo.js?v=12"></script>
-    <script src="js/Buffer.js?v=12"></script>
-    <script src="js/Regole.js?v=12"></script>
-    <script src="js/Effetti.js?v=12"></script>
-    <script src="index.js?v=12"></script>
+    <script src="js/Utili.js?v=14"></script>
+    <script src="js/Stato.js?v=14"></script>
+    <script src="js/Api.js?v=14"></script>
+    <script src="js/Keybinds.js?v=14"></script>
+    <script src="js/Report.js?v=14"></script>
+    <script src="js/MenuModello.js?v=14"></script>
+    <script src="js/Menu.js?v=14"></script>
+    <script src="js/Account.js?v=14"></script>
+    <script src="js/Punti.js?v=14"></script>
+    <script src="js/Negozio.js?v=14"></script>
+    <script src="js/Amici.js?v=14"></script>
+    <script src="js/Classifica.js?v=14"></script>
+    <script src="js/Coda.js?v=14"></script>
+    <script src="js/Classi.js?v=14"></script>
+    <script src="js/Personaggi.js?v=14"></script>
+    <script src="js/Selezione.js?v=14"></script>
+    <script src="js/CPU.js?v=14"></script>
+    <script src="js/Rete.js?v=14"></script>
+    <script src="js/Online.js?v=14"></script>
+    <script src="js/Touch.js?v=14"></script>
+    <script src="js/Tempo.js?v=14"></script>
+    <script src="js/Buffer.js?v=14"></script>
+    <script src="js/Regole.js?v=14"></script>
+    <script src="js/Effetti.js?v=14"></script>
+    <script src="index.js?v=14"></script>
 </body>
 </html>

@@ -283,28 +283,127 @@ canvas {
     line-height: 1.2;
 }
 
+/* Corpo del menu: colonne a sinistra, scheda giocatore a destra.
+   Riferimento: Tekken 8 e Street Fighter 6, dove le modalità stanno in grande
+   e il profilo vive in un pannello suo. */
+#menuCorpo {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 48px;
+    width: min(1280px, 94vw);
+}
+
+/* Tre colonne raggruppate: ogni gruppo ha titolo e voci */
 #menuVoci {
+    display: grid;
+    grid-template-columns: minmax(300px, 1fr) minmax(210px, 0.7fr) minmax(210px, 0.7fr);
+    gap: 26px 40px;
+    align-items: start;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* Gruppo di voci (colonna) */
+.gruppo {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 18px;
+    gap: 6px;
+    min-width: 0;
 }
 
-/* Singola voce di menu */
+.gruppo-titolo {
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: #6b6b6b;
+    margin-bottom: 6px;
+    border-bottom: 2px solid #2a2a2a;
+    padding-bottom: 6px;
+}
+
+/* Singola voce di menu: la barra colorata si accende con la selezione */
 .voce {
-    font-size: 40px;
+    position: relative;
+    font-size: 26px;
+    line-height: 1.15;
     color: #777777;
+    padding: 8px 12px 8px 16px;
+    border-left: 4px solid transparent;
     user-select: none;
+    cursor: pointer;
+    transition: color 90ms linear, border-color 90ms linear;
 }
 
-/* Voce evidenziata dalla tastiera */
+/* Riga di spiegazione sotto il nome della voce */
+.voce .nota {
+    display: block;
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: #5c5c5c;
+    margin-top: 2px;
+}
+
+/* Voce evidenziata: più grande, bianca, con la barra accesa.
+   La barra #ff4a6e è l'accento del gioco: cambiarlo qui e basta. */
 .voce.selezionata {
-    color: white;
+    color: #ffffff;
+    font-size: 32px;
+    border-left-color: #ff4a6e;
+    background: linear-gradient(90deg, rgba(255, 74, 110, 0.16), rgba(255, 74, 110, 0));
+}
+
+.voce.selezionata .nota {
+    color: #b9b9b9;
 }
 
 /* Voce non ancora disponibile: mostrata ma non selezionabile */
 .voce.wip {
     color: #444444;
+}
+
+/* Scheda del giocatore, in alto a destra del menu principale */
+#menuPannello {
+    flex: 0 0 330px;
+    max-width: 330px;
+    border: 2px solid #2a2a2a;
+    background: rgba(18, 18, 22, 0.9);
+    padding: 18px 20px;
+    min-height: 132px;
+}
+
+.pannello-titolo {
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: #6b6b6b;
+    margin-bottom: 10px;
+}
+
+.pannello-nick {
+    font-size: 26px;
+    color: #ffffff;
+    margin-bottom: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pannello-riga {
+    font-size: 13px;
+    color: #b9b9b9;
+    margin-top: 4px;
+}
+
+.pannello-lega {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 3px;
+    font-size: 13px;
+    color: #101010;
+}
+
+.pannello-vuoto {
+    font-size: 13px;
+    color: #b9b9b9;
+    line-height: 1.5;
 }
 
 .etichetta-wip {
@@ -1006,12 +1105,80 @@ canvas {
         letter-spacing: 2px;
     }
 
+    #menuLogo {
+        width: 92px;
+        margin-bottom: 6px;
+    }
+
+    #menuTitolo {
+        margin-bottom: 10px;
+        font-size: 20px;
+        letter-spacing: 2px;
+    }
+
+    /* Il menu vive DENTRO #areaGioco (il riquadro 16:9), non nel viewport: su
+       un telefono in orizzontale l'area è larga ma bassa, quindi il menu può
+       scorrere e le colonne si dispongono da sole. */
+    #menu {
+        justify-content: flex-start;
+        overflow-y: auto;
+        padding: 8px 4px 12px;
+    }
+
+    #menuCorpo {
+        /* la scheda del giocatore sta SOPRA le voci: sotto, con nove voci, non
+           ci starebbe più niente */
+        flex-direction: column-reverse;
+        gap: 12px;
+        width: 100%;
+        padding: 0 6px;
+        box-sizing: border-box;
+    }
+
     #menuVoci {
-        gap: 10px;
+        display: grid;
+        /* auto-fit: un gruppo per colonna quando c'è spazio, una colonna sola
+           quando l'area è stretta */
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px 14px;
+        width: 100%;
+    }
+
+    .gruppo {
+        gap: 3px;
+    }
+
+    .gruppo-titolo {
+        font-size: 11px;
+        letter-spacing: 2px;
+        margin-bottom: 3px;
+        padding-bottom: 3px;
     }
 
     .voce {
-        font-size: 24px;
+        font-size: 18px;
+        padding: 5px 8px 5px 10px;
+    }
+
+    .voce .nota {
+        display: none;                    /* sul telefono le note mangiano spazio */
+    }
+
+    .voce.selezionata {
+        font-size: 21px;
+    }
+
+    #menuPannello {
+        flex: 1 1 auto;
+        width: 100%;
+        max-width: none;
+        padding: 10px 12px;
+        min-height: 0;
+    }
+
+    .pannello-nick {
+        font-size: 18px;
+        margin-bottom: 4px;
     }
 
     .menu-suggerimento {
@@ -1667,5 +1834,66 @@ canvas {
     letter-spacing: 0;
 }
 
+/* ========================================
+   Schermi bassi: il menu deve entrare lo stesso
+   ========================================== */
+/* Telefono in orizzontale, portatile piccolo, finestra ridotta: logo e titolo
+   si stringono, le voci rimpiccioliscono e la riga dei punti sparisce. */
+@media (max-height: 720px) {
+    #menuLogo {
+        width: 84px;
+        margin-bottom: 4px;
+    }
 
+    #menuTitolo {
+        font-size: 18px;
+        margin-bottom: 8px;
+        letter-spacing: 2px;
+    }
 
+    #menuVoci {
+        gap: 8px 14px;
+    }
+
+    .gruppo {
+        gap: 2px;
+    }
+
+    .gruppo-titolo {
+        font-size: 10px;
+        margin-bottom: 2px;
+        padding-bottom: 3px;
+    }
+
+    .voce {
+        font-size: 16px;
+        padding: 3px 8px 3px 10px;
+    }
+
+    .voce.selezionata {
+        font-size: 18px;
+    }
+
+    .voce .nota {
+        display: none;
+    }
+
+    #menuPannello {
+        padding: 8px 10px;
+        min-height: 0;
+    }
+
+    .pannello-nick {
+        font-size: 16px;
+        margin-bottom: 2px;
+    }
+
+    .pannello-punti {
+        display: none;
+    }
+
+    .menu-suggerimento {
+        margin-top: 8px;
+        font-size: 11px;
+    }
+}

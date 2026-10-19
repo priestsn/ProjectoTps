@@ -668,7 +668,7 @@ function applicaAzioneRemota(giocatore, azione, premuto) {
     if (annulla) {
         annulla.addEventListener('click', () => {
             chiudiPannelloOnline();
-            apriMenu('play');
+            apriMenu('principale');
         });
     }
 
@@ -682,7 +682,7 @@ function applicaAzioneRemota(giocatore, azione, premuto) {
             } else if (evento.key === 'Escape') {
                 evento.preventDefault();
                 chiudiPannelloOnline();
-                apriMenu('play');
+                apriMenu('principale');
             }
         });
     }

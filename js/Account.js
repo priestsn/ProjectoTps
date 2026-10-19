@@ -266,6 +266,7 @@ async function esciAccount() {
     statoAccount.lottatori = [];
     disegnaAccount();
     messaggioAccount('Sei uscito dal tuo account.', 'ok');
+    aggiornaSchedaMenu();
 }
 
 /** Rilegge il profilo dal server (dopo un acquisto, per esempio). */
@@ -296,6 +297,46 @@ function applicaProfilo(profilo) {
     statoAccount.legaColore = profilo.legaColore || '#b07a4a';
     statoAccount.legaProssima = profilo.legaProssima || null;
     statoAccount.legaMancano = profilo.legaMancano || 0;
+
+    // La scheda si ridisegna DOPO aver copiato tutto il profilo: se la si
+    // aggiorna a metà, mostra la lega e le partite vecchie.
+    aggiornaSchedaMenu();
+}
+
+/**
+ * Dati per la scheda del giocatore nel menu principale.
+ * Restituisce solo quello che serve a disegnare: nessun DOM, così la scheda
+ * resta semplice e questa funzione si legge da sola.
+ */
+function datiPannelloGiocatore() {
+    if (!statoAccount.dentro) {
+        return { dentro: false };
+    }
+    return {
+        dentro: true,
+        nick: statoAccount.nick || 'Giocatore',
+        elo: statoAccount.elo,
+        punti: statoAccount.punti,
+        lega: statoAccount.lega || 'Bronzo',
+        legaColore: statoAccount.legaColore || '#b07a4a',
+        legaProssima: statoAccount.legaProssima || null,
+        legaMancano: statoAccount.legaMancano || 0,
+        partite: statoAccount.partiteGiocate || 0,
+        vittorie: statoAccount.vittorie || 0
+    };
+}
+
+/**
+ * La scheda del menu principale va ridisegnata appena cambia l'account:
+ * la chiamano applicaProfilo() e esciAccount().
+ */
+function aggiornaSchedaMenu() {
+    if (typeof disegnaPannelloGiocatore !== 'function') {
+        return;
+    }
+    if (typeof menuCorrente !== 'undefined' && menuCorrente === 'principale') {
+        disegnaPannelloGiocatore();
+    }
 }
 
 /** All'avvio: se c'è un token salvato si prova a riprendere la sessione. */

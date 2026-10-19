@@ -501,8 +501,8 @@ function gestisciInputSelezione(evento) {
 function indietroDallaSelezione() {
     if (modalitaPartita === MODALITA.ONLINE) {
         esciOnline();
-        apriMenu('play');
+        apriMenu('principale');
         return;
     }
-    apriMenu(modalitaPartita === MODALITA.CPU ? 'cpu' : 'play');
+    apriMenu(modalitaPartita === MODALITA.CPU ? 'cpu' : 'principale');
 }

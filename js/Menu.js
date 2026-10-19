@@ -4,33 +4,21 @@
 // Le voci di ogni menu sono dati: `wip: true` significa "non ancora
 // disponibile", quindi la voce viene mostrata ma NON è selezionabile.
 
+// Il menu principale NON è qui: le sue tre colonne sono dati in
+// js/MenuModello.js (GRUPPI_PRINCIPALE) e le azioni in AZIONI_MENU_PRINCIPALE,
+// più sotto. Qui restano i sottomenu, che sono elenchi piatti.
 const VOCI_MENU = {
-    principale: [
-        { testo: 'PLAY', azione: () => apriMenu('play') },
-        { testo: 'RANKED', azione: () => apriCodaRanked() },
-        { testo: 'ACCOUNT', azione: () => apriAccount() },
-        { testo: 'NEGOZIO', azione: () => apriNegozio() },
-        { testo: 'AMICI', azione: () => apriAmici() },
-        { testo: 'CLASSIFICA', azione: () => apriClassifica() },
-        { testo: 'SETTINGS', azione: () => apriMenu('settings') }
-    ],
-    play: [
-        { testo: 'VS LOCALE', azione: () => apriSelezione(MODALITA.LOCALE) },
-        { testo: 'VS CPU', azione: () => apriMenu('cpu') },
-        { testo: 'VS ONLINE', azione: () => apriMenu('online') },
-        { testo: 'INDIETRO', azione: () => apriMenu('principale') }
-    ],
     // VS ONLINE: la sfida in rete passa da una stanza con codice
     online: [
         { testo: 'CREA STANZA', azione: () => creaStanzaOnline() },
         { testo: 'ENTRA CON CODICE', azione: () => apriIngressoOnline() },
-        { testo: 'INDIETRO', azione: () => apriMenu('play') }
+        { testo: 'INDIETRO', azione: () => apriMenu('principale') }
     ],
     cpu: [
         { testo: 'FACILE', azione: () => avviaSelezioneCPU('facile') },
         { testo: 'DIFFICILE', azione: () => avviaSelezioneCPU('difficile') },
         { testo: 'GUISSÈ', azione: () => avviaSelezioneCPU('guisse') },
-        { testo: 'INDIETRO', azione: () => apriMenu('play') }
+        { testo: 'INDIETRO', azione: () => apriMenu('principale') }
     ],
     settings: [
         { testo: 'FULLSCREEN', azione: () => attivaFullscreen() },
@@ -57,7 +45,6 @@ const VOCI_MENU = {
 
 const TITOLI_MENU = {
     principale: 'Ultra Verdello Street Fight 7',
-    play: 'PLAY',
     cpu: 'VS CPU',
     online: 'VS ONLINE',
     settings: 'SETTINGS',
@@ -68,16 +55,14 @@ const TITOLI_MENU = {
 
 // Menu a cui torna Esc da ciascun sottomenu
 const MENU_PADRE = {
-    play: 'principale',
-    cpu: 'play',
-    online: 'play',
+    cpu: 'principale',
+    online: 'principale',
     settings: 'principale'
 };
 
 // Testo di aiuto mostrato sotto le voci: ricorda che Esc fa sempre da "back"
 const SUGGERIMENTI_MENU = {
-    principale: 'Invio per scegliere',
-    play: 'Esc per tornare indietro',
+    principale: 'Invio per scegliere · ← → per cambiare colonna · Esc per uscire',
     cpu: 'Esc per tornare indietro',
     online: 'Esc per tornare indietro',
     settings: 'Esc per tornare indietro',
@@ -87,6 +72,11 @@ const SUGGERIMENTI_MENU = {
 };
 
 let menuCorrente = 'principale';
+
+// Menu principale: due dimensioni (colonna, indice), modello in js/MenuModello.js
+let selezionePrincipale = { colonna: 0, indice: 0 };
+
+// Sottomenu (cpu, online, settings, pausa…): elenco piatto, una sola dimensione
 let indiceVoce = 0;
 
 /**
@@ -95,7 +85,13 @@ let indiceVoce = 0;
  */
 function apriMenu(nome, stato = STATI.MENU) {
     menuCorrente = nome;
-    indiceVoce = primaVoceSelezionabile();
+
+    if (nome === 'principale') {
+        selezionePrincipale = { colonna: 0, indice: primoIndice(0) };
+    } else {
+        indiceVoce = primaVoceSelezionabile();
+    }
+
     disegnaMenu();
 
     // In pausa lo sfondo del menu è trasparente e compare il pulsante report
@@ -118,21 +114,54 @@ function disegnaMenu() {
     const contenitore = document.querySelector('#menuVoci');
     contenitore.innerHTML = '';
 
-    VOCI_MENU[menuCorrente].forEach((voce, indice) => {
-        const elemento = document.createElement('div');
-        elemento.className = 'voce';
+    if (menuCorrente === 'principale') {
+        disegnaColonne(contenitore);
+    } else {
+        disegnaElenco(contenitore);
+    }
 
-        if (voce.wip) {
-            elemento.className += ' wip';
-        }
+    disegnaPannelloGiocatore();
+}
+
+/** Menu principale: un blocco per colonna, con titolo e voci. */
+function disegnaColonne(contenitore) {
+    GRUPPI_PRINCIPALE.forEach((gruppo, colonna) => {
+        const blocco = document.createElement('div');
+        blocco.className = 'gruppo';
+
+        const titolo = document.createElement('div');
+        titolo.className = 'gruppo-titolo';
+        titolo.textContent = gruppo.titolo;
+        blocco.appendChild(titolo);
+
+        gruppo.voci.forEach((voce, indice) => {
+            const elemento = creaVoce(voce);
+
+            if (colonna === selezionePrincipale.colonna && indice === selezionePrincipale.indice) {
+                elemento.className += ' selezionata';
+            }
+
+            elemento.addEventListener('click', () => {
+                selezionePrincipale = { colonna: colonna, indice: indice };
+                disegnaMenu();
+                attivaVoce();
+            });
+
+            blocco.appendChild(elemento);
+        });
+
+        contenitore.appendChild(blocco);
+    });
+}
+
+/** Sottomenu: elenco piatto, come prima. */
+function disegnaElenco(contenitore) {
+    (VOCI_MENU[menuCorrente] || []).forEach((voce, indice) => {
+        const elemento = creaVoce(voce);
+
         if (indice === indiceVoce) {
             elemento.className += ' selezionata';
         }
-
-        // Le voci WIP si vedono ma hanno l'etichetta accanto
-        elemento.innerHTML = voce.wip
-            ? voce.testo + '<span class="etichetta-wip">WIP</span>'
-            : voce.testo;
 
         // Il click funziona solo sulle voci disponibili
         if (!voce.wip) {
@@ -144,6 +173,97 @@ function disegnaMenu() {
 
         contenitore.appendChild(elemento);
     });
+}
+
+/** Crea il div di una voce: nome, riga di nota e (se serve) etichetta WIP. */
+function creaVoce(voce) {
+    const elemento = document.createElement('div');
+    elemento.className = voce.wip ? 'voce wip' : 'voce';
+
+    const testo = document.createElement('span');
+    testo.textContent = voce.testo;
+    elemento.appendChild(testo);
+
+    if (voce.wip) {
+        const etichetta = document.createElement('span');
+        etichetta.className = 'etichetta-wip';
+        etichetta.textContent = 'WIP';
+        elemento.appendChild(etichetta);
+    }
+
+    if (voce.nota) {
+        const nota = document.createElement('span');
+        nota.className = 'nota';
+        nota.textContent = voce.nota;
+        elemento.appendChild(nota);
+    }
+
+    return elemento;
+}
+
+/**
+ * Scheda del giocatore a destra del menu principale: nick, lega con il suo
+ * colore, ELO, quanti punti mancano alla lega dopo, punti e partite.
+ * Da sloggati mostra l'invito ad accedere, che è la prima cosa da fare per
+ * ranked, negozio e classifica.
+ */
+function disegnaPannelloGiocatore() {
+    const pannello = document.querySelector('#menuPannello');
+    if (!pannello) {
+        return;
+    }
+    pannello.innerHTML = '';
+
+    // La scheda serve solo al menu principale: nei sottomenu resta nascosta
+    if (menuCorrente !== 'principale') {
+        pannello.style.display = 'none';
+        return;
+    }
+    pannello.style.display = '';
+
+    const dati = typeof datiPannelloGiocatore === 'function'
+        ? datiPannelloGiocatore()
+        : { dentro: false };
+
+    const titolo = document.createElement('div');
+    titolo.className = 'pannello-titolo';
+    titolo.textContent = 'IL TUO PROFILO';
+    pannello.appendChild(titolo);
+
+    if (!dati.dentro) {
+        const testo = document.createElement('div');
+        testo.className = 'pannello-vuoto';
+        testo.textContent = 'Accedi per salvare punti, ELO e lottatori. Senza account restano VS LOCALE e VS CPU.';
+        pannello.appendChild(testo);
+        return;
+    }
+
+    const nick = document.createElement('div');
+    nick.className = 'pannello-nick';
+    nick.textContent = dati.nick;
+    pannello.appendChild(nick);
+
+    const rigaLega = document.createElement('div');
+    rigaLega.className = 'pannello-riga';
+    const distintivo = document.createElement('span');
+    distintivo.className = 'pannello-lega';
+    distintivo.style.backgroundColor = dati.legaColore;
+    distintivo.textContent = String(dati.lega).toUpperCase();
+    rigaLega.appendChild(distintivo);
+    rigaLega.appendChild(document.createTextNode('  ' + dati.elo + ' ELO'));
+    pannello.appendChild(rigaLega);
+
+    const mancano = document.createElement('div');
+    mancano.className = 'pannello-riga';
+    mancano.textContent = (dati.legaProssima && dati.legaMancano > 0)
+        ? 'Mancano ' + dati.legaMancano + ' punti per ' + dati.legaProssima
+        : 'Lega massima raggiunta';
+    pannello.appendChild(mancano);
+
+    const punti = document.createElement('div');
+    punti.className = 'pannello-riga pannello-punti';
+    punti.textContent = dati.punti + ' punti · ' + dati.partite + ' partite';
+    pannello.appendChild(punti);
 }
 
 /**
@@ -158,32 +278,65 @@ function primaVoceSelezionabile() {
  * Sposta la selezione saltando le voci WIP e ripartendo dal fondo
  */
 function spostaSelezione(passo) {
-    const voci = VOCI_MENU[menuCorrente];
-    let indice = indiceVoce;
-
-    for (let i = 0; i < voci.length; i++) {
-        indice = (indice + passo + voci.length) % voci.length;
-        if (!voci[indice].wip) {
-            indiceVoce = indice;
-            disegnaMenu();
-            return;
-        }
+    if (menuCorrente === 'principale') {
+        spostaVert(selezionePrincipale, passo);
+    } else {
+        const finto = { colonna: 0, indice: indiceVoce };
+        spostaInElenco(VOCI_MENU[menuCorrente], finto, passo);
+        indiceVoce = finto.indice;
     }
+    disegnaMenu();
 }
 
 /**
- * Esegue l'azione della voce evidenziata
+ * Sposta la selezione fra le colonne: vale solo per il menu principale.
+ */
+function spostaColonna(passo) {
+    if (menuCorrente !== 'principale') {
+        return;
+    }
+    spostaOrizz(selezionePrincipale, passo);
+    disegnaMenu();
+}
+
+/**
+ * Esegue l'azione della voce evidenziata.
+ * Nel menu principale l'azione è una stringa del modello: qui diventa la
+ * funzione vera, in un solo posto (AZIONI_MENU_PRINCIPALE).
  */
 function attivaVoce() {
-    const voce = VOCI_MENU[menuCorrente][indiceVoce];
-
-    // Sicurezza: una voce WIP non deve fare nulla
-    if (!voce || voce.wip) {
+    if (menuCorrente !== 'principale') {
+        const voce = VOCI_MENU[menuCorrente][indiceVoce];
+        if (!voce || voce.wip) {
+            return;
+        }
+        voce.azione();
         return;
     }
 
-    voce.azione();
+    const scelta = voceSelezionata(selezionePrincipale);
+    if (!scelta || scelta.voce.wip) {
+        return;
+    }
+
+    const azione = AZIONI_MENU_PRINCIPALE[scelta.voce.azione];
+    if (typeof azione === 'function') {
+        azione();
+    }
 }
+
+// Dalla stringa del modello alla funzione del gioco: un solo posto.
+const AZIONI_MENU_PRINCIPALE = {
+    vsLocale: () => apriSelezione(MODALITA.LOCALE),
+    vsCpu: () => apriMenu('cpu'),
+    vsOnline: () => apriMenu('online'),
+    ranked: () => apriCodaRanked(),
+    amici: () => apriAmici(),
+    classifica: () => apriClassifica(),
+    account: () => apriAccount(),
+    negozio: () => apriNegozio(),
+    settings: () => apriMenu('settings')
+};
 
 /**
  * Apre la selezione in modalità CPU con la difficoltà scelta
@@ -260,6 +413,18 @@ function gestisciInputMenu(evento) {
             spostaSelezione(1);
             break;
 
+        case 'ArrowLeft':
+        case 'a':
+        case 'A':
+            spostaColonna(-1);
+            break;
+
+        case 'ArrowRight':
+        case 'd':
+        case 'D':
+            spostaColonna(1);
+            break;
+
         case 'Enter':
             attivaVoce();
             break;
@@ -269,3 +434,17 @@ function gestisciInputMenu(evento) {
             break;
     }
 }
+
+// Diagnosi dal browser: dice dove sta la selezione. La usano le verifiche.
+window.uvsf7MenuDebug = function () {
+    const scelta = voceSelezionata(selezionePrincipale);
+    return {
+        menu: menuCorrente,
+        colonna: selezionePrincipale.colonna,
+        indice: selezionePrincipale.indice,
+        voce: scelta ? scelta.voce.id : null,
+        azione: scelta ? scelta.voce.azione : null,
+        colonneVisibili: document.querySelectorAll('#menuVoci .gruppo').length,
+        vociVisibili: document.querySelectorAll('#menuVoci .voce').length
+    };
+};
