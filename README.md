@@ -26,8 +26,10 @@
   <sub>La prima è la versione statica pubblicata da questo repository (GitHub Pages): si aggiorna a ogni push.
   La seconda è lo <strong>stesso gioco servito dal server delle stanze</strong>, dietro un tunnel Cloudflare:
   è lì che funzionano <strong>VS ONLINE</strong>, account, punti, ELO e classifica.
-  L'indirizzo del tunnel è <em>temporaneo</em> e cambia quando il tunnel viene riavviato — come leggerlo
-  e come renderlo fisso è spiegato in <a href="#indirizzo-pubblico">Indirizzo pubblico</a>.</sub>
+  È anche l'indirizzo del campo <strong>Website</strong> di questo repository (il link in alto a destra
+  nella pagina GitHub). Attenzione: l'indirizzo del tunnel è <em>temporaneo</em> e cambia quando il tunnel
+  viene riavviato — come leggerlo e come renderlo fisso è spiegato in
+  <a href="#indirizzo-pubblico">Indirizzo pubblico</a>.</sub>
 </p>
 
 ![Schermata del gioco](screenshot.png)
