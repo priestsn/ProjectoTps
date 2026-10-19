@@ -46,7 +46,7 @@ public class MainActivity extends Activity {
      * che il layout sia rotto (successo davvero: sfondo piccolo in alto a
      * sinistra, selezione tagliata).
      */
-    private static final int BUILD_APP = 2;
+    private static final int BUILD_APP = 3;
 
     /** Dopo quanto tempo in background ricaricare per prendere l'ultima versione. */
     private static final long RICARICA_DOPO_MS = 5 * 60 * 1000L;

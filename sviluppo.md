@@ -659,3 +659,70 @@ sopra la partita).
   fa ReferenceError a ogni passo del ciclo, congelando il gioco).
 - `controllaComandiFisici()` vale solo per i lottatori comandati da una persona: la CPU ha i suoi tempi in
   `js/CPU.js` e non deve passare dalle protezioni "fisiche".
+
+## 17. Verdellinesi: il nome e la chiave tecnica
+
+I lottatori si chiamano **verdellinesi**. Nel codice:
+
+- il modulo `js/Personaggi.js` è diventato **`js/Verdellinesi.js`** e l'array `PERSONAGGI` è
+  **`VERDELLINESI`**;
+- le costanti `NOME_VERDELLINESE` / `NOME_VERDELLINESI` stanno in cima a quel file, e le scritte
+  dell'interfaccia le usano invece di scrivere la parola a mano;
+- `tools/prova_nomi.js` legge i file dell'interfaccia e **boccia** ogni stringa visibile che contenga
+  ancora "personaggio". I commenti non contano.
+
+La chiave `personaggio` di `dati/negozio.json`, dei payload `/api/negozio/acquisto` e il campo
+`lottatore.personaggio` **restano invariati**: sono identificativi salvati nei profili e nei dati del
+server, non parole da leggere. Rinominarli obbligherebbe a migrare i dati online e a rompere i client
+già installati senza alcun vantaggio per chi gioca. Gli sprite restano in `assets/Personaggi/` per lo
+stesso motivo: i percorsi sono scritti nei dati, e rinominare la cartella significa toccare nove
+cartelle di immagini per niente.
+
+## 18. Identità: l'ospite esiste anche senza account
+
+Prima chi non faceva il login non aveva né id né nome: il pannello del menu diceva solo "Accedi…",
+la selezione motivava i blocchi come se il giocatore fosse un utente incompleto e in VS ONLINE i due
+giocatori non sapevano con chi stavano giocando (il server non scambiava nessun nome).
+
+Ora `js/Identita.js`:
+
+- `ospite()` crea la prima volta e ricorda nel browser (`localStorage`, chiave `uvsf7.ospite`) un id
+  `ospite-3F2A` e il nome **"Ospite 3F2A"**;
+- `identitaCorrente()` risponde sempre: account (nick) se collegato, ospite altrimenti;
+- `nomeGiocatore('p1'|'p2')` dà il nome giusto in ogni modalità: nick, nome ospite, `GIOCATORE 1/2`
+  in VS LOCALE (due persone sullo stesso schermo) e `CPU` per l'avversario del computer;
+- `contaPartitaOspite()` conta le partite giocate da ospite: il numero resta nel browser, perché
+  senza account non c'è un profilo sul server a cui scriverlo.
+
+Dove si vede: pannello del menu ("Ospite 3F2A · 3 partite giocate"), intestazione della selezione,
+badge della stanza online, cartello di fine partita.
+
+In VS ONLINE il server (`server/server.js`) ora scambia i nomi: `crea`/`entra` portano un campo
+`nome`, e `entrato`/`avversario` lo restituiscono all'altro. Sono campi **additivi**: un client
+vecchio li ignora, quindi non c'è bisogno di coordinare i rilasci. Il nome viene ripulito
+(`pulisciNome`: via a capo e tabulazioni, massimo 24 caratteri) perché non è un dato di fiducia,
+serve solo a leggere con chi si gioca.
+
+## 19. Versione mobile: file separati
+
+Dettagli e misure in **`mobile.md`**. In breve:
+
+- `css/mobile.css` contiene **solo** le regole che dipendono dal dito (`pointer: coarse`,
+  `hover: none`, portrait, safe area del notch, dimensione minima dei tasti). Le regole che dipendono
+  soltanto dalla dimensione (per esempio `max-height: 720px`) restano in `css/style.css`, perché
+  valgono anche per una finestra desktop ridotta: spostarle cambierebbe il desktop.
+- `js/Mobile.js` possiede il dispositivo (`dispositivoTouch()`, `schermoVerticale()`,
+  `aggiornaMobile()`, `segnaTastieraFisica()`, `comandiTouchUtili()`); `js/Touch.js` resta il disegno
+  dei comandi a schermo.
+- tasti con minimo 64 px, comandi spenti semi-trasparenti (i pollici non coprono i lottatori),
+  safe area laterale per comandi e HUD, comandi che spariscono appena si usa una tastiera vera.
+- `tools/prova_mobile.js` (26 controlli) verifica la separazione, il desktop intatto e il
+  comportamento del rilevamento.
+
+## 20. Cartello di fine partita con i due nomi
+
+`testoEsito(esito)` restituisce `giocatore` e `verdellinese`: il cartello mostra **sopra** chi ha
+vinto (nick dell'account, nome dell'ospite, `GIOCATORE 1/2` o `CPU`) e **sotto** il verdellinese che
+ha usato. I nomi di entrambi viaggiano dentro l'esito (`nomeP1`, `nomeP2`, `verdellineseP1`,
+`verdellineseP2`) fin dalla creazione della cerimonia, così `js/CerimoniaFine.js` resta un modulo puro
+e `disegnaEsito()` in `index.js` non deve indovinare niente.

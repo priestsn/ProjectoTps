@@ -32,6 +32,15 @@
   <a href="#indirizzo-pubblico">Indirizzo pubblico</a>.</sub>
 </p>
 
+<p align="center">
+  <a href="https://github.com/priestsn/uvstf7/releases/latest"><strong>📱 APP ANDROID</strong></a> —
+  APK firmato, si aggiorna da solo: <code>uvsf7-v1.0.2.apk</code> (versione 1.0.2).<br>
+  <sub>Chi non fa il login gioca come <strong>ospite</strong> con un id suo ("Ospite 3F2A"): punti ed ELO
+  arrivano creando un account. La parte telefono vive in <code>css/mobile.css</code> e
+  <code>js/Mobile.js</code>, il desktop non viene toccato — dettagli e misure in
+  <a href="mobile.md">mobile.md</a>.</sub>
+</p>
+
 ![Schermata del gioco](screenshot.png)
 
 <p align="center">
