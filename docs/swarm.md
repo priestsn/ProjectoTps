@@ -133,6 +133,35 @@ node tools/swarm/spike_runtime.js      # 2 Chrome a 60 passi/s, tasti, cattura
 inietta difetti veri (`Enemy.health = 9999`, thread principale occupato 1,2 s) e verifica che le sonde
 scattino: senza quella prova, "nessun difetto" non significa nulla.
 
+## Godibilità: cosa dicono i numeri
+
+Le sonde dicono se qualcosa è rotto; la godibilità dice se il gioco si lascia giocare. Sono **misure**,
+non opinioni (un classificatore a cui si chiede "è divertente?" inventa):
+
+| Misura | Da dove | Cosa accende |
+|---|---|---|
+| durata media e mediana | `metriche` per partita | sotto 25 s: partite che non fanno in tempo a scaldarsi · sopra 52 s: decise dal tempo |
+| colpi al minuto | colpi messi a segno / durata | sotto 5: si sta più fermi che a combattere · sopra 45: frenetico |
+| equilibrio degli esiti | rapporto k.o. a sinistra/destra | oltre il 68% dallo stesso lato con almeno 6 partite decise |
+| pareggi | esito della partita | oltre il 40% |
+| ultimate usate | contatore per partita | informativo |
+| varietà | verdellinesi diversi | meno di 4 su 10+ partite |
+| **leggibilità** | Jev su campioni di schermata: si capisce chi attacca? | sotto il 60% dei campioni |
+| **affollamento** | Jev, 0 = vuoto · 4 = caotico | ≥3,4 troppo denso · ≤1,2 troppo vuoto |
+
+La sezione `## Godibilità` compare in testa a ogni rapporto.
+
+## Modalità notte
+
+`node tools/swarm/index.js --notte --fino 07:00 --bot 8 --ciclo 6 --partite 6 --jev`
+
+Gira a cicli fino all'ora indicata, riscrive `rapporto-parziale.md` a ogni ciclo (se si interrompe, il
+misurato non si perde) e chiude con il rapporto completo della notte. Il numero di bot non è arbitrario:
+`node tools/swarm/capacita.js 8` misura i passi al secondo di N browser veri. Su questo PC (Ryzen 5 5600G,
+16 GB) **8 bot restano a 60 passi/s esatti**, con la memoria quasi esaurita: oltre si misura la contesa di
+CPU, non il gioco, e i numeri sulla godibilità diventano fuffa. Con cicli da 6 minuti si arriva comunque a
+centinaia di partite e a decine di sessioni diverse (seme e verdellinesi cambiano a ogni ciclo).
+
 ## Gira da sola di notte
 
 C'è un job di cron (`Sciame UVSF7 notturno`, ogni giorno alle 3:30) che fa le tre corse — sciame con Jev,

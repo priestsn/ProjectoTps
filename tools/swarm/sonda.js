@@ -16,7 +16,7 @@
         azioneInCorso: null,
         mancate: {},
         colpiSenzaDanno: { quante: 0, quando: 0 },
-        timerFermo: 0,
+        timerFermoDa: null,
         ultimoCampione: null,
         ultimaFirma: {}
     };
@@ -170,14 +170,19 @@
                 ? sw.ultimoCampione.timerHud : sw.ultimoCampione.timer)
             : null;
 
+        // Il fermo si misura sul TEMPO, non sul numero di campioni: il corridore
+        // chiama campiona() anche 10 volte al secondo, e con un contatore di
+        // campioni "24 campioni" diventavano 2 secondi, non 6 — così ogni
+        // secondo di gioco sembrava un timer fermo.
         if (stato === 'partita' && !finita && timerMostrato !== null &&
             timerPrecedente === timerMostrato) {
-            sw.timerFermo = (sw.timerFermo || 0) + 1;
-            if (sw.timerFermo === 24) {
+            if (!sw.timerFermoDa) sw.timerFermoDa = campione.quando;
+            if (campione.quando - sw.timerFermoDa > 6000) {
                 annota('timer-fermo', 'Il timer mostrato è fermo a ' + timerMostrato + ' da 6 secondi', 'grave', campione);
+                sw.timerFermoDa = null;
             }
         } else {
-            sw.timerFermo = 0;
+            sw.timerFermoDa = null;
         }
 
         // --- sonda: schermate informative senza via d'uscita ---

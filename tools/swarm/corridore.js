@@ -93,6 +93,28 @@ async function corriUnBot(opzioni) {
         let ultimoGiudizio = 0;
         let ultimoAttacco = 0;
 
+        // --- metriche per la godibilità: si contano durante la partita e si
+        // aggregano nel rapporto (durata, colpi scambiati, ultimate, esiti) ---
+        let metriche = null;
+
+        function azzeraMetriche(campioneIniziale) {
+            metriche = {
+                avvio: Date.now(),
+                colpiSubitiP1: 0,
+                colpiSubitiP2: 0,
+                ultimateP1: 0,
+                ultimateP2: 0,
+                vitaP1Prec: campioneIniziale && campioneIniziale.p1 ? campioneIniziale.p1.vita : null,
+                vitaP2Prec: campioneIniziale && campioneIniziale.p2 ? campioneIniziale.p2.vita : null,
+                ultimaUltP1: campioneIniziale && campioneIniziale.p1 ? campioneIniziale.p1.ultimate : 0,
+                ultimaUltP2: campioneIniziale && campioneIniziale.p2 ? campioneIniziale.p2.ultimate : 0,
+                verdellinesi: [
+                    campioneIniziale && campioneIniziale.p1 ? campioneIniziale.p1.personaggio : null,
+                    campioneIniziale && campioneIniziale.p2 ? campioneIniziale.p2.personaggio : null
+                ]
+            };
+        }
+
         while (Date.now() - avvio < limiteMs && partitaCorrente <= scelte.partite) {
             // 1. stato attuale
             let campione = null;
@@ -105,8 +127,45 @@ async function corriUnBot(opzioni) {
 
             if (!campione) { await attendi(200); continue; }
 
+            // 1b. metriche: si accumulano a ogni campione
+            if (!metriche) azzeraMetriche(campione);
+            if (campione.p1 && campione.p2) {
+                if (metriche.vitaP1Prec !== null && campione.p1.vita < metriche.vitaP1Prec) {
+                    metriche.colpiSubitiP1 += 1;
+                }
+                if (metriche.vitaP2Prec !== null && campione.p2.vita < metriche.vitaP2Prec) {
+                    metriche.colpiSubitiP2 += 1;
+                }
+                if (campione.p1.ultimate + 20 < metriche.ultimaUltP1) metriche.ultimateP1 += 1;
+                if (campione.p2.ultimate + 20 < metriche.ultimaUltP2) metriche.ultimateP2 += 1;
+                metriche.vitaP1Prec = campione.p1.vita;
+                metriche.vitaP2Prec = campione.p2.vita;
+                metriche.ultimaUltP1 = campione.p1.ultimate;
+                metriche.ultimaUltP2 = campione.p2.ultimate;
+            }
+
             // 2. la partita è finita? se ne apre un'altra
             if (campione.gameOver || campione.stato !== 'partita') {
+                if (metriche) {
+                    const vita = (campione.p1 && campione.p2)
+                        ? [campione.p1.vita, campione.p2.vita] : [null, null];
+                    scelte.scriviEvento({
+                        tipo: 'metriche', bot: scelte.numero, partita: partitaCorrente,
+                        verdellinesi: metriche.verdellinesi,
+                        durataSec: Math.round((Date.now() - metriche.avvio) / 1000),
+                        vitaFinale: vita,
+                        esito: (vita[0] === null || vita[1] === null) ? 'sconosciuto'
+                            : (vita[0] > vita[1] ? 'p1' : (vita[1] > vita[0] ? 'p2' : 'pari')),
+                        colpiP1: metriche.colpiSubitiP2,
+                        colpiP2: metriche.colpiSubitiP1,
+                        ultimateP1: metriche.ultimateP1,
+                        ultimateP2: metriche.ultimateP2,
+                        finitaPerTempo: !campione.gameOver,
+                        decimi: secondo()
+                    });
+                    metriche = null;
+                }
+
                 await attendi(1200);
                 if (partitaCorrente >= scelte.partite) break;
                 partitaCorrente += 1;
@@ -192,6 +251,7 @@ async function corriUnBot(opzioni) {
                                 tipo: 'giudizio', bot: scelte.numero, partita: partitaCorrente,
                                 difetto: verdetto.difetto, categoria: verdetto.categoria,
                                 gravita: verdetto.gravita, secondo: verdetto.secondo,
+                                siCapisce: verdetto.siCapisce, affollamento: verdetto.affollamento,
                                 costoStimato: verdetto.costoStimato,
                                 immagine: eDifetto(verdetto) ? nomeImmagine : null,
                                 contesto: campione, decimi: secondo()

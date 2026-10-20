@@ -65,6 +65,22 @@ const DOMANDE = {
         type: 'score',
         instructions: 'Quanto è grave per chi gioca?',
         criteria: ['nessuna', 'cosmetica', 'fastidiosa', 'grave', 'bloccante']
+    },
+    // --- godibilità: qualità che si vedono, non "quanto è divertente" (un
+    // classificatore non sa rispondere a quella domanda e inventerebbe) ---
+    si_capisce: {
+        type: 'noul',
+        instructions: NORMALE + 'Guardando SOLO questa immagine, si capisce chi sta attaccando e chi sta ' +
+            'subendo? Guarda le pose dei due lottatori, la direzione degli effetti e le barre della vita.',
+        criteria: {
+            true: 'la situazione di combattimento si legge',
+            false: 'non si capisce chi ha il sopravvento'
+        }
+    },
+    affollamento: {
+        type: 'score',
+        instructions: 'Quanto è pieno lo schermo, per un picchiaduro 2D?',
+        criteria: ['troppo vuoto', 'scarso', 'giusto', 'denso', 'troppo caotico']
     }
 };
 
@@ -141,6 +157,8 @@ async function giudica(immagineBase64, contestoTesto, opzioni) {
         difetto: (risposte.difetto_visibile && risposte.difetto_visibile.noul) || 0,
         categoria: (risposte.categoria && risposte.categoria.choice) || 'nessuno',
         gravita: (risposte.gravita && risposte.gravita.score) || 0,
+        siCapisce: (risposte.si_capisce && risposte.si_capisce.noul) || 0,
+        affollamento: (risposte.affollamento && risposte.affollamento.score) || 0,
         modello: risultato.model || scelte.modello,
         secondo: (Date.now() - partenza) / 1000,
         costoStimato: token * PREZZO_INPUT

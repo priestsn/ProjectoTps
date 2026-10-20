@@ -46,6 +46,9 @@ function argomenti(elenco) {
         else if (voce === '--ripetizioni') scelte.ripetizioni = Number(prossimo());
         else if (voce === '--account') scelte.account = true;
         else if (voce === '--online') scelte.online = true;
+        else if (voce === '--notte') scelte.notte = true;
+        else if (voce === '--fino') scelte.fino = prossimo();
+        else if (voce === '--ciclo') scelte.ciclo = Number(prossimo());
     }
 
     return scelte;
@@ -88,7 +91,9 @@ async function main() {
         }
     }
 
-    console.log(scelte.online
+    console.log(scelte.notte
+        ? 'Notte: ' + scelte.bot + ' bot a ciclo, ' + scelte.ciclo + ' minuti per ciclo, fino alle ' + scelte.fino
+        : scelte.online
         ? 'Online: 2 bot in coda ranked per ' + scelte.minuti + ' minuti'
         : scelte.giro
             ? 'Giro schermate: ' + scelte.bot + ' bot, ' + scelte.ripetizioni + ' giri a bot'
@@ -101,7 +106,52 @@ async function main() {
     let esiti = [];
 
     try {
-        if (scelte.online) {
+        if (scelte.notte) {
+            // Corse a cicli fino all'ora indicata: la macchina non regge venti
+            // browser insieme, quindi si fanno girare a ondate. Contano le
+            // partite totali e le misure di godibilità, non il picco di bot.
+            const [oreFine, minutiFine] = scelte.fino.split(':').map(Number);
+            const fine = new Date();
+            fine.setHours(oreFine, minutiFine, 0, 0);
+            if (fine.getTime() <= Date.now()) fine.setDate(fine.getDate() + 1);
+
+            let ciclo = 0;
+            while (Date.now() < fine.getTime()) {
+                ciclo += 1;
+                const minutiCiclo = Math.min(scelte.ciclo,
+                    Math.max(1, Math.floor((fine.getTime() - Date.now()) / 60000)));
+                console.log('\n--- ciclo ' + ciclo + ' (' + new Date().toLocaleTimeString('it-IT') +
+                    ', ' + minutiCiclo + ' minuti, ' + scelte.bot + ' bot) ---');
+
+                const esitiCiclo = await corriSciame({
+                    bot: scelte.bot,
+                    url: server.url,
+                    minuti: minutiCiclo,
+                    partite: scelte.partite,
+                    basePorta: 9500,
+                    // il tetto delle chiamate vale per tutta la notte, non per il ciclo
+                    usaGiudice: scelte.jev && !tettoRaggiunto,
+                    ogniGiudizioSec: scelte.jevOgni,
+                    cartella: cartella,
+                    scriviEvento: scriviEvento
+                });
+                esiti = esiti.concat(esitiCiclo);
+
+                // rapporto parziale a ogni ciclo: se la notte si interrompe,
+                // quello che si è misurato non si perde
+                if (!tettoRaggiunto) {
+                    const parziale = costruisciRapporto(eventi, {
+                        bot: scelte.bot, minuti: scelte.ciclo, partite: 0,
+                        modo: 'sciame', build: '?',
+                        dataLeggibile: new Date().toLocaleString('it-IT'),
+                        immagineEsiste: (nome) => fs.existsSync(path.join(cartella, nome))
+                    });
+                    fs.writeFileSync(path.join(cartella, 'rapporto-parziale.md'), parziale, 'utf8');
+                }
+
+                await new Promise((r) => setTimeout(r, 5000));
+            }
+        } else if (scelte.online) {
             // Due bot nella stessa stanza ranked: controlla abbinamento, relay
             // WebSocket e desync fra le due viste.
             esiti = await corriOnline({

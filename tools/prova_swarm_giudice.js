@@ -15,8 +15,15 @@ function verifica(nome, condizione, dettaglio) {
 }
 
 // --- forma delle domande ---
-verifica('tre domande: difetto, categoria, gravità',
-    Object.keys(DOMANDE).length === 3 && !!DOMANDE.difetto_visibile && !!DOMANDE.categoria && !!DOMANDE.gravita);
+verifica('cinque domande: tre sui difetti, due sulla godibilità',
+    Object.keys(DOMANDE).length === 5 && !!DOMANDE.difetto_visibile && !!DOMANDE.categoria &&
+    !!DOMANDE.gravita && !!DOMANDE.si_capisce && !!DOMANDE.affollamento);
+
+verifica('la leggibilità si chiede come noul (probabilità, non giudizio secco)',
+    DOMANDE.si_capisce.type === 'noul' && typeof DOMANDE.si_capisce.criteria === 'object');
+
+verifica('l\'affollamento è uno score ordinato da vuoto a caotico',
+    DOMANDE.affollamento.type === 'score' && DOMANDE.affollamento.criteria.length === 5);
 
 verifica('difetto_visibile è un noul con criteria vero/falso',
     DOMANDE.difetto_visibile.type === 'noul' &&
