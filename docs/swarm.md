@@ -141,12 +141,22 @@ ritmo resta pieno. Oltre, guardare la sonda `ritmo-basso`: il numero
 massimo è l'ultimo che tiene tutti i bot sopra ~55 passi/s. Non lanciare lo sciame mentre si gioca a mano
 o si fa un deploy.
 
-## Difetti trovati dallo sciame
+## Cosa ha trovato finora (e cosa era invece colpa delle sonde)
 
-- **Timer dell'ospite fermo nelle partite online** (21/10/2026): misurato con
-  `node tools/swarm/diagnosi_online.js`, il padrone conta 48→19 secondi mentre l'ospite resta a **60** per
-  tutta la partita. Causa: `decreaseTimer()` viene chiamata solo dentro `avviaPartita()` (`index.js:2014`),
-  e l'ospite non passa da lì — disegna lo stato ricevuto. La sonda `timer-fermo` lo segnala da sola.
+Nessun difetto del gioco, per ora. Tutte le segnalazioni delle prime corse si sono rivelate **errori delle
+sonde**, e ognuna è stata corretta con una misura:
+
+| Segnalazione | Verità |
+|---|---|
+| `valore-fuori-scala` su metà del roster | il massimo della vita è per verdellinese (85-110), non 100 |
+| `azione-persa` sulle parate | la parata è vietata in aria e senza stamina: il gioco ha ragione |
+| `colpo-senza-danno` a ripetizione | la pressione cadeva nella finestra di recupero (16 passi) e il flag era quello dell'attacco prima |
+| `ritmo-basso: −5548 passi/s` | confronto a cavallo del riavvio della partita (`frameGioco` riparte da zero) |
+| `timer-fermo` in online | **la variabile `timer` dell'ospite resta a 60, ma l'HUD scende correttamente** (verificato in `verifica_timer_ospite.js`: HUD 59-57-55-53 come il padrone). Non era un difetto: ora la sonda misura il timer **mostrato** |
+
+Il valore vero di queste corse è stato quindi trovare **dove le sonde mentono**: uno strumento che grida
+al lupo ogni due minuti non serve a nessuno. Adesso le corse escono pulite e le sonde sono provate con
+difetti iniettati a mano (`prova_swarm_sonda_viva.js`).
 
 ## Cosa non fa (per ora)
 - Non apre issue GitHub: i difetti restano in `bug_reports/`.

@@ -91,6 +91,15 @@
             stato: stato,
             modalita: typeof modalitaPartita !== 'undefined' ? modalitaPartita : null,
             timer: timerAttuale,
+            // In online l'ospite non simula: la variabile `timer` resta a 60
+            // mentre l'HUD (disegnata dallo stato ricevuto) scende. Il difetto
+            // per chi gioca è quello che si vede, quindi si misura l'HUD.
+            timerHud: (function () {
+                const e = document.querySelector('#timer');
+                if (!e) return null;
+                const valore = parseInt((e.textContent || '').trim(), 10);
+                return isNaN(valore) ? null : valore;
+            })(),
             gameOver: finita,
             p1: p1,
             p2: p2,
@@ -139,15 +148,22 @@
         }
 
         // --- sonda: timer ---
-        if (timerAttuale !== null && typeof timerAttuale === 'number' && timerAttuale < 0) {
-            annota('timer-negativo', 'Timer negativo: ' + timerAttuale, 'grave', campione);
+        const timerMostrato = (campione.timerHud !== null) ? campione.timerHud : timerAttuale;
+
+        if (timerMostrato !== null && typeof timerMostrato === 'number' && timerMostrato < 0) {
+            annota('timer-negativo', 'Timer negativo: ' + timerMostrato, 'grave', campione);
         }
 
-        if (stato === 'partita' && !finita && timerAttuale !== null &&
-            sw.ultimoCampione && sw.ultimoCampione.timer === timerAttuale) {
+        const timerPrecedente = sw.ultimoCampione
+            ? ((sw.ultimoCampione.timerHud !== null && sw.ultimoCampione.timerHud !== undefined)
+                ? sw.ultimoCampione.timerHud : sw.ultimoCampione.timer)
+            : null;
+
+        if (stato === 'partita' && !finita && timerMostrato !== null &&
+            timerPrecedente === timerMostrato) {
             sw.timerFermo = (sw.timerFermo || 0) + 1;
             if (sw.timerFermo === 24) {
-                annota('timer-fermo', 'Il timer è fermo a ' + timerAttuale + ' da 6 secondi', 'grave', campione);
+                annota('timer-fermo', 'Il timer mostrato è fermo a ' + timerMostrato + ' da 6 secondi', 'grave', campione);
             }
         } else {
             sw.timerFermo = 0;

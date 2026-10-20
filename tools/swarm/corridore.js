@@ -564,6 +564,56 @@ async function corriOnline(opzioni) {
                 await attendi(60);
             }
 
+            // --- fine partita: la prova della "uscita libera" ---
+            // Regola voluta dall'autore: rivincita e cambio verdellinese
+            // richiedono l'accordo dei due, mentre USCIRE è libero. Qui il bot 1
+            // propone la rivincita e il bot 2 esce: devono tornare al menu
+            // entrambi, e non deve ripartire niente.
+            try {
+                await attendi(2500);   // lascia finire la cerimonia
+                const fine = await nav.valuta(
+                    'JSON.stringify({stato: statoCorrente, gameOver: (typeof gameOver !== "undefined") ? !!gameOver : null,' +
+                    'attivo: (typeof onlineStato !== "undefined" && onlineStato) ? !!onlineStato.attivo : null})'
+                );
+                const info = JSON.parse(fine || '{}');
+
+                if (info.attivo) {
+                    const miaScelta = (numero === 1) ? 'rivincita' : 'esci';
+                    await nav.valuta('proponiSceltaFine("' + miaScelta + '"); "proposta"');
+                    scelte.scriviEvento({
+                        tipo: 'nota', bot: numero, partita: 1, firma: 'scelta-fine',
+                        gravita: 'nessuna',
+                        messaggio: 'a fine partita ho scelto "' + miaScelta + '"', contesto: null, decimi: secondo()
+                    });
+
+                    // entrambi devono finire al menu entro 8 s
+                    const scadenzaFine = Date.now() + 8000;
+                    let alMenu = false;
+                    while (Date.now() < scadenzaFine) {
+                        const adesso = await nav.valuta('statoCorrente');
+                        if (adesso === 'menu') { alMenu = true; break; }
+                        await attendi(400);
+                    }
+
+                    if (!alMenu) {
+                        scelte.scriviEvento({
+                            tipo: 'anomalia', bot: numero, partita: 1, firma: 'uscita-non-libera',
+                            gravita: 'grave',
+                            messaggio: 'Uno ha scelto la rivincita e l\'altro è uscito, ma dopo 8 s lo stato è "' +
+                                (await nav.valuta('statoCorrente')) + '" invece di menu',
+                            contesto: null, decimi: secondo()
+                        });
+                    }
+                }
+            } catch (errore) {
+                scelte.scriviEvento({
+                    tipo: 'anomalia', bot: numero, partita: 1, firma: 'fine-partita-non-gestita',
+                    gravita: 'fastidiosa',
+                    messaggio: 'La prova di fine partita si è interrotta: ' + errore.message,
+                    contesto: null, decimi: secondo()
+                });
+            }
+
             return { giudizi: 0, partite: 1 };
         } finally {
             if (nav) nav.chiudi();
