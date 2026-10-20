@@ -107,8 +107,17 @@ function costruisciRapporto(eventi, opzioni) {
     const scelte = Object.assign({
         bot: 0, minuti: 0, partite: 0, build: '?',
         dataLeggibile: new Date().toLocaleString('it-IT'),
-        immagineEsiste: function () { return true; }
+        immagineEsiste: function () { return true; },
+        revisione: null      // {firma: {verdetto, compatibile, confidenza}}
     }, opzioni || {});
+
+    // Il parere del revisore separa i difetti veri dal rumore. Senza revisione
+    // restano tutti fra i difetti: meglio sembrare rumorosi che nascondere
+    // qualcosa alla cieca.
+    function verdettoDi(firma) {
+        if (!scelte.revisione || !scelte.revisione[firma]) return null;
+        return scelte.revisione[firma];
+    }
 
     const gruppi = raggruppa(eventi);
     const righe = [];
@@ -154,18 +163,52 @@ function costruisciRapporto(eventi, opzioni) {
     }
 
     if (gruppi.anomalie.length) {
-        righe.push('## Difetti delle sonde (' + gruppi.anomalie.length + ' firme)');
-        righe.push('');
-        let indice = 1;
+        const confermati = [];
+        const archiviati = [];
+
         for (const voce of gruppi.anomalie) {
-            righe.push('### ' + (indice++) + '. ' + voce.firma + ' — ' + voce.occorrenze +
-                ' volte su ' + voce.bot.size + ' bot — ' + nomeGravita(voce.gravita));
-            for (const messaggio of Array.from(voce.messaggi).slice(0, 3)) {
-                righe.push('- ' + messaggio);
+            const verdetto = verdettoDi(voce.firma);
+            if (verdetto && verdetto.verdetto === 'rumore') archiviati.push(voce);
+            else confermati.push(voce);
+        }
+
+        if (scelte.revisione) {
+            righe.push('## Dopo la revisione: ' + confermati.length + ' difetti da guardare, ' +
+                archiviati.length + ' archiviati come rumore');
+            righe.push('');
+        }
+
+        if (confermati.length) {
+            righe.push('## Difetti delle sonde (' + confermati.length + ' firme)');
+            righe.push('');
+            let indice = 1;
+            for (const voce of confermati) {
+                const verdetto = verdettoDi(voce.firma);
+                righe.push('### ' + (indice++) + '. ' + voce.firma + ' — ' + voce.occorrenze +
+                    ' volte su ' + voce.bot.size + ' bot — ' + nomeGravita(voce.gravita));
+                for (const messaggio of Array.from(voce.messaggi).slice(0, 3)) {
+                    righe.push('- ' + messaggio);
+                }
+                if (voce.primoEsempio) {
+                    righe.push('- Contesto: ' + rigaContesto(voce.primoEsempio.contesto) +
+                        ' (bot ' + voce.primoEsempio.bot + ', partita ' + voce.primoEsempio.partita + ')');
+                }
+                if (verdetto) {
+                    righe.push('- Revisione: **' + verdetto.verdetto + '** (confidenza ' +
+                        (verdetto.confidenza + 1) + '/5, spiegabile dalle regole: ' +
+                        (verdetto.compatibile >= 0.5 ? 'sì' : 'no') + ')');
+                }
+                righe.push('');
             }
-            if (voce.primoEsempio) {
-                righe.push('- Contesto: ' + rigaContesto(voce.primoEsempio.contesto) +
-                    ' (bot ' + voce.primoEsempio.bot + ', partita ' + voce.primoEsempio.partita + ')');
+        }
+
+        if (archiviati.length) {
+            righe.push('## Archiviati come rumore (' + archiviati.length + ' firme)');
+            righe.push('');
+            for (const voce of archiviati) {
+                const verdetto = verdettoDi(voce.firma);
+                righe.push('- **' + voce.firma + '** — ' + voce.occorrenze + ' volte · ' +
+                    (verdetto ? 'confidenza ' + (verdetto.confidenza + 1) + '/5' : 'nessun verdetto'));
             }
             righe.push('');
         }

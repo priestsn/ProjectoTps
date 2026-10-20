@@ -133,6 +133,42 @@ node tools/swarm/spike_runtime.js      # 2 Chrome a 60 passi/s, tasti, cattura
 inietta difetti veri (`Enemy.health = 9999`, thread principale occupato 1,2 s) e verifica che le sonde
 scattino: senza quella prova, "nessun difetto" non significa nulla.
 
+## Il giro clicca davvero
+
+Il giro delle schermate **non chiama più `apriNegozio()`**: cerca la voce nel menu, verifica che sia
+disegnata, dentro la finestra e non coperta (`document.elementFromPoint`) e la preme con un
+`Input.dispatchMouseEvent` vero. Stessa cosa per il pulsante di ritorno.
+
+Serve perché la chiamata diretta funziona sempre: passa anche se il pulsante è coperto, fuori schermo o
+senza listener. Il clic vero scopre proprio quei difetti — «c'è ma non succede niente» — che con la
+chiamata restano invisibili. Se l'elemento è fuori dalla finestra si prova a scorrere (`scrollIntoView`) e
+si riclicca: se funziona dopo lo scorrimento è una **nota**, non un difetto.
+
+Trappola pagata subito: nell'`#areaGioco` convivono **tutte** le schermate, quelle spente hanno rettangolo
+`0x0`, e cercare «INDIETRO» trovava il pulsante invisibile di un'altra schermata — da cui falsi «pulsante
+coperto da body». Ora si scartano gli elementi non disegnati.
+
+## Secondo parere sulle anomalie (revisore)
+
+Le sonde producono decine di segnalazioni, quasi tutte rumore. `tools/swarm/revisore.js` rilegge **ogni
+firma una volta sola** (non ogni occorrenza) con i suoi esempi e con le **regole del gioco scritte nero su
+bianco** (`REGOLE`: stamina, da terra, finestra di recupero, parata annulla il danno, vita massima per
+verdellinese, timer al secondo, carico della macchina) e decide se regge.
+
+Il verdetto **non si prende dalla `choice`**: in prova Jev ha risposto «spiegabile dalle regole: sì» e poi
+«difetto_reale» nella stessa chiamata. Si ricava dal `noul` con `decidiVerdetto()` — funzione pura e
+provata: `compatibile >= 0,5` → rumore.
+
+Effetto misurato su una notte di corsa: **117 segnalazioni → 2 da guardare, 115 archiviate**. Delle due,
+una era un difetto vero dello sciame (`VERDELLINESI is not defined` quando il bot arrivava prima del
+caricamento del gioco: corretto con un'attesa), l'altra un 504 di Jev su una chiamata.
+
+```bash
+node tools/swarm/index.js --rivedi bug_reports/swarm-2026-10-20_2316   # rilegge una corsa già fatta
+node tools/swarm/index.js --bot 3 --minuti 3 --jev                    # la revisione è automatica a fine corsa
+node tools/swarm/index.js --bot 3 --minuti 3 --no-revisione           # spegne la revisione
+```
+
 ## Godibilità: cosa dicono i numeri
 
 Le sonde dicono se qualcosa è rotto; la godibilità dice se il gioco si lascia giocare. Sono **misure**,

@@ -175,6 +175,92 @@ async function apriNavigatore(opzioni) {
     }
 
     /**
+     * Gli elementi cliccabili che corrispondono a un selettore, con il loro
+     * rettangolo e se il centro è davvero raggiungibile dal mouse.
+     * `raggiungibile` è falso se qualcosa li copre (elementFromPoint restituisce
+     * un altro nodo) o se stanno fuori dalla finestra: sono i casi in cui un
+     * pulsante "esiste" ma il giocatore non lo può premere.
+     */
+    async function scatole(selettore) {
+        const espressione = '(function(){' +
+            'var elenco = Array.prototype.slice.call(document.querySelectorAll(' + JSON.stringify(selettore) + '));' +
+            'return JSON.stringify(elenco.map(function (el) {' +
+            '  var r = el.getBoundingClientRect();' +
+            '  var cx = r.left + r.width / 2, cy = r.top + r.height / 2;' +
+            '  var sopra = null;' +
+            '  try { sopra = document.elementFromPoint(cx, cy); } catch (e) {}' +
+            '  return {' +
+            '    testo: (el.innerText || el.textContent || "").trim().slice(0, 60),' +
+            '    x: Math.round(cx), y: Math.round(cy),' +
+            '    larghezza: Math.round(r.width), altezza: Math.round(r.height),' +
+            '    disegnato: r.width > 2 && r.height > 2,' +
+            '    dentroFinestra: r.top >= 0 && r.left >= 0 && r.bottom <= window.innerHeight && r.right <= window.innerWidth,' +
+            '    raggiungibile: !!sopra && (sopra === el || el.contains(sopra)),' +
+            '    copertoDa: (sopra && !(sopra === el || el.contains(sopra)))' +
+            '      ? (sopra.tagName.toLowerCase() + (sopra.id ? "#" + sopra.id : "")) : null' +
+            '  };' +
+            '}));})()';
+        const grezzo = await valuta(espressione);
+        try { return JSON.parse(grezzo || '[]'); } catch (errore) { return []; }
+    }
+
+    /** Un clic vero del mouse in un punto (pressione + rilascio). */
+    async function cliccaPunto(x, y) {
+        const base = { x: Math.round(x), y: Math.round(y), button: 'left', buttons: 1, clickCount: 1 };
+        await invia('Input.dispatchMouseEvent', Object.assign({ type: 'mouseMoved', buttons: 0 }, base));
+        await invia('Input.dispatchMouseEvent', Object.assign({ type: 'mousePressed' }, base));
+        await attendi(40);
+        await invia('Input.dispatchMouseEvent', Object.assign({ type: 'mouseReleased' }, base));
+    }
+
+    /**
+     * Clicca l'elemento il cui testo contiene `testo`.
+     * Ritorna {esito: 'cliccato'|'assente'|'coperto'|'fuori', testo, copertoDa}.
+     */
+    async function cliccaTesto(selettore, testo) {
+        const cercato = String(testo).toUpperCase();
+
+        // nell'area di gioco stanno TUTTE le schermate insieme: quelle spente
+        // hanno rettangolo 0x0 e vanno scartate, altrimenti si cerca di cliccare
+        // il pulsante invisibile di un'altra schermata
+        const elenco = (await scatole(selettore))
+            .filter((voce) => voce.disegnato && voce.testo.toUpperCase().indexOf(cercato) !== -1);
+
+        let trovato = elenco.find((voce) => voce.dentroFinestra && voce.raggiungibile) || elenco[0];
+
+        if (!trovato) return { esito: 'assente', testo: null, copertoDa: null };
+
+        // Se l'elemento esiste ma sta fuori dalla finestra, un giocatore
+        // scorrerebbe: si prova a portarlo in vista e si ricontrolla. Solo se
+        // resta irraggiungibile è un difetto.
+        if (!trovato.dentroFinestra) {
+            await valuta(
+                '(function(){var elenco=Array.prototype.slice.call(document.querySelectorAll(' +
+                JSON.stringify(selettore) + '));var cercato=' + JSON.stringify(cercato) + ';' +
+                'for (var i = 0; i < elenco.length; i++) {' +
+                '  var r = elenco[i].getBoundingClientRect();' +
+                '  if (r.width <= 2 || r.height <= 2) continue;' +
+                '  if ((elenco[i].innerText || "").toUpperCase().indexOf(cercato) === -1) continue;' +
+                '  elenco[i].scrollIntoView({block: "center", behavior: "instant"}); return "scorso";' +
+                '} return "niente";})()'
+            );
+            await attendi(250);
+            const dopo = (await scatole(selettore))
+                .filter((voce) => voce.disegnato && voce.testo.toUpperCase().indexOf(cercato) !== -1);
+            const ricercato = dopo.find((voce) => voce.dentroFinestra && voce.raggiungibile) || dopo[0];
+            if (ricercato) {
+                trovato = ricercato;
+                trovato.haScrollato = true;
+            }
+        }
+        if (!trovato.dentroFinestra) return { esito: 'fuori', testo: trovato.testo, copertoDa: null };
+        if (!trovato.raggiungibile) return { esito: 'coperto', testo: trovato.testo, copertoDa: trovato.copertoDa };
+
+        await cliccaPunto(trovato.x, trovato.y);
+        return { esito: 'cliccato', testo: trovato.testo, copertoDa: null, scrollato: !!trovato.haScrollato };
+    }
+
+    /**
      * PNG dell'INTERA PAGINA (canvas + HUD), in base64.
      * Serve per il giudice: la barra della vita e il timer sono elementi DOM,
      * non disegnati sul canvas, quindi una cattura del solo canvas li perde
@@ -247,6 +333,9 @@ async function apriNavigatore(opzioni) {
         screenshotPng: screenshotPng,
         screenshotRidotto: screenshotRidotto,
         screenshotPagina: screenshotPagina,
+        scatole: scatole,
+        cliccaPunto: cliccaPunto,
+        cliccaTesto: cliccaTesto,
         chiudi: chiudi
     };
 }

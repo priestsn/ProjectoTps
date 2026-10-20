@@ -62,11 +62,21 @@ async function corriUnBot(opzioni) {
         // Verdellinesi diversi a ogni bot: coprire tutti gli sprite e le
         // hitbox costa niente e senza questo ogni corsa prova sempre la coppia
         // predefinita (il primo e il secondo della lista).
-        const scelti = await nav.valuta(
-            "(function(){var liberi=[];for(var i=0;i<VERDELLINESI.length;i++){" +
-            "if(lottatorePosseduto(VERDELLINESI[i].id))liberi.push(i);}return JSON.stringify(liberi);})()"
-        );
-        const liberi = JSON.parse(scelti || '[]');
+        // Il gioco può non essere ancora caricato quando il bot arriva qui: senza
+        // attesa la lettura di VERDELLINESI lancia "VERDELLINESI is not defined"
+        // e il bot non parte (12 casi in una notte, trovati dalla revisione).
+        let liberi = [];
+        for (let attesa = 0; attesa < 20 && !liberi.length; attesa++) {
+            try {
+                const scelti = await nav.valuta(
+                    "(function(){if(typeof VERDELLINESI==='undefined')return 'non pronto';" +
+                    'var liberi=[];for(var i=0;i<VERDELLINESI.length;i++){' +
+                    "if(lottatorePosseduto(VERDELLINESI[i].id))liberi.push(i);}return JSON.stringify(liberi);})()"
+                );
+                if (scelti && scelti !== 'non pronto') liberi = JSON.parse(scelti);
+            } catch (errore) { /* il gioco sta ancora caricando */ }
+            if (!liberi.length) await attendi(400);
+        }
         // L'ordine conta: apriSelezione rimette i cursori a zero, quindi gli
         // indici si scrivono DOPO averla aperta e PRIMA di confermare.
         const indicePrimo = liberi.length ? liberi[scelte.numero % liberi.length] : 0;
@@ -324,22 +334,10 @@ async function corriSciame(opzioni) {
 // faceva return prima del pulsante INDIETRO), quindi lo sciame li controlla a
 // parte, con un giro scriptato e delle asserzioni secche.
 
-const SCHERMATE = [
-    { nome: 'negozio', funzione: 'apriNegozio', stato: 'negozio', attesa: 2500 },
-    { nome: 'account', funzione: 'apriAccount', stato: 'account', attesa: 2000 },
-    { nome: 'classifica', funzione: 'apriClassifica', stato: 'classifica', attesa: 2500 },
-    { nome: 'amici', funzione: 'apriAmici', stato: 'amici', attesa: 2000 },
-    { nome: 'coda ranked', funzione: 'apriCodaRanked', stato: 'coda', attesa: 3000 }
-];
-
-/**
- * Apre ogni schermata informativa, controlla che si apra e che Escape riporti
- * al menu. Ogni fallimento è un difetto vero: nessuna euristica.
- */
 /**
  * Crea un account di prova e lo mette nel browser del bot.
- * Serve per il giro "con account": da ospite il negozio, gli amici e la coda
- * non si aprono (rimandano al login), quindi metà del gioco resterebbe scoperta.
+ * Da ospite negozio, amici e coda rimandano al login: senza account metà del
+ * gioco resterebbe scoperta.
  */
 async function accediConAccountNouvo(nav, url, numero) {
     const casuale = Math.random().toString(36).slice(2, 7);
@@ -363,6 +361,24 @@ async function accediConAccountNouvo(nav, url, numero) {
     return { nick: nick, dentro: dentro };
 }
 
+const SCHERMATE = [
+    { nome: 'negozio', voce: 'NEGOZIO', stato: 'negozio', attesa: 2500 },
+    { nome: 'account', voce: 'ACCOUNT', stato: 'account', attesa: 2000 },
+    { nome: 'classifica', voce: 'CLASSIFICA', stato: 'classifica', attesa: 2500 },
+    { nome: 'amici', voce: 'AMICI', stato: 'amici', attesa: 2000 },
+    { nome: 'coda ranked', voce: 'RANKED', stato: 'coda', attesa: 3000 }
+];
+
+/**
+ * Apre ogni schermata CLICCANDO la voce del menu come farebbe un giocatore, e
+ * torna indietro cliccando il pulsante.
+ *
+ * Perché non chiamare `apriNegozio()`: quella funzione si esegue sempre, anche
+ * se la voce del menu è coperta da qualcos'altro, fuori dallo schermo o senza
+ * listener. Un clic vero passa dall'evento del browser e scopre proprio quei
+ * difetti — «il pulsante c'è ma non succede niente» — che con la chiamata
+ * diretta restano invisibili.
+ */
 async function corriGiro(opzioni) {
     const scelte = Object.assign({
         numero: 1, portaCdp: 9600, url: '', ripetizioni: 1, account: false,
@@ -374,6 +390,20 @@ async function corriGiro(opzioni) {
 
     function secondo() { return Math.round((Date.now() - avvio) / 100); }
 
+    function annota(firma, messaggio, gravita, contesto) {
+        scelte.scriviEvento({
+            tipo: 'anomalia', bot: scelte.numero, partita: 0, firma: firma,
+            gravita: gravita, messaggio: messaggio, contesto: contesto || null, decimi: secondo()
+        });
+    }
+
+    function nota(firma, messaggio) {
+        scelte.scriviEvento({
+            tipo: 'nota', bot: scelte.numero, partita: 0, firma: firma,
+            gravita: 'nessuna', messaggio: messaggio, contesto: null, decimi: secondo()
+        });
+    }
+
     try {
         nav = await apriNavigatore({ porta: scelte.portaCdp, url: scelte.url, attesaCaricamentoMs: 4000 });
         await nav.valuta(SORGENTE_SONDA);
@@ -382,113 +412,102 @@ async function corriGiro(opzioni) {
         if (scelte.account) {
             try {
                 const accesso = await accediConAccountNouvo(nav, scelte.url, scelte.numero);
-                await nav.valuta(SORGENTE_SONDA);   // il ricaricamento l'aveva persa
-                scelte.scriviEvento({
-                    tipo: 'nota', bot: scelte.numero, partita: 0, firma: 'account-di-prova',
-                    gravita: 'nessuna',
-                    messaggio: 'account ' + accesso.nick + ' creato, dentro: ' + accesso.dentro,
-                    contesto: null, decimi: secondo()
-                });
+                await nav.valuta(SORGENTE_SONDA);
+                nota('account-di-prova', 'account ' + accesso.nick + ' creato, dentro: ' + accesso.dentro);
             } catch (errore) {
-                scelte.scriviEvento({
-                    tipo: 'anomalia', bot: scelte.numero, partita: 0, firma: 'iscrizione-fallita',
-                    gravita: 'grave', messaggio: 'Iscrizione non riuscita: ' + errore.message,
-                    contesto: null, decimi: secondo()
-                });
+                annota('iscrizione-fallita', 'Iscrizione non riuscita: ' + errore.message, 'grave');
             }
         }
 
         for (let giro = 1; giro <= scelte.ripetizioni; giro++) {
+            // si parte dal menu: da qualunque schermata ci si riporti
+            await nav.premiTasto('Escape', 60);
+            await attendi(600);
+
             for (const schermata of SCHERMATE) {
-                const esiste = await nav.valuta('typeof ' + schermata.funzione + ' === "function"');
-                if (!esiste) {
-                    scelte.scriviEvento({
-                        tipo: 'anomalia', bot: scelte.numero, partita: 0, firma: 'funzione-assente',
-                        gravita: 'grave',
-                        messaggio: 'La funzione ' + schermata.funzione + '() non esiste nel client',
-                        contesto: null, decimi: secondo()
-                    });
+                const statoPrima = await nav.valuta('statoCorrente');
+                if (statoPrima !== 'menu') {
+                    await nav.valuta('apriMenu("principale")');
+                    await attendi(500);
+                }
+
+                // --- il clic sulla voce del menu ---
+                const clic = await nav.cliccaTesto('#menuCorpo .voce', schermata.voce);
+                if (clic.esito === 'assente') {
+                    annota('voce-mancante', 'Nel menu non c\'è nessuna voce "' + schermata.voce + '"', 'grave');
+                    continue;
+                }
+                if (clic.esito === 'coperto') {
+                    annota('voce-coperta', 'La voce "' + schermata.voce + '" è coperta da ' + clic.copertoDa, 'grave');
+                    continue;
+                }
+                if (clic.esito === 'fuori') {
+                    annota('voce-fuori-schermo', 'La voce "' + schermata.voce + '" sta fuori dalla finestra', 'grave');
                     continue;
                 }
 
-                await nav.valuta(schermata.funzione + '()');
                 await attendi(schermata.attesa);
                 const stato = await nav.valuta('statoCorrente');
 
                 if (stato !== schermata.stato) {
-                    // Un ospite che chiede il negozio finisce sulla schermata
-                    // account: è voluto, ma DEVE dire perché ("Per usare il
-                    // negozio serve un account..."). Il difetto non è la
-                    // deviazione, è la deviazione muta.
                     let spiegazione = '';
                     if (stato === 'account') {
                         spiegazione = await nav.valuta(
                             "(function(){var e=document.querySelector('#accountStato');return e?(e.innerText||'').trim():'';})()"
                         );
                     }
-
                     if (stato === 'account' && spiegazione && String(spiegazione).length > 10) {
-                        // comportamento voluto e spiegato: si annota solo, non è un difetto
-                        scelte.scriviEvento({
-                            tipo: 'nota', bot: scelte.numero, partita: 0, firma: 'accesso-richiesto',
-                            gravita: 'nessuna',
-                            messaggio: 'La schermata ' + schermata.nome + ' rimanda all\'account: "' + spiegazione + '"',
-                            contesto: null, decimi: secondo()
-                        });
+                        nota('accesso-richiesto', 'La schermata ' + schermata.nome + ' rimanda all\'account: "' +
+                            spiegazione + '"');
                     } else if (stato === 'account') {
-                        scelte.scriviEvento({
-                            tipo: 'anomalia', bot: scelte.numero, partita: 0, firma: 'accesso-senza-spiegazione',
-                            gravita: 'grave',
-                            messaggio: 'La schermata ' + schermata.nome + ' rimanda all\'account senza dire perché',
-                            contesto: null, decimi: secondo()
-                        });
+                        annota('accesso-senza-spiegazione',
+                            'Il clic su ' + schermata.nome + ' porta all\'account senza dire perché', 'grave');
                     } else {
-                        scelte.scriviEvento({
-                            tipo: 'anomalia', bot: scelte.numero, partita: 0, firma: 'schermata-non-aperta',
-                            gravita: 'grave',
-                            messaggio: 'Chiamata ' + schermata.funzione + '() ma lo stato è "' + stato +
-                                '" invece di "' + schermata.stato + '"',
-                            contesto: await accanto(nav), decimi: secondo()
-                        });
+                        annota('clic-senza-effetto', 'Clic su "' + clic.testo + '" ma lo stato è "' + stato +
+                            '" invece di "' + schermata.stato + '"', 'grave', await accanto(nav));
+                        continue;
                     }
                 }
 
-                // il pulsante di uscita esiste ed è raggiungibile?
-                const uscita = await nav.valuta(
-                    "(function(){var testi=[];document.querySelectorAll('#areaGioco button, #areaGioco a')" +
-                    ".forEach(function(e){var t=(e.innerText||'').toUpperCase();" +
-                    "if(t.indexOf('TORNA')!==-1||t.indexOf('INDIETRO')!==-1||t.indexOf('MENU')!==-1)testi.push(t.slice(0,20));});" +
-                    "return testi;})()"
-                );
-                if (!Array.isArray(uscita) || !uscita.length) {
-                    scelte.scriviEvento({
-                        tipo: 'anomalia', bot: scelte.numero, partita: 0, firma: 'schermo-senza-uscita',
-                        gravita: 'grave',
-                        messaggio: 'Schermata ' + schermata.nome + ' senza pulsante di ritorno visibile',
-                        contesto: accanto(nav), decimi: secondo()
-                    });
+                // --- il ritorno: prima il pulsante, poi Escape ---
+                const indietro = await nav.cliccaTesto('#areaGioco button, #areaGioco a', 'INDIETRO');
+                const altro = (indietro.esito === 'assente')
+                    ? await nav.cliccaTesto('#areaGioco button, #areaGioco a', 'TORNA')
+                    : indietro;
+
+                if (altro.esito === 'cliccato' && altro.scrollato) {
+                    nota('ritorno-con-scroll', 'In ' + schermata.nome +
+                        ' il pulsante di ritorno richiede di scorrere: raggiungibile, ma non a vista');
                 }
 
-                // Escape deve riportare al menu
-                await nav.premiTasto('Escape', 60);
+                if (altro.esito === 'assente') {
+                    annota('schermo-senza-uscita', 'Schermata ' + schermata.nome + ' senza pulsante di ritorno', 'grave');
+                } else if (altro.esito === 'coperto' || altro.esito === 'fuori') {
+                    annota('uscita-non-cliccabile', 'Il pulsante di ritorno di ' + schermata.nome + ' è ' +
+                        (altro.esito === 'coperto' ? 'coperto da ' + altro.copertoDa : 'fuori dalla finestra'), 'grave');
+                }
+
                 await attendi(700);
-                const dopUscta = await nav.valuta('statoCorrente');
-                if (dopUscta !== 'menu') {
-                    scelte.scriviEvento({
-                        tipo: 'anomalia', bot: scelte.numero, partita: 0, firma: 'escape-non-funziona',
-                        gravita: 'grave',
-                        messaggio: 'Escape dalla schermata ' + schermata.nome +
-                            ' lascia lo stato su "' + dopUscta + '" invece di tornare al menu',
-                        contesto: accanto(nav), decimi: secondo()
-                    });
-                    // rimetto il client in uno stato utile per il giro successivo
+                if ((await nav.valuta('statoCorrente')) !== 'menu') {
+                    annota('pulsante-ritorno-non-funziona',
+                        'Cliccato "' + (altro.testo || 'niente') + '" in ' + schermata.nome +
+                        ' ma lo stato resta "' + (await nav.valuta('statoCorrente')) + '"', 'grave');
                     await nav.valuta('apriMenu("principale")');
-                    await attendi(500);
+                    await attendi(400);
+                }
+
+                // Escape, come ultima rete di sicurezza
+                await nav.premiTasto('Escape', 60);
+                await attendi(400);
+                if ((await nav.valuta('statoCorrente')) !== 'menu') {
+                    annota('escape-non-funziona', 'Escape dal menu dopo ' + schermata.nome +
+                        ' non riporta al menu principale', 'fastidiosa');
+                    await nav.valuta('apriMenu("principale")');
+                    await attendi(400);
                 }
             }
         }
 
-        // anomalie raccolte dalla sonda durante il giro (eccezioni, valori...)
         const anomalie = await nav.valuta('_swarm.prelevaAnomalie()');
         for (const anomalia of (anomalie || [])) {
             scelte.scriviEvento({
@@ -500,11 +519,7 @@ async function corriGiro(opzioni) {
 
         return { giudizi: 0, partite: 0 };
     } catch (errore) {
-        scelte.scriviEvento({
-            tipo: 'anomalia', bot: scelte.numero, partita: 0, firma: 'giro-interrotto',
-            gravita: 'fastidiosa', messaggio: 'Il giro si è interrotto: ' + errore.message,
-            contesto: null, decimi: secondo()
-        });
+        annota('giro-interrotto', 'Il giro si è interrotto: ' + errore.message, 'fastidiosa');
         return { giudizi: 0, partite: 0 };
     } finally {
         if (nav) nav.chiudi();

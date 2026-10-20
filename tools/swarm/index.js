@@ -21,6 +21,7 @@ const path = require('path');
 const { avviaServerDiProva, fermaServerDiProva } = require('./serverProva.js');
 const { corriSciame, corriGiro, corriOnline } = require('./corridore.js');
 const { costruisciRapporto } = require('./rapporto.js');
+const { rivediEventi } = require('./revisore.js');
 
 const RADICE = path.join(__dirname, '..', '..');
 
@@ -49,6 +50,8 @@ function argomenti(elenco) {
         else if (voce === '--notte') scelte.notte = true;
         else if (voce === '--fino') scelte.fino = prossimo();
         else if (voce === '--ciclo') scelte.ciclo = Number(prossimo());
+        else if (voce === '--no-revisione') scelte.revisione = false;
+        else if (voce === '--rivedi') scelte.rivediCartella = path.resolve(prossimo());
     }
 
     return scelte;
@@ -63,6 +66,27 @@ function marcaTempo() {
 
 async function main() {
     const scelte = argomenti(process.argv.slice(2));
+
+    // --rivedi <cartella>: si rilegge una corsa già fatta, senza rigiocare.
+    if (scelte.rivediCartella) {
+        const percorsoEventi = path.join(scelte.rivediCartella, 'eventi.jsonl');
+        const eventi = fs.readFileSync(percorsoEventi, 'utf8')
+            .split('\n').filter(Boolean).map((riga) => JSON.parse(riga));
+
+        console.log('Revisione di ' + eventi.length + ' eventi in ' + scelte.rivediCartella);
+        const revisione = await rivediEventi(eventi);
+        console.log('Firme riviste: ' + revisione.chiamate + ' · costo $' + revisione.costo.toFixed(4));
+
+        const markdown = costruisciRapporto(eventi, {
+            bot: 0, minuti: 0, partite: 0, build: '?',
+            dataLeggibile: new Date().toLocaleString('it-IT'),
+            immagineEsiste: (nome) => fs.existsSync(path.join(scelte.rivediCartella, nome)),
+            revisione: revisione.verdetti
+        });
+        fs.writeFileSync(path.join(scelte.rivediCartella, 'rapporto-revisione.md'), markdown, 'utf8');
+        console.log('Scritto: ' + path.join(scelte.rivediCartella, 'rapporto-revisione.md'));
+        return;
+    }
 
     const cartella = path.join(scelte.uscita, 'swarm-' + marcaTempo());
     fs.mkdirSync(cartella, { recursive: true });
@@ -202,6 +226,19 @@ async function main() {
         catch (errore) { return '?'; }
     })();
 
+    // Secondo parere: una domanda per firma, non per occorrenza.
+    let verdetti = null;
+    if (scelte.revisione !== false && eventi.some((evento) => evento.tipo === 'anomalia')) {
+        try {
+            console.log('\nRevisione delle anomalie con Jev…');
+            const revisione = await rivediEventi(eventi);
+            verdetti = revisione.verdetti;
+            console.log('Firme riviste: ' + revisione.chiamate + ' · costo $' + revisione.costo.toFixed(4));
+        } catch (errore) {
+            console.error('Revisione non riuscita: ' + errore.message);
+        }
+    }
+
     const markdown = costruisciRapporto(eventi, {
         bot: scelte.online ? 2 : scelte.bot,
         minuti: scelte.minuti,
@@ -209,7 +246,8 @@ async function main() {
         modo: scelte.giro ? 'giro' : 'sciame',
         build: versione,
         dataLeggibile: new Date().toLocaleString('it-IT'),
-        immagineEsiste: (nome) => fs.existsSync(path.join(cartella, nome))
+        immagineEsiste: (nome) => fs.existsSync(path.join(cartella, nome)),
+        revisione: verdetti
     });
 
     const percorsoRapporto = path.join(cartella, 'rapporto.md');
