@@ -115,7 +115,7 @@ async function main() {
         verifica('tre verdellinesi risultano da acquistare',
             vociVerdellinesi.filter((v) => !v.ottenuto).length === 3,
             vociVerdellinesi.filter((v) => !v.ottenuto).map((v) => v.personaggio).join(','));
-        verifica('il negozio elenca 9 skin', vociSkins.length === 9, 'skin ' + vociSkins.length);
+        verifica('il negozio elenca 18 skin', vociSkins.length === 18, 'skin ' + vociSkins.length);
         verifica('nessuna skin è posseduta all\'inizio',
             vociSkins.every((v) => !v.ottenuto),
             vociSkins.filter((v) => v.ottenuto).map((v) => v.chiave).join(','));

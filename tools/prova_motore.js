@@ -207,8 +207,9 @@ verifica('Tre verdellinesi si sbloccano nel negozio', aPagamento.length === 3, S
 verifica('I prezzi sono quelli decisi dal server',
     aPagamento.map((v) => v.prezzo).join(',') === '2500,3500,4000',
     aPagamento.map((v) => v.personaggio + ' ' + v.prezzo).join(' | '));
-verifica('Il catalogo ha una skin per verdellinese', soloSkins.length === 9, String(soloSkins.length));
-verifica('Ogni skin costa 1000 punti', soloSkins.every((v) => v.prezzo === 1000));
+verifica('Il catalogo ha due skin per verdellinese', soloSkins.length === 18, String(soloSkins.length));
+verifica('Ogni skin ha un prezzo fra 1000 e 1500',
+    soloSkins.every((v) => v.prezzo === 1000 || v.prezzo === 1500));
 
 const passate = risultati.filter(Boolean).length;
 console.log('\n' + passate + '/' + risultati.length + ' verifiche passate');

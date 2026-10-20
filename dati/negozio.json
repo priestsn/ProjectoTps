@@ -1,5 +1,5 @@
 {
-  "versione": 2,
+  "versione": 3,
   "voci": [
     {
       "personaggio": "OusmaneDiouf",
@@ -126,6 +126,78 @@
       "prezzo": 1000,
       "ottenutoAllInizio": false,
       "icona": "assets/Skins/AyoAdebayo-raro/ritratto.png"
+    },
+    {
+      "personaggio": "OusmaneDiouf",
+      "skin": "ombrosa",
+      "nome": "Ombrosa",
+      "prezzo": 1500,
+      "ottenutoAllInizio": false,
+      "icona": "assets/Skins/OusmaneDiouf-ombrosa/ritratto.png"
+    },
+    {
+      "personaggio": "KwameMensah",
+      "skin": "ombrosa",
+      "nome": "Ombrosa",
+      "prezzo": 1500,
+      "ottenutoAllInizio": false,
+      "icona": "assets/Skins/KwameMensah-ombrosa/ritratto.png"
+    },
+    {
+      "personaggio": "ChidiOkonkwo",
+      "skin": "ombrosa",
+      "nome": "Ombrosa",
+      "prezzo": 1500,
+      "ottenutoAllInizio": false,
+      "icona": "assets/Skins/ChidiOkonkwo-ombrosa/ritratto.png"
+    },
+    {
+      "personaggio": "AmaraDiallo",
+      "skin": "ombrosa",
+      "nome": "Ombrosa",
+      "prezzo": 1500,
+      "ottenutoAllInizio": false,
+      "icona": "assets/Skins/AmaraDiallo-ombrosa/ritratto.png"
+    },
+    {
+      "personaggio": "TarisaiMoyo",
+      "skin": "ombrosa",
+      "nome": "Ombrosa",
+      "prezzo": 1500,
+      "ottenutoAllInizio": false,
+      "icona": "assets/Skins/TarisaiMoyo-ombrosa/ritratto.png"
+    },
+    {
+      "personaggio": "ZuriNkosi",
+      "skin": "ombrosa",
+      "nome": "Ombrosa",
+      "prezzo": 1500,
+      "ottenutoAllInizio": false,
+      "icona": "assets/Skins/ZuriNkosi-ombrosa/ritratto.png"
+    },
+    {
+      "personaggio": "BakariTraore",
+      "skin": "ombrosa",
+      "nome": "Ombrosa",
+      "prezzo": 1500,
+      "ottenutoAllInizio": false,
+      "icona": "assets/Skins/BakariTraore-ombrosa/ritratto.png"
+    },
+    {
+      "personaggio": "SekouCamara",
+      "skin": "ombrosa",
+      "nome": "Ombrosa",
+      "prezzo": 1500,
+      "ottenutoAllInizio": false,
+      "icona": "assets/Skins/SekouCamara-ombrosa/ritratto.png"
+    },
+    {
+      "personaggio": "AyoAdebayo",
+      "skin": "ombrosa",
+      "nome": "Ombrosa",
+      "prezzo": 1500,
+      "ottenutoAllInizio": false,
+      "icona": "assets/Skins/AyoAdebayo-ombrosa/ritratto.png"
     }
   ]
 }

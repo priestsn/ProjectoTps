@@ -34,17 +34,21 @@ const personaggi = fs.readdirSync(path.join(RADICE, 'assets', 'Personaggi'))
 
 verifica('Ci sono i nove verdellinesi', personaggi.length === 9, String(personaggi.length));
 
+const STATI_SKIN = ['idle', 'run', 'attack', 'parry', 'takehit', 'death', 'jump', 'fall'];
 let completi = 0;
 const mancanti = [];
 for (const personaggio of personaggi) {
-    const cartella = path.join(RADICE, 'assets', 'Skins', personaggio + '-raro');
-    const stati = ['idle', 'run', 'attack', 'parry', 'takehit', 'death', 'jump', 'fall'];
-    const ok = fs.existsSync(cartella) && stati.every((s) => fs.existsSync(path.join(cartella, s + '.png')));
-    if (ok && fs.existsSync(path.join(cartella, 'ritratto.png'))) completi++;
-    else mancanti.push(personaggio);
+    for (const skin of ['raro', 'ombrosa']) {
+        const cartella = path.join(RADICE, 'assets', 'Skins', personaggio + '-' + skin);
+        const ok = fs.existsSync(cartella) &&
+            STATI_SKIN.every((s) => fs.existsSync(path.join(cartella, s + '.png'))) &&
+            fs.existsSync(path.join(cartella, 'ritratto.png'));
+        if (ok) completi++;
+        else mancanti.push(personaggio + '-' + skin);
+    }
 }
-verifica('Ogni verdellinese ha la skin "raro" completa', completi === personaggi.length,
-    completi + '/' + personaggi.length + (mancanti.length ? ' mancano: ' + mancanti.join(', ') : ''));
+verifica('Ogni verdellinese ha le skin "raro" e "ombrosa"', completi === personaggi.length * 2,
+    completi + '/' + personaggi.length * 2 + (mancanti.length ? ' mancano: ' + mancanti.slice(0, 4).join(', ') : ''));
 
 // --- chiavi e nomi ---
 verifica('Chiave di una skin', Skins.chiaveSkin('OusmaneDiouf', 'raro') === 'OusmaneDiouf:raro');
@@ -107,11 +111,19 @@ const voci = Negozio.CATALOGO_PREDEFINITO;
 const skin = voci.filter((v) => v.skin);
 const verdellinesi = voci.filter((v) => !v.skin);
 
-verifica('Il catalogo ha nove skin', skin.length === 9, String(skin.length));
-verifica('Tutte le skin costano 1000', skin.every((v) => v.prezzo === 1000));
+verifica('Il catalogo ha due skin per verdellinese', skin.length === 18, String(skin.length));
+verifica('Le skin "raro" costano 1000',
+    skin.filter((v) => v.skin === 'raro').every((v) => v.prezzo === 1000));
+verifica('Le skin "ombrosa" costano 1500',
+    skin.filter((v) => v.skin === 'ombrosa').every((v) => v.prezzo === 1500),
+    String(skin.filter((v) => v.skin === 'ombrosa').length) + ' voci');
+verifica('Ogni skin ha la sua cartella di sprite',
+    skin.every((v) => Skins.cartellaSkin(v.personaggio, v.skin) !== null));
 verifica('Nessuna skin è gratis all\'inizio', skin.every((v) => v.ottenutoAllInizio === false));
-verifica('Ogni verdellinese ha la sua skin',
-    verdellinesi.every((v) => skin.some((s) => s.personaggio === v.personaggio)));
+verifica('Ogni verdellinese ha la skin "raro"',
+    verdellinesi.every((v) => skin.some((s) => s.skin === 'raro' && s.personaggio === v.personaggio)));
+verifica('Ogni verdellinese ha la skin "ombrosa"',
+    verdellinesi.every((v) => skin.some((s) => s.skin === 'ombrosa' && s.personaggio === v.personaggio)));
 verifica('La chiave della skin è personaggio:skin',
     Negozio.chiaveDiVoce({ personaggio: 'AyoAdebayo', skin: 'raro' }) === 'AyoAdebayo:raro');
 verifica('La chiave del verdellinese è il suo id',

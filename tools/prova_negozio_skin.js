@@ -48,13 +48,15 @@ function giocatoreDiProva(punti) {
 // --- catalogo ---
 const catalogo = account.negozio().voci;
 const skinVoci = catalogo.filter((v) => v.skin);
-verifica('Il catalogo ha nove skin', skinVoci.length === 9, String(skinVoci.length));
-verifica('Tutte le skin costano 1000 punti', skinVoci.every((v) => v.prezzo === 1000));
+verifica('Il catalogo ha due skin per verdellinese', skinVoci.length === 18, String(skinVoci.length));
+verifica('Le skin "raro" costano 1000', skinVoci.filter((v) => v.skin === 'raro').every((v) => v.prezzo === 1000));
+verifica('Le skin "ombrosa" costano 1500', skinVoci.filter((v) => v.skin === 'ombrosa').every((v) => v.prezzo === 1500));
 verifica('Nessuna skin è regalata alla creazione',
     skinVoci.every((v) => v.ottenutoAllInizio === false));
+const primaRaro = skinVoci.find((v) => v.skin === 'raro');
 verifica('La chiave della skin è personaggio:skin',
-    account.chiaveVoce(skinVoci[0]) === skinVoci[0].personaggio + ':raro',
-    account.chiaveVoce(skinVoci[0]));
+    account.chiaveVoce(primaRaro) === primaRaro.personaggio + ':raro',
+    account.chiaveVoce(primaRaro));
 verifica('La chiave del verdellinese resta il suo id',
     account.chiaveVoce(catalogo[0]) === catalogo[0].personaggio);
 
@@ -69,11 +71,24 @@ verifica('I punti sono scalati', giocatore.punti === 200, String(giocatore.punti
 verifica('La skin finisce in skins', giocatore.skins.includes('OusmaneDiouf:raro'));
 verifica('Il verdellinese resta in personaggi', giocatore.personaggi.length === 1);
 
+// --- acquisto di una skin complessa (1500) ---
+magazzino = magazzinoFinto();
+giocatore = giocatoreDiProva(2000);
+const complessa = account.acquista(magazzino, giocatore, 'OusmaneDiouf:ombrosa');
+verifica('La skin complessa si compra', complessa.ok === true, complessa.messaggio || '');
+verifica('La skin complessa costa 1500', giocatore.punti === 500, String(giocatore.punti));
+verifica('La skin complessa finisce in skins', giocatore.skins.includes('OusmaneDiouf:ombrosa'));
+verifica('La skin raro e quella ombrosa sono distinte',
+    giocatore.skins.length === 1 && !giocatore.skins.includes('OusmaneDiouf:raro'));
+
 // --- doppio acquisto ---
+magazzino = magazzinoFinto();
+giocatore = giocatoreDiProva(1200);
+account.acquista(magazzino, giocatore, 'OusmaneDiouf:raro');   // primo acquisto
 const doppio = account.acquista(magazzino, giocatore, 'OusmaneDiouf:raro');
 verifica('La stessa skin non si compra due volte', doppio.ok === false && doppio.stato === 409,
     doppio.messaggio || '');
-verifica('Il secondo tentativo non scala punti', giocatore.punti === 200);
+verifica('Il secondo tentativo non scala punti', giocatore.punti === 200, String(giocatore.punti));
 
 // --- punti insufficienti ---
 magazzino = magazzinoFinto();

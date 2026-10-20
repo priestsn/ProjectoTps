@@ -21,7 +21,28 @@ const SKINS = {
         id: 'raro',
         nome: 'Raro',
         prezzo: 1000,
-        descrizione: 'Ricolorazione completa del verdellinese'
+        descrizione: 'Tinta piatta su tutto il verdellinese'
+    },
+    // Le skin complesse usano lo stesso motore ma con una rampa per zona di
+    // colore (contorni, tessuto, pelle, metallo) e con alone e dithering.
+    // Vengono da tools/crea_skin.py, ricette "ombrosa", "fiamma", "ghiaccio".
+    ombrosa: {
+        id: 'ombrosa',
+        nome: 'Ombrosa',
+        prezzo: 1500,
+        descrizione: 'Zone fredde, ombre profonde, alone ciano'
+    },
+    fiamma: {
+        id: 'fiamma',
+        nome: 'Fiamma',
+        prezzo: 1500,
+        descrizione: 'Rampa calda, alone incandescente'
+    },
+    ghiaccio: {
+        id: 'ghiaccio',
+        nome: 'Ghiaccio',
+        prezzo: 1500,
+        descrizione: 'Rampa fredda con dithering, alone bianco-azzurro'
     }
 };
 

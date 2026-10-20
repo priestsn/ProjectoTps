@@ -29,7 +29,19 @@ const CATALOGO_PREDEFINITO = [
     { chiave: 'ZuriNkosi:raro', personaggio: 'ZuriNkosi', skin: 'raro', nome: 'Raro Azzurro', prezzo: 1000, ottenutoAllInizio: false },
     { chiave: 'BakariTraore:raro', personaggio: 'BakariTraore', skin: 'raro', nome: 'Raro Ambra', prezzo: 1000, ottenutoAllInizio: false },
     { chiave: 'SekouCamara:raro', personaggio: 'SekouCamara', skin: 'raro', nome: 'Raro Fucsia', prezzo: 1000, ottenutoAllInizio: false },
-    { chiave: 'AyoAdebayo:raro', personaggio: 'AyoAdebayo', skin: 'raro', nome: 'Raro Turchese', prezzo: 1000, ottenutoAllInizio: false }
+    { chiave: 'AyoAdebayo:raro', personaggio: 'AyoAdebayo', skin: 'raro', nome: 'Raro Turchese', prezzo: 1000, ottenutoAllInizio: false },
+
+    // Skin complesse (rampa per zona + alone). Fiamma e Ghiaccio sono generate
+    // in assets/Skins/ ma non ancora in vendita: si attivano aggiungendo le voci.
+    { chiave: 'OusmaneDiouf:ombrosa', personaggio: 'OusmaneDiouf', skin: 'ombrosa', nome: 'Ombrosa', prezzo: 1500, ottenutoAllInizio: false },
+    { chiave: 'KwameMensah:ombrosa', personaggio: 'KwameMensah', skin: 'ombrosa', nome: 'Ombrosa', prezzo: 1500, ottenutoAllInizio: false },
+    { chiave: 'ChidiOkonkwo:ombrosa', personaggio: 'ChidiOkonkwo', skin: 'ombrosa', nome: 'Ombrosa', prezzo: 1500, ottenutoAllInizio: false },
+    { chiave: 'AmaraDiallo:ombrosa', personaggio: 'AmaraDiallo', skin: 'ombrosa', nome: 'Ombrosa', prezzo: 1500, ottenutoAllInizio: false },
+    { chiave: 'TarisaiMoyo:ombrosa', personaggio: 'TarisaiMoyo', skin: 'ombrosa', nome: 'Ombrosa', prezzo: 1500, ottenutoAllInizio: false },
+    { chiave: 'ZuriNkosi:ombrosa', personaggio: 'ZuriNkosi', skin: 'ombrosa', nome: 'Ombrosa', prezzo: 1500, ottenutoAllInizio: false },
+    { chiave: 'BakariTraore:ombrosa', personaggio: 'BakariTraore', skin: 'ombrosa', nome: 'Ombrosa', prezzo: 1500, ottenutoAllInizio: false },
+    { chiave: 'SekouCamara:ombrosa', personaggio: 'SekouCamara', skin: 'ombrosa', nome: 'Ombrosa', prezzo: 1500, ottenutoAllInizio: false },
+    { chiave: 'AyoAdebayo:ombrosa', personaggio: 'AyoAdebayo', skin: 'ombrosa', nome: 'Ombrosa', prezzo: 1500, ottenutoAllInizio: false }
 ];
 
 // Catalogo attivo: parte dalla copia di riserva, il server può aggiornarlo.
