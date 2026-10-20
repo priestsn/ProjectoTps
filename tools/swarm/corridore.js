@@ -429,4 +429,200 @@ async function accanto(nav) {
     }
 }
 
-module.exports = { corriUnBot, corriSciame, corriGiro, contestoInParole };
+// ========================================
+// Partita online fra due bot
+// ==========================================
+// Due account nuovi (ELO 1000 entrambi, quindi la finestra della coda li
+// abbina subito), tutti e due in coda ranked: la stanza la crea il client, il
+// codice lo scambia il server, la partita parte da sola. Da lì in poi i bot
+// giocano come nell'allenamento, ma con in più il controllo di DESYNC: ogni
+// secondo si confrontano le due viste. Se A vede B a x=500 e B si vede a x=520,
+// uno dei due sta vedendo un'altra partita.
+
+/**
+ * Fa giocare due bot nella stessa stanza online e confronta le rispettive viste.
+ */
+async function corriOnline(opzioni) {
+    const scelte = Object.assign({
+        url: '', minuti: 4, portaCdpBase: 9700, cartella: process.cwd(),
+        scriviEvento: function () {}, giocatori: 2
+    }, opzioni || {});
+
+    const avvio = Date.now();
+    const limiteMs = scelte.minuti * 60 * 1000;
+    const viste = {};
+    const divergenze = {};
+
+    function secondo() { return Math.round((Date.now() - avvio) / 100); }
+
+    async function unBot(numero) {
+        let nav = null;
+        try {
+            nav = await apriNavigatore({ porta: scelte.portaCdpBase + numero, url: scelte.url, attesaCaricamentoMs: 4000 });
+            const accesso = await accediConAccountNouvo(nav, scelte.url, numero);
+            await nav.valuta(SORGENTE_SONDA);
+
+            scelte.scriviEvento({
+                tipo: 'nota', bot: numero, partita: 0, firma: 'account-di-prova',
+                gravita: 'nessuna', messaggio: 'account ' + accesso.nick + ' in coda', contesto: null, decimi: secondo()
+            });
+
+            await nav.valuta('apriCodaRanked(); "ok"');
+            await attendi(500);
+            await nav.valuta('cercaPartitaRanked(); "ok"');
+
+            // Aspetto l'abbinamento. Dopo la coda si passa dalla SELEZIONE, non
+            // direttamente in partita: ognuno conferma il proprio lato (l'host è
+            // P1, l'ospite è P2) e solo allora l'host avvia la stanza.
+            const scadenza = Date.now() + 60000;
+            let inPartita = false;
+            let confermato = false;
+
+            while (Date.now() < scadenza) {
+                const stato = await nav.valuta('statoCorrente');
+
+                if (stato === 'selezione' && !confermato) {
+                    const ospite = await nav.valuta(
+                        '(typeof onlineStato !== "undefined" && onlineStato) ? !!onlineStato.ospite : false');
+                    await nav.valuta('confermaScelta(' + (ospite ? 2 : 1) + '); "confermata"');
+                    confermato = true;
+                    scelte.scriviEvento({
+                        tipo: 'nota', bot: numero, partita: 0, firma: 'scelta-confermata',
+                        gravita: 'nessuna',
+                        messaggio: 'abbinato, confermata la scelta come ' + (ospite ? 'P2 (ospite)' : 'P1 (padrone)'),
+                        contesto: null, decimi: secondo()
+                    });
+                }
+
+                if (stato === 'partita') { inPartita = true; break; }
+                await attendi(600);
+            }
+
+            if (!inPartita) {
+                scelte.scriviEvento({
+                    tipo: 'anomalia', bot: numero, partita: 0, firma: 'abbinamento-mancato',
+                    gravita: 'grave',
+                    messaggio: 'Dopo 40 s in coda ranked la partita non è partita (stato "' +
+                        (await nav.valuta('statoCorrente')) + '")',
+                    contesto: null, decimi: secondo()
+                });
+                return { giudizi: 0, partite: 0 };
+            }
+
+            const dado = casualeConSeme(numero * 977);
+            let ultimoAttacco = 0;
+
+            while (Date.now() - avvio < limiteMs) {
+                let campione = null;
+                try { campione = await nav.valuta('_swarm.campiona()'); } catch (errore) { await attendi(200); continue; }
+                if (!campione) { await attendi(200); continue; }
+
+                if (campione.stato !== 'partita' || campione.gameOver) break;
+
+                // la mia vista, per il confronto con l'altro bot
+                viste[numero] = { quando: Date.now(), p1: campione.p1, p2: campione.p2, timer: campione.timer };
+
+                // azioni come in allenamento
+                const azione = prossimaAzione(campione, dado);
+                const adesso = Date.now();
+                if (azione && !campione.p1.stun && (azione !== 'attacco' || adesso - ultimoAttacco > 420)) {
+                    const vitaPrima = campione.p2 ? campione.p2.vita : null;
+                    try {
+                        await nav.valuta('_swarm.segnalaAzione("' + azione + '",' +
+                            (typeof vitaPrima === 'number' ? vitaPrima : 'null') + ')');
+                    } catch (errore) { /* niente */ }
+
+                    await nav.premiTasto(azione === 'attacco' ? 'h' :
+                        azione === 'parata' ? 'j' :
+                            azione === 'ultimate' ? 'g' :
+                                azione === 'salto' ? 'w' :
+                                    azione === 'sinistra' ? 'a' : 'd',
+                        azione === 'parata' ? 160 : 70);
+
+                    if (azione === 'attacco') ultimoAttacco = adesso;
+
+                    // In online le sonde azione/colpo NON valgono: l'ospite non
+                    // simula, manda i comandi e disegna lo stato ricevuto, quindi
+                    // "il comando non ha reagito" e "il colpo non ha fatto danno"
+                    // misurano l'architettura, non un difetto. Qui conta il
+                    // confronto fra le due viste (desync).
+                    await attendi(450);
+                    await nav.valuta('_swarm.esitoAzione()');
+                }
+
+                try {
+                    const anomalie = await nav.valuta('_swarm.prelevaAnomalie()');
+                    for (const anomalia of (anomalie || [])) {
+                        scelte.scriviEvento({
+                            tipo: 'anomalia', bot: numero, partita: 1, firma: anomalia.firma,
+                            gravita: anomalia.gravita, messaggio: anomalia.messaggio,
+                            contesto: anomalia.contesto, decimi: secondo()
+                        });
+                    }
+                } catch (errore) { /* niente */ }
+
+                await attendi(60);
+            }
+
+            return { giudizi: 0, partite: 1 };
+        } finally {
+            if (nav) nav.chiudi();
+        }
+    }
+
+    // controllo di desync: ogni secondo confronto le due viste
+    const controllo = setInterval(function () {
+        const a = viste[1];
+        const b = viste[2];
+        if (!a || !b) return;
+
+        // Prima si accerta che sia la STESSA partita: stesso timer (entro 2 s) e
+        // stessi verdellinesi incrociati. Senza questo controllo si confrontano
+        // due partite diverse e ogni differenza sembra un desync.
+        if (typeof a.timer !== 'number' || typeof b.timer !== 'number' ||
+            Math.abs(a.timer - b.timer) > 2) return;
+        if (!a.p1 || !a.p2 || !b.p1 || !b.p2) return;
+        if (a.p1.personaggio && b.p2.personaggio && a.p1.personaggio !== b.p2.personaggio) return;
+        if (a.p2.personaggio && b.p1.personaggio && a.p2.personaggio !== b.p1.personaggio) return;
+
+        // Le due viste hanno la STESSA semantica: P1 è sempre il lottatore del
+        // padrone e P2 quello dell'ospite (l'ospite disegna lo stato ricevuto),
+        // quindi si confronta P1 con P1 e P2 con P2. Confrontare P1 con P2
+        // produceva un desync su ogni lettura.
+        const coppie = [
+            ['x di P1', a.p1.x, b.p1.x, 3],
+            ['vita di P1', a.p1.vita, b.p1.vita, 1],
+            ['x di P2', a.p2.x, b.p2.x, 3],
+            ['vita di P2', a.p2.vita, b.p2.vita, 1]
+        ];
+
+        for (const [cosa, primo, secondoValore, tolleranza] of coppie) {
+            if (typeof primo !== 'number' || typeof secondoValore !== 'number') continue;
+            if (Math.abs(primo - secondoValore) <= tolleranza) { divergenze[cosa] = 0; continue; }
+
+            divergenze[cosa] = (divergenze[cosa] || 0) + 1;
+            // tre letture di fila oltre tolleranza: non è la latenza, è una vista diversa
+            if (divergenze[cosa] === 3) {
+                scelte.scriviEvento({
+                    tipo: 'anomalia', bot: 0, partita: 1, firma: 'desync-online',
+                    gravita: 'grave',
+                    messaggio: 'Le due viste non coincidono su ' + cosa + ': ' + primo + ' contro ' + secondoValore,
+                    contesto: { a: a, b: b }, decimi: secondo()
+                });
+                divergenze[cosa] = 0;
+            }
+        }
+    }, 1000);
+
+    try {
+        const esiti = [];
+        for (let numero = 1; numero <= scelte.giocatori; numero++) {
+            esiti.push(unBot(numero));
+        }
+        return await Promise.all(esiti);
+    } finally {
+        clearInterval(controllo);
+    }
+}
+
+module.exports = { corriUnBot, corriSciame, corriGiro, corriOnline, contestoInParole };

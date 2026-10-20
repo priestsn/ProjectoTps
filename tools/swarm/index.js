@@ -19,7 +19,7 @@ const fs = require('fs');
 const path = require('path');
 
 const { avviaServerDiProva, fermaServerDiProva } = require('./serverProva.js');
-const { corriSciame, corriGiro } = require('./corridore.js');
+const { corriSciame, corriGiro, corriOnline } = require('./corridore.js');
 const { costruisciRapporto } = require('./rapporto.js');
 
 const RADICE = path.join(__dirname, '..', '..');
@@ -28,7 +28,7 @@ function argomenti(elenco) {
     const scelte = {
         bot: 3, minuti: 5, partite: 3, jev: false, jevOgni: 12,
         maxChiamate: 300, porta: 8300, uscita: path.join(RADICE, 'bug_reports'),
-        giro: false, ripetizioni: 2, account: false
+        giro: false, ripetizioni: 2, account: false, online: false
     };
 
     for (let indice = 0; indice < elenco.length; indice++) {
@@ -45,6 +45,7 @@ function argomenti(elenco) {
         else if (voce === '--giro') scelte.giro = true;
         else if (voce === '--ripetizioni') scelte.ripetizioni = Number(prossimo());
         else if (voce === '--account') scelte.account = true;
+        else if (voce === '--online') scelte.online = true;
     }
 
     return scelte;
@@ -87,10 +88,12 @@ async function main() {
         }
     }
 
-    console.log(scelte.giro
-        ? 'Giro schermate: ' + scelte.bot + ' bot, ' + scelte.ripetizioni + ' giri a bot'
-        : 'Sciame: ' + scelte.bot + ' bot, ' + scelte.minuti + ' minuti, ' +
-            scelte.partite + ' partite a bot' + (scelte.jev ? ', con giudice Jev' : ', senza Jev'));
+    console.log(scelte.online
+        ? 'Online: 2 bot in coda ranked per ' + scelte.minuti + ' minuti'
+        : scelte.giro
+            ? 'Giro schermate: ' + scelte.bot + ' bot, ' + scelte.ripetizioni + ' giri a bot'
+            : 'Sciame: ' + scelte.bot + ' bot, ' + scelte.minuti + ' minuti, ' +
+                scelte.partite + ' partite a bot' + (scelte.jev ? ', con giudice Jev' : ', senza Jev'));
     console.log('Cartella: ' + cartella);
     console.log('');
 
@@ -98,7 +101,17 @@ async function main() {
     let esiti = [];
 
     try {
-        if (scelte.giro) {
+        if (scelte.online) {
+            // Due bot nella stessa stanza ranked: controlla abbinamento, relay
+            // WebSocket e desync fra le due viste.
+            esiti = await corriOnline({
+                url: server.url,
+                minuti: scelte.minuti,
+                portaCdpBase: 9700,
+                cartella: cartella,
+                scriviEvento: scriviEvento
+            });
+        } else if (scelte.giro) {
             // Giro delle schermate: non è una partita, è la navigazione.
             // Cerca schermate senza uscita, Escape che non torna al menu e
             // funzioni che non aprono niente.
@@ -140,7 +153,7 @@ async function main() {
     })();
 
     const markdown = costruisciRapporto(eventi, {
-        bot: scelte.bot,
+        bot: scelte.online ? 2 : scelte.bot,
         minuti: scelte.minuti,
         partite: partiteGiocate,
         modo: scelte.giro ? 'giro' : 'sciame',

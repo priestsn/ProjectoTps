@@ -6,11 +6,21 @@ difetti. Serve al posto dei beta tester: nessuno deve stare lì a giocare per tr
 ```
 node tools/swarm/index.js --bot 4 --minuti 6 --jev        # combattimento
 node tools/swarm/index.js --giro --bot 2 --account        # navigazione delle schermate
+node tools/swarm/index.js --online --minuti 3             # due bot nella stessa stanza ranked
 ```
 
-Due modalità: lo **sciame** fa giocare i bot (VS CPU, con o senza giudice) e misura il motore; il **giro**
+Tre modalità: lo **sciame** fa giocare i bot (VS CPU, con o senza giudice) e misura il motore; il **giro**
 apre ogni schermata informativa e verifica che si apra, che abbia un pulsante di ritorno e che Escape
-riporti al menu.
+riporti al menu; **online** mette due bot nella stessa stanza ranked e confronta le due viste per
+trovare il desync.
+
+In online le sonde `azione-persa` e `colpo-senza-danno` sono **spente**: l'ospite non simula, manda i
+comandi e disegna lo stato ricevuto, quindi misurerebbero l'architettura e non un difetto. Restano attive
+le sonde di stato (timer, valori fuori scala, ritmo) più il confronto fra le due viste.
+
+Attenzione al confronto fra viste: **P1 è sempre il lottatore del padrone e P2 quello dell'ospite in
+entrambi i browser** (l'ospite disegna lo stato ricevuto). Confrontare P1 con P2 dà un desync su ogni
+lettura — errore già fatto e corretto.
 
 Il rapporto finisce in `bug_reports/swarm-<data>/rapporto.md`, con gli screenshot dei difetti visti
 accanto e il registro completo in `eventi.jsonl`.
@@ -106,6 +116,7 @@ qualcosa, è quello che lo dice.
 | `--giro` | spento | modalità navigazione invece del combattimento |
 | `--ripetizioni N` | 2 | quanti giri completi fa ogni bot |
 | `--account` | spento | crea un account di prova e ci entra (senza, metà delle schermate rimanda al login) |
+| `--online` | spento | due bot in coda ranked nella stessa stanza, con controllo di desync |
 
 ## Verifica (sempre, prima di fidarsi di un rapporto)
 
@@ -130,9 +141,13 @@ ritmo resta pieno. Oltre, guardare la sonda `ritmo-basso`: il numero
 massimo è l'ultimo che tiene tutti i bot sopra ~55 passi/s. Non lanciare lo sciame mentre si gioca a mano
 o si fa un deploy.
 
-## Cosa non fa (per ora)
+## Difetti trovati dallo sciame
 
-- Non gioca **online**: solo VS CPU. Il gioco a coppie nella stessa stanza (e il controllo di desync) è
-  il passo successivo.
+- **Timer dell'ospite fermo nelle partite online** (21/10/2026): misurato con
+  `node tools/swarm/diagnosi_online.js`, il padrone conta 48→19 secondi mentre l'ospite resta a **60** per
+  tutta la partita. Causa: `decreaseTimer()` viene chiamata solo dentro `avviaPartita()` (`index.js:2014`),
+  e l'ospite non passa da lì — disegna lo stato ricevuto. La sonda `timer-fermo` lo segnala da sola.
+
+## Cosa non fa (per ora)
 - Non apre issue GitHub: i difetti restano in `bug_reports/`.
 - Non manda i report al server (`POST /report` è limitato a 20 per IP ogni 10 minuti).
