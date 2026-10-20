@@ -130,7 +130,12 @@
             // diventa un "ritmo" negativo di migliaia di passi al secondo
             const nuovaPartita = passiFatti < 0 || (campione.frame || 0) < 90;
 
-            if (!nuovaPartita && trascorso > 100) {
+            // In online l'ospite non simula: il suo conteggio dei passi non è
+            // confrontabile con i 60 al secondo, quindi la sonda sul ritmo vale
+            // solo in locale/CPU
+            const online = (typeof modalitaPartita !== 'undefined' && modalitaPartita === 'online');
+
+            if (!nuovaPartita && !online && trascorso > 100) {
                 if (passiFatti < 20 && atteso > 40) {
                     annota('ciclo-blocco',
                         'Il ciclo di gioco avanza di ' + passiFatti + ' passi in ' + Math.round(trascorso) + ' ms',
