@@ -1,0 +1,84 @@
+{
+ "acciaio": {
+  "nome": "Acciaio",
+  "prezzo": 1500,
+  "descrizione": "Ricetta dal concept SDXL: acciaio, ciano e riflessi bianchi",
+  "contrasto": 1.0,
+  "dither": true,
+  "rim": {
+   "colore": [
+    166,
+    190,
+    185
+   ],
+   "intensita": 0.55,
+   "spessore": 2,
+   "alone": [
+    2,
+    100
+   ]
+  },
+  "rampe": [
+   {
+    "scuro": [
+     0,
+     0,
+     0
+    ],
+    "chiaro": [
+     4,
+     7,
+     6
+    ]
+   },
+   {
+    "scuro": [
+     0,
+     0,
+     0
+    ],
+    "chiaro": [
+     8,
+     8,
+     8
+    ]
+   },
+   {
+    "scuro": [
+     5,
+     12,
+     15
+    ],
+    "chiaro": [
+     97,
+     105,
+     108
+    ]
+   },
+   {
+    "scuro": [
+     15,
+     33,
+     34
+    ],
+    "chiaro": [
+     177,
+     196,
+     197
+    ]
+   },
+   {
+    "scuro": [
+     43,
+     63,
+     60
+    ],
+    "chiaro": [
+     232,
+     253,
+     249
+    ]
+   }
+  ]
+ }
+}

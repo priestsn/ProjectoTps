@@ -49,7 +49,16 @@ def pixel_visibili(percorso):
     if len(visibili) == 0:
         visibili = dati.reshape(-1, 4)
 
-    return visibili[:, :3].astype(np.float64)
+    rgb = visibili[:, :3].astype(np.float64)
+
+    # I modelli generano spesso su fondo nero pieno (o trasparente). Se il
+    # fondo resta nella palette, la ricetta diventa quasi tutta nera: lo si
+    # scarta quando non è il colore del personaggio.
+    scuri = rgb.max(axis=1) <= 12
+    if scuri.sum() < len(rgb) * 0.9:
+        rgb = rgb[~scuri]
+
+    return rgb if len(rgb) else visibili[:, :3].astype(np.float64)
 
 
 def raggruppa(lab, gruppi):
@@ -137,6 +146,17 @@ def main():
         pixel = pixel[scelta]
 
     lab = rgb_a_oklab(pixel)
+
+    # Il raggruppamento va fatto sui COLORI, non sulle ombre: in un'immagine
+    # generata metà dei pixel è quasi nera, e senza questo filtro quattro
+    # gruppi su cinque finiscono sul nero. Si tengono i pixel abbastanza
+    # luminosi; le rampe scure si ricavano poi da ogni gruppo.
+    luminosi = lab[:, 0] >= 0.15
+    if luminosi.sum() < len(lab) * 0.15:
+        luminosi = lab[:, 0] >= 0.08
+    if luminosi.sum() >= opzioni.gruppi * 20:
+        lab = lab[luminosi]
+
     centri = raggruppa(lab, opzioni.gruppi)
 
     descrizione = opzioni.descrizione or ("Ricetta estratta da " + percorso.name)
