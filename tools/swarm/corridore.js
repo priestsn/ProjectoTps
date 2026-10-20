@@ -59,10 +59,35 @@ async function corriUnBot(opzioni) {
         nav = await apriNavigatore({ porta: scelte.portaCdp, url: scelte.url, attesaCaricamentoMs: 4000 });
         await nav.valuta(SORGENTE_SONDA);
 
+        // Verdellinesi diversi a ogni bot: coprire tutti gli sprite e le
+        // hitbox costa niente e senza questo ogni corsa prova sempre la coppia
+        // predefinita (il primo e il secondo della lista).
+        const scelti = await nav.valuta(
+            "(function(){var liberi=[];for(var i=0;i<VERDELLINESI.length;i++){" +
+            "if(lottatorePosseduto(VERDELLINESI[i].id))liberi.push(i);}return JSON.stringify(liberi);})()"
+        );
+        const liberi = JSON.parse(scelti || '[]');
+        // L'ordine conta: apriSelezione rimette i cursori a zero, quindi gli
+        // indici si scrivono DOPO averla aperta e PRIMA di confermare.
+        const indicePrimo = liberi.length ? liberi[scelte.numero % liberi.length] : 0;
+        const indiceSecondo = liberi.length ? liberi[(scelte.numero + 3) % liberi.length] : 1;
+
         // prima partita
-        await nav.valuta("avviaSelezioneCPU('normale'); confermaScelta(1); confermaScelta(2); 'avviata'");
+        await nav.valuta("avviaSelezioneCPU('normale'); sceltaP1 = " + indicePrimo + '; sceltaP2 = ' +
+            indiceSecondo + "; confermaScelta(1); confermaScelta(2); 'avviata'");
         await attendi(1500);
         partitaCorrente = 1;
+
+        // si annota la coppia in campo: serve a sapere cosa ha coperto la corsa
+        try {
+            const coppia = await nav.valuta(
+                'JSON.stringify({p1: Player.personaggio.id, p2: Enemy.personaggio.id})'
+            );
+            scelte.scriviEvento({
+                tipo: 'nota', bot: scelte.numero, partita: partitaCorrente, firma: 'partita-iniziata',
+                gravita: 'nessuna', messaggio: 'in campo ' + coppia, contesto: null, decimi: secondo()
+            });
+        } catch (errore) { /* niente */ }
 
         const dado = casualeConSeme(scelte.seme);
         let ultimoGiudizio = 0;
@@ -85,7 +110,10 @@ async function corriUnBot(opzioni) {
                 await attendi(1200);
                 if (partitaCorrente >= scelte.partite) break;
                 partitaCorrente += 1;
-                await nav.valuta('avviaSelezioneCPU("normale"); confermaScelta(1); confermaScelta(2); "avviata"');
+                await nav.valuta('avviaSelezioneCPU("normale"); sceltaP1 = ' +
+                    (liberi.length ? liberi[partitaCorrente % liberi.length] : 0) + '; sceltaP2 = ' +
+                    (liberi.length ? liberi[(partitaCorrente + 2) % liberi.length] : 1) +
+                    '; confermaScelta(1); confermaScelta(2); "avviata"');
                 await attendi(1500);
                 continue;
             }
@@ -147,7 +175,10 @@ async function corriUnBot(opzioni) {
             if (scelte.usaGiudice && Date.now() - ultimoGiudizio > scelte.ogniGiudizioSec * 1000) {
                 ultimoGiudizio = Date.now();
                 try {
-                    const immagine = await nav.screenshotPagina(0.6);
+                    // Scala 1: a 0,6 i numeri del timer diventano una poltiglia
+                    // di pixel e Jev li segnala come "testo illeggibile" — un
+                    // difetto che non esiste (verificato: a 1x si legge "98")
+                    const immagine = await nav.screenshotPagina(1);
                     if (immagine) {
                         const verdetto = await giudica(immagine, contestoInParole(campione));
                         giudiziFatti += 1;

@@ -35,6 +35,8 @@ const NORMALE = "Contesto: è un picchiaduro 2D in pixel art, ambientato in una 
     "Sono NORMALI anche i lottatori che impugnano spade, lance o bastoni (l'arma fa parte del disegno), " +
     "le scie bianche e le esplosioni dei colpi, e le scritte grandi al centro dello schermo con bordo nero " +
     "(STAMINA, PERFECT BLOCK, K.O., un avviso sui punti): sono messaggi voluti dal gioco, non errori. " +
+    "È NORMALE anche l'effetto dell'ULTIMATE: è grosso di proposito, può coprire fino a un terzo dello " +
+    "schermo con un'esplosione, un pugno o una zampata sgranata. Non è un difetto di scala. " +
     "Un difetto è qualcosa che rompe la figura: un lottatore tagliato a metà o senza testa, due corpi " +
     "fusi nello stesso punto, un elemento dell'interfaccia sopra i lottatori, un'immagine nera o vuota. ";
 

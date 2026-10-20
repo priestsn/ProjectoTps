@@ -14,6 +14,7 @@
         azioni: [],
         ultimoAttaccoVisto: 0,
         azioneInCorso: null,
+        mancate: {},
         timerFermo: 0,
         ultimoCampione: null,
         ultimaFirma: {}
@@ -62,6 +63,10 @@
             parata: !!l.isParata,
             stun: !!l.isStunned,
             danno: !!l.isTakingDmg,
+            caricando: !!l.isCaricando,
+            // l'attacco costa stamina e parte solo da terra: sotto la soglia il
+            // gioco lo rifiuta di proposito (e mostra "STAMINA")
+            costoStamina: (l.statistiche && l.statistiche.costoStamina) ? l.statistiche.costoStamina : 0,
             // la parata e il salto valgono solo da terra (scelta del gioco):
             // senza questo dato, ogni parata in aria sembra un comando perso
             inAria: (typeof ground !== 'undefined')
@@ -205,6 +210,12 @@
         let ammessa = true;
 
         if (azione === 'attacco' && Date.now() - (sw.ultimoAttaccoVisto || 0) < 500) ammessa = false;
+        // chi sta caricando non può attaccare: il gioco rifiuta, e non è un difetto
+        if (me && me.caricando) ammessa = false;
+        if (azione === 'attacco' && me) {
+            if (me.inAria) ammessa = false;                                // solo da terra
+            if (me.stamina < (me.costoStamina || 0)) ammessa = false;      // senza stamina non parte
+        }
         if (azione === 'parata' && me && (me.inAria || me.stamina < 1)) ammessa = false;
         if (me && (me.stun || me.danno)) ammessa = false;
 
@@ -242,8 +253,15 @@
         const io = typeof Player !== 'undefined' ? Player : null;
         if (!me) return;
 
-        if (voce.azione === 'attacco' && (me.attacco || (io && io.attaccoHaColpito))) voce.reazioneVista = true;
-        if (voce.azione === 'parata' && me.parata) voce.reazioneVista = true;
+        // Solo `isAttacking`: `attaccoHaColpito` può essere il residuo
+        // dell'attacco precedente (si azzera solo quando ne parte uno nuovo) e
+        // faceva credere che il comando fosse stato eseguito
+        if (voce.azione === 'attacco' && me.attacco) voce.reazioneVista = true;
+        // `framesParata` cresce appena la parata parte: se l'avversario colpisce
+        // subito dopo, `isParata` torna falso in pochi passi e il campione può
+        // non vederla mai (era un falso "comando perso" sulle parate)
+        if (voce.azione === 'parata' && (me.parata ||
+            (io && typeof io.framesParata === 'number' && io.framesParata > 0))) voce.reazioneVista = true;
         if (voce.azione === 'salto' && me.inAria) voce.reazioneVista = true;
         if (voce.azione === 'ultimate' && me.ultimate < 50) voce.reazioneVista = true;
         if (voce.azione === 'sinistra' || voce.azione === 'destra') voce.reazioneVista = true; // lo spostamento si misura dopo
@@ -265,12 +283,25 @@
         aggiornaAzioneInCorso();
 
         if (!voce.reazioneVista) {
-            return {
-                firma: 'azione-persa',
-                messaggio: 'Comando "' + voce.azione + '" accettabile dal gioco, nessuna reazione entro 450 ms',
-                gravita: 'fastidiosa',
-                contesto: sw.ultimoCampione
-            };
+            // Un singolo comando ignorato può essere una condizione di gioco che
+            // la sonda non conosce (carica in corso, un passo di stun appena
+            // partito). Due entro 30 secondi no: quello è un difetto vero e
+            // viene segnalato come tale; il singolo resta una nota.
+            const adesso = Date.now();
+            const prima = sw.mancate[voce.azione] || { quante: 0, quando: 0 };
+            const quante = (adesso - prima.quando < 30000) ? prima.quante + 1 : 1;
+            sw.mancate[voce.azione] = { quante: quante, quando: adesso };
+
+            if (quante >= 2) {
+                sw.mancate[voce.azione] = { quante: 0, quando: 0 };
+                return {
+                    firma: 'azione-persa',
+                    messaggio: 'Comando "' + voce.azione + '" ignorato due volte in 30 s pur essendo accettabile',
+                    gravita: 'fastidiosa',
+                    contesto: sw.ultimoCampione
+                };
+            }
+            return null;
         }
 
         if (voce.azione !== 'attacco') return null;

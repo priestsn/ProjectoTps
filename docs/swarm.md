@@ -153,6 +153,9 @@ sonde**, e ognuna è stata corretta con una misura:
 | `colpo-senza-danno` a ripetizione | la pressione cadeva nella finestra di recupero (16 passi) e il flag era quello dell'attacco prima |
 | `ritmo-basso: −5548 passi/s` | confronto a cavallo del riavvio della partita (`frameGioco` riparte da zero) |
 | `timer-fermo` in online | **la variabile `timer` dell'ospite resta a 60, ma l'HUD scende correttamente** (verificato in `verifica_timer_ospite.js`: HUD 59-57-55-53 come il padrone). Non era un difetto: ora la sonda misura il timer **mostrato** |
+| `azione-persa` sull'attacco | il colpo costa stamina (`statistiche.costoStamina`) e parte solo da terra: sotto soglia il gioco lo rifiuta e mostra "STAMINA". La sonda ora lo sa e la politica non prova più ad attaccare in quelle condizioni |
+| Jev: "testo illeggibile" nel timer | era la cattura a scala 0,6: i numeri diventavano una poltiglia di pixel. Il giudice riceve la pagina a **scala 1** |
+| Jev: "sprite enorme fuori scala" | è l'effetto dell'**ULTIMATE**, 128 px × 3,2 di proposito. Aggiunto alla taratura |
 
 Il valore vero di queste corse è stato quindi trovare **dove le sonde mentono**: uno strumento che grida
 al lupo ogni due minuti non serve a nessuno. Adesso le corse escono pulite e le sonde sono provate con

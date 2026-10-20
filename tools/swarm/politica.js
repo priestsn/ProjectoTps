@@ -36,6 +36,7 @@ function prossimaAzione(stato, casuale) {
     if (!stato.p1 || !stato.p2) return null;
     if (stato.p1.stun) return null;              // con lo stun non si comanda
     if (stato.p1.danno) return null;             // mentre incassa, i comandi possono essere ignorati
+    if (stato.p1.caricando) return null;         // chi carica non può fare altro
 
     const distanza = Math.abs(stato.p1.x - stato.p2.x);
     const versoDestra = stato.p2.x > stato.p1.x;
@@ -44,7 +45,11 @@ function prossimaAzione(stato, casuale) {
 
     if (stato.p2.attacco && distanza < FINESTRA_PARATA) return 'parata';
 
-    if (distanza < DISTANZA_ATTACCO && !stato.p1.attacco) {
+    // senza stamina l'attacco non parte: meglio avvicinarsi o parare
+    const senzaStamina = (typeof stato.p1.stamina === 'number' && typeof stato.p1.costoStamina === 'number')
+        ? stato.p1.stamina < stato.p1.costoStamina : false;
+
+    if (distanza < DISTANZA_ATTACCO && !stato.p1.attacco && !senzaStamina) {
         // la stamina sotto soglia non impedisce l'attacco normale: si attacca punto
         return 'attacco';
     }
