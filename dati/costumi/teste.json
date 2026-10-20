@@ -1,0 +1,39 @@
+{
+ "_nota": "Testa di ogni verdellinese nell'idle: scostamento dall'alto del riquadro del gioco e larghezza in pixel. Misurata dai profili di larghezza delle righe (vedi tools/crea_costume.py); tarare qui quando si aggiunge un verdellinese.",
+ "OusmaneDiouf": {
+  "scarto": 6,
+  "larghezza": 14
+ },
+ "KwameMensah": {
+  "scarto": 0,
+  "larghezza": 10
+ },
+ "ChidiOkonkwo": {
+  "scarto": 3,
+  "larghezza": 11
+ },
+ "AmaraDiallo": {
+  "scarto": 4,
+  "larghezza": 9
+ },
+ "TarisaiMoyo": {
+  "scarto": 4,
+  "larghezza": 24
+ },
+ "ZuriNkosi": {
+  "scarto": 3,
+  "larghezza": 13
+ },
+ "BakariTraore": {
+  "scarto": 9,
+  "larghezza": 26
+ },
+ "SekouCamara": {
+  "scarto": 17,
+  "larghezza": 26
+ },
+ "AyoAdebayo": {
+  "scarto": 3,
+  "larghezza": 28
+ }
+}
