@@ -194,15 +194,21 @@ verifica('Un nome sconosciuto non crea niente', Effetti.avviaAnimazione(sistema,
 const Negozio = require('../js/Negozio.js');
 
 sezione('Negozio');
-const gratuiti = Negozio.CATALOGO_PREDEFINITO.filter((v) => v.prezzo === 0);
-const aPagamento = Negozio.CATALOGO_PREDEFINITO.filter((v) => v.prezzo > 0);
-verifica('Il catalogo di riserva ha nove lottatori', Negozio.CATALOGO_PREDEFINITO.length === 9,
-    String(Negozio.CATALOGO_PREDEFINITO.length));
-verifica('Sei lottatori sono gratuiti dall\'inizio', gratuiti.length === 6, String(gratuiti.length));
-verifica('Tre lottatori si sbloccano nel negozio', aPagamento.length === 3, String(aPagamento.length));
+// Il catalogo contiene due cose: i verdellinesi e le loro skin rare.
+const soloVerdellinesi = Negozio.CATALOGO_PREDEFINITO.filter((v) => !v.skin);
+const soloSkins = Negozio.CATALOGO_PREDEFINITO.filter((v) => v.skin);
+const gratuiti = soloVerdellinesi.filter((v) => v.prezzo === 0);
+const aPagamento = soloVerdellinesi.filter((v) => v.prezzo > 0);
+
+verifica('Il catalogo di riserva ha nove verdellinesi', soloVerdellinesi.length === 9,
+    String(soloVerdellinesi.length));
+verifica('Sei verdellinesi sono gratuiti dall\'inizio', gratuiti.length === 6, String(gratuiti.length));
+verifica('Tre verdellinesi si sbloccano nel negozio', aPagamento.length === 3, String(aPagamento.length));
 verifica('I prezzi sono quelli decisi dal server',
     aPagamento.map((v) => v.prezzo).join(',') === '2500,3500,4000',
     aPagamento.map((v) => v.personaggio + ' ' + v.prezzo).join(' | '));
+verifica('Il catalogo ha una skin per verdellinese', soloSkins.length === 9, String(soloSkins.length));
+verifica('Ogni skin costa 1000 punti', soloSkins.every((v) => v.prezzo === 1000));
 
 const passate = risultati.filter(Boolean).length;
 console.log('\n' + passate + '/' + risultati.length + ' verifiche passate');

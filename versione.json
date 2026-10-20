@@ -1,4 +1,4 @@
 {
-  "build": 12,
+  "build": 13,
   "nota": "Aumentare 'build' a ogni rilascio. La pagina lo legge senza cache: se il numero è più alto di quello compilato in index.js, si ricarica da sola per prendere la versione nuova (serve perché GitHub Pages tiene l'HTML in cache per 10 minuti e altrimenti telefono e WebView mostrano CSS vecchio con JS nuovo)."
 }

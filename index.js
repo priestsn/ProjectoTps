@@ -6,7 +6,7 @@
 // (è successo davvero: sfondo piccolo in alto a sinistra e selezione tagliata).
 // Qui si chiede versione.json SENZA cache: se il build del server è più recente
 // di quello compilato in questo file, la pagina si ricarica da sola una volta.
-const BUILD_PAGINA = 12;
+const BUILD_PAGINA = 13;
 
 (function controlloVersione() {
     if (typeof fetch !== 'function') {
@@ -214,9 +214,24 @@ function preparaPartita(idP1, idP2) {
 
     ultimiPersonaggi = { p1: idP1, p2: idP2 };
 
-    Player = creaLottatore(trovaPersonaggio(idP1), margine, 1);
-    Enemy = creaLottatore(trovaPersonaggio(idP2), canvas.width - margine, -1);
+    // personaggioConSkin() restituisce gli stessi dati con la cartella degli
+    // sprite della skin indossata: statistiche e mosse non cambiano.
+    Player = creaLottatore(verdellineseInPartita(idP1), margine, 1);
+    Enemy = creaLottatore(verdellineseInPartita(idP2), canvas.width - margine, -1);
     Enemy.lastKey = 'ArrowLeft';
+}
+
+/**
+ * Il verdellinese da mettere in campo, con la skin indossata se c'è.
+ * Se il modulo delle skin non è caricato (o non c'è nessuna skin) si usa il
+ * dato originale: la partita deve partire comunque.
+ */
+function verdellineseInPartita(id) {
+    if (typeof personaggioConSkin === 'function') {
+        const conSkin = personaggioConSkin(id);
+        if (conSkin) return conSkin;
+    }
+    return trovaPersonaggio(id);
 }
 
 // ========================================

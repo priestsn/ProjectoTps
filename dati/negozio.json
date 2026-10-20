@@ -1,14 +1,131 @@
 {
-  "versione": 1,
+  "versione": 2,
   "voci": [
-    { "personaggio": "OusmaneDiouf", "prezzo": 0, "ottenutoAllInizio": true, "icona": "assets/interfaccia/personaggi/OusmaneDiouf.png" },
-    { "personaggio": "KwameMensah", "prezzo": 0, "ottenutoAllInizio": true, "icona": "assets/interfaccia/personaggi/KwameMensah.png" },
-    { "personaggio": "ChidiOkonkwo", "prezzo": 0, "ottenutoAllInizio": true, "icona": "assets/interfaccia/personaggi/ChidiOkonkwo.png" },
-    { "personaggio": "AmaraDiallo", "prezzo": 0, "ottenutoAllInizio": true, "icona": "assets/interfaccia/personaggi/AmaraDiallo.png" },
-    { "personaggio": "TarisaiMoyo", "prezzo": 0, "ottenutoAllInizio": true, "icona": "assets/interfaccia/personaggi/TarisaiMoyo.png" },
-    { "personaggio": "ZuriNkosi", "prezzo": 0, "ottenutoAllInizio": true, "icona": "assets/interfaccia/personaggi/ZuriNkosi.png" },
-    { "personaggio": "BakariTraore", "prezzo": 2500, "ottenutoAllInizio": false, "icona": "assets/interfaccia/personaggi/BakariTraore.png" },
-    { "personaggio": "SekouCamara", "prezzo": 3500, "ottenutoAllInizio": false, "icona": "assets/interfaccia/personaggi/SekouCamara.png" },
-    { "personaggio": "AyoAdebayo", "prezzo": 4000, "ottenutoAllInizio": false, "icona": "assets/interfaccia/personaggi/AyoAdebayo.png" }
+    {
+      "personaggio": "OusmaneDiouf",
+      "prezzo": 0,
+      "ottenutoAllInizio": true,
+      "icona": "assets/interfaccia/personaggi/OusmaneDiouf.png"
+    },
+    {
+      "personaggio": "KwameMensah",
+      "prezzo": 0,
+      "ottenutoAllInizio": true,
+      "icona": "assets/interfaccia/personaggi/KwameMensah.png"
+    },
+    {
+      "personaggio": "ChidiOkonkwo",
+      "prezzo": 0,
+      "ottenutoAllInizio": true,
+      "icona": "assets/interfaccia/personaggi/ChidiOkonkwo.png"
+    },
+    {
+      "personaggio": "AmaraDiallo",
+      "prezzo": 0,
+      "ottenutoAllInizio": true,
+      "icona": "assets/interfaccia/personaggi/AmaraDiallo.png"
+    },
+    {
+      "personaggio": "TarisaiMoyo",
+      "prezzo": 0,
+      "ottenutoAllInizio": true,
+      "icona": "assets/interfaccia/personaggi/TarisaiMoyo.png"
+    },
+    {
+      "personaggio": "ZuriNkosi",
+      "prezzo": 0,
+      "ottenutoAllInizio": true,
+      "icona": "assets/interfaccia/personaggi/ZuriNkosi.png"
+    },
+    {
+      "personaggio": "BakariTraore",
+      "prezzo": 2500,
+      "ottenutoAllInizio": false,
+      "icona": "assets/interfaccia/personaggi/BakariTraore.png"
+    },
+    {
+      "personaggio": "SekouCamara",
+      "prezzo": 3500,
+      "ottenutoAllInizio": false,
+      "icona": "assets/interfaccia/personaggi/SekouCamara.png"
+    },
+    {
+      "personaggio": "AyoAdebayo",
+      "prezzo": 4000,
+      "ottenutoAllInizio": false,
+      "icona": "assets/interfaccia/personaggi/AyoAdebayo.png"
+    },
+    {
+      "personaggio": "OusmaneDiouf",
+      "skin": "raro",
+      "nome": "Raro Oro",
+      "prezzo": 1000,
+      "ottenutoAllInizio": false,
+      "icona": "assets/Skins/OusmaneDiouf-raro/ritratto.png"
+    },
+    {
+      "personaggio": "KwameMensah",
+      "skin": "raro",
+      "nome": "Raro Ghiaccio",
+      "prezzo": 1000,
+      "ottenutoAllInizio": false,
+      "icona": "assets/Skins/KwameMensah-raro/ritratto.png"
+    },
+    {
+      "personaggio": "ChidiOkonkwo",
+      "skin": "raro",
+      "nome": "Raro Cremisi",
+      "prezzo": 1000,
+      "ottenutoAllInizio": false,
+      "icona": "assets/Skins/ChidiOkonkwo-raro/ritratto.png"
+    },
+    {
+      "personaggio": "AmaraDiallo",
+      "skin": "raro",
+      "nome": "Raro Smeraldo",
+      "prezzo": 1000,
+      "ottenutoAllInizio": false,
+      "icona": "assets/Skins/AmaraDiallo-raro/ritratto.png"
+    },
+    {
+      "personaggio": "TarisaiMoyo",
+      "skin": "raro",
+      "nome": "Raro Ametista",
+      "prezzo": 1000,
+      "ottenutoAllInizio": false,
+      "icona": "assets/Skins/TarisaiMoyo-raro/ritratto.png"
+    },
+    {
+      "personaggio": "ZuriNkosi",
+      "skin": "raro",
+      "nome": "Raro Azzurro",
+      "prezzo": 1000,
+      "ottenutoAllInizio": false,
+      "icona": "assets/Skins/ZuriNkosi-raro/ritratto.png"
+    },
+    {
+      "personaggio": "BakariTraore",
+      "skin": "raro",
+      "nome": "Raro Ambra",
+      "prezzo": 1000,
+      "ottenutoAllInizio": false,
+      "icona": "assets/Skins/BakariTraore-raro/ritratto.png"
+    },
+    {
+      "personaggio": "SekouCamara",
+      "skin": "raro",
+      "nome": "Raro Fucsia",
+      "prezzo": 1000,
+      "ottenutoAllInizio": false,
+      "icona": "assets/Skins/SekouCamara-raro/ritratto.png"
+    },
+    {
+      "personaggio": "AyoAdebayo",
+      "skin": "raro",
+      "nome": "Raro Turchese",
+      "prezzo": 1000,
+      "ottenutoAllInizio": false,
+      "icona": "assets/Skins/AyoAdebayo-raro/ritratto.png"
+    }
   ]
 }

@@ -33,6 +33,16 @@ function negozio() {
     return NEGOZIO;
 }
 
+/**
+ * Chiave unica di una voce di negozio.
+ * Verdellinese: "OusmaneDiouf". Skin: "OusmaneDiouf:raro".
+ * Serve perché un verdellinese e la sua skin hanno lo stesso `personaggio`:
+ * senza la chiave, comprare la skin risulterebbe "lottatore già posseduto".
+ */
+function chiaveVoce(voce) {
+    return voce.skin ? voce.personaggio + ':' + voce.skin : voce.personaggio;
+}
+
 /** Lottatori che si hanno appena creato l'account. */
 function personaggiIniziali() {
     return NEGOZIO.voci.filter((voce) => voce.ottenutoAllInizio).map((voce) => voce.personaggio);
@@ -76,6 +86,7 @@ function pubblico(giocatore) {
         legaMancano: lega.mancano,
         protezioneUsata: !!giocatore.protezioneUsata,
         personaggi: giocatore.personaggi,
+        skins: giocatore.skins || [],
         vittorie: giocatore.vittorie,
         sconfitte: giocatore.sconfitte,
         pareggi: giocatore.pareggi || 0,
@@ -241,23 +252,41 @@ function promuoviAdmin(magazzino, nick) {
     return giocatore;
 }
 
-/** Acquisto nel negozio: scala i punti e aggiunge il lottatore. */
-function acquista(magazzino, giocatore, idPersonaggio) {
-    const voce = NEGOZIO.voci.find((v) => v.personaggio === idPersonaggio);
+/** Acquisto nel negozio: scala i punti e aggiunge il lottatore o la skin. */
+function acquista(magazzino, giocatore, chiave) {
+    const voce = NEGOZIO.voci.find((v) => chiaveVoce(v) === chiave || v.personaggio === chiave);
     if (!voce) {
         return { ok: false, stato: 404, messaggio: 'Lottatore non presente nel negozio.' };
     }
-    if (giocatore.personaggi.includes(idPersonaggio)) {
-        return { ok: false, stato: 409, messaggio: 'Possiedi già questo lottatore.' };
+
+    // Skin e verdellinesi si possiedono in due elenchi diversi: uno non deve
+    // bloccare l'altro (la skin dell'Ousmane si compra anche possedendo Ousmane).
+    const eSkin = !!voce.skin;
+    if (eSkin) {
+        giocatore.skins = giocatore.skins || [];
+    }
+    const elenco = eSkin ? giocatore.skins : giocatore.personaggi;
+    const identificativo = chiaveVoce(voce);
+
+    if (elenco.includes(identificativo)) {
+        return {
+            ok: false, stato: 409,
+            messaggio: eSkin ? 'Possiedi già questa skin.' : 'Possiedi già questo lottatore.'
+        };
     }
     if (giocatore.punti < voce.prezzo) {
         return { ok: false, stato: 402, messaggio: 'Punti insufficienti: ne servono ' + voce.prezzo + '.' };
     }
 
     giocatore.punti -= voce.prezzo;
-    giocatore.personaggi.push(idPersonaggio);
+    elenco.push(identificativo);
     salvaGiocatore(magazzino, giocatore);
-    return { ok: true, punti: giocatore.punti, personaggi: giocatore.personaggi };
+    return {
+        ok: true,
+        punti: giocatore.punti,
+        personaggi: giocatore.personaggi,
+        skins: giocatore.skins || []
+    };
 }
 
 /** Accredita punti a un giocatore (usato da partite, tornei e missioni). */
@@ -268,7 +297,7 @@ function accredita(magazzino, giocatore, punti) {
 }
 
 module.exports = {
-    regole, negozio, personaggiIniziali, pubblico, nickAccettabile,
+    regole, negozio, chiaveVoce, personaggiIniziali, pubblico, nickAccettabile,
     iscrivi, accedi, esci, daToken, leggiGiocatore, salvaGiocatore,
     elencoGiocatori, promuoviAdmin, acquista, accredita
 };

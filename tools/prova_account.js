@@ -107,10 +107,20 @@ async function main() {
         verifica('senza token il profilo è vietato', senzaToken.stato === 401, 'http ' + senzaToken.stato);
 
         const negozio = await get('/api/negozio', accesso.dati.token);
-        verifica('il negozio elenca 9 lottatori', negozio.dati.voci.length === 9, 'voci ' + negozio.dati.voci.length);
-        verifica('tre lottatori risultano da acquistare',
-            negozio.dati.voci.filter((v) => !v.ottenuto).length === 3,
-            negozio.dati.voci.filter((v) => !v.ottenuto).map((v) => v.personaggio).join(','));
+        const vociVerdellinesi = negozio.dati.voci.filter((v) => !v.skin);
+        const vociSkins = negozio.dati.voci.filter((v) => v.skin);
+
+        verifica('il negozio elenca 9 verdellinesi', vociVerdellinesi.length === 9,
+            'voci ' + vociVerdellinesi.length);
+        verifica('tre verdellinesi risultano da acquistare',
+            vociVerdellinesi.filter((v) => !v.ottenuto).length === 3,
+            vociVerdellinesi.filter((v) => !v.ottenuto).map((v) => v.personaggio).join(','));
+        verifica('il negozio elenca 9 skin', vociSkins.length === 9, 'skin ' + vociSkins.length);
+        verifica('nessuna skin è posseduta all\'inizio',
+            vociSkins.every((v) => !v.ottenuto),
+            vociSkins.filter((v) => v.ottenuto).map((v) => v.chiave).join(','));
+        verifica('ogni skin ha la sua chiave',
+            vociSkins.every((v) => v.chiave === v.personaggio + ':' + v.skin));
 
         const troppoCaro = await post('/api/negozio/acquisto', { personaggio: 'AyoAdebayo' }, accesso.dati.token);
         verifica('acquisto senza punti sufficienti rifiutato', troppoCaro.stato === 402, 'http ' + troppoCaro.stato);

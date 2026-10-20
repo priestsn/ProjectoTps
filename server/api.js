@@ -147,12 +147,21 @@ async function gestisciApi(richiesta, risposta) {
         case 'GET /api/negozio': {
             const giocatore = giocatoreDaRichiesta(richiesta);
             if (!giocatore) { rispondi(risposta, 401, { messaggio: MESSAGGIO_SESSIONE }); return true; }
-            const voci = account.negozio().voci.map((voce) => ({
-                personaggio: voce.personaggio,
-                prezzo: voce.prezzo,
-                ottenuto: giocatore.personaggi.includes(voce.personaggio),
-                icona: voce.icona
-            }));
+            const skinsPossedute = giocatore.skins || [];
+            const voci = account.negozio().voci.map((voce) => {
+                const chiave = account.chiaveVoce(voce);
+                return {
+                    chiave: chiave,
+                    personaggio: voce.personaggio,
+                    skin: voce.skin || null,
+                    nome: voce.nome || null,
+                    prezzo: voce.prezzo,
+                    ottenuto: voce.skin
+                        ? skinsPossedute.includes(chiave)
+                        : giocatore.personaggi.includes(voce.personaggio),
+                    icona: voce.icona
+                };
+            });
             rispondi(risposta, 200, { punti: giocatore.punti, voci: voci });
             return true;
         }
@@ -160,9 +169,15 @@ async function gestisciApi(richiesta, risposta) {
         case 'POST /api/negozio/acquisto': {
             const giocatore = giocatoreDaRichiesta(richiesta);
             if (!giocatore) { rispondi(risposta, 401, { messaggio: MESSAGGIO_SESSIONE }); return true; }
-            const esito = account.acquista(magazzino, giocatore, String(corpo.personaggio || ''));
+            // `chiave` per le voci nuove (skin comprese), `personaggio` per i client vecchi
+            const scelta = String(corpo.chiave || corpo.personaggio || '');
+            const esito = account.acquista(magazzino, giocatore, scelta);
             if (!esito.ok) { rispondi(risposta, esito.stato, { messaggio: esito.messaggio }); return true; }
-            rispondi(risposta, 200, { punti: esito.punti, personaggi: esito.personaggi });
+            rispondi(risposta, 200, {
+                punti: esito.punti,
+                personaggi: esito.personaggi,
+                skins: esito.skins || []
+            });
             return true;
         }
 

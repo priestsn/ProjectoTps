@@ -1483,6 +1483,11 @@ canvas {
     gap: 12px;
     padding: 22px;
     overflow-y: auto;
+
+    /* Con `justify-content: center` (ereditato da .schermata) un contenuto
+       più alto del riquadro esce dalla parte ALTA e diventa irraggiungibile:
+       il primo titolo del negozio finiva a y = -3 px. Si parte dall'alto. */
+    justify-content: flex-start;
 }
 
 .account-titolo,
@@ -1682,6 +1687,40 @@ canvas {
 
 .negozio-scheda.gia-tuo {
     border-color: #2a4a2a;
+}
+
+/* Titolo delle due sezioni del negozio (verdellinesi / skin) */
+.negozio-sezione {
+    align-self: flex-start;
+    margin-top: 12px;
+    font-size: 19px;
+    letter-spacing: 3px;
+    color: #9a9a9a;
+}
+
+.negozio-nota {
+    max-width: 620px;
+    color: #9a9a9a;
+    text-align: center;
+}
+
+/* Anteprima animata: mostra il verdellinese vero, non un'icona.
+   La larghezza del foglio arriva da --foglio, impostata da js/Negozio.js. */
+.negozio-anteprima {
+    border-radius: 6px;
+    background-color: rgba(255, 236, 196, 0.12);
+    box-shadow: inset 0 0 0 1px rgba(255, 236, 196, 0.18);
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+}
+
+@keyframes negozio-anteprima {
+    from { background-position-x: 0; }
+    to   { background-position-x: calc(-1 * var(--foglio, 0px)); }
+}
+
+.negozio-scheda.indossata {
+    border-color: #7dff7d;
 }
 
 .negozio-nome {
