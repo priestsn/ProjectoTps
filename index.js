@@ -6,7 +6,7 @@
 // (è successo davvero: sfondo piccolo in alto a sinistra e selezione tagliata).
 // Qui si chiede versione.json SENZA cache: se il build del server è più recente
 // di quello compilato in questo file, la pagina si ricarica da sola una volta.
-const BUILD_PAGINA = 11;
+const BUILD_PAGINA = 12;
 
 (function controlloVersione() {
     if (typeof fetch !== 'function') {
@@ -2050,13 +2050,9 @@ function rivincita() {
         return;
     }
 
+    // VS ONLINE: la rivincita deve volerla anche l'altro giocatore
     if (modalitaPartita === MODALITA.ONLINE && onlineStato.attivo) {
-        if (onlineStato.ospite) {
-            Rete.invia({ t: 'rivincita' });
-            mostraBadgeOnline('RICHIESTA DI RIVINCITA INVIATA');
-            return;
-        }
-        inviaAvvioOnline();
+        proponiSceltaFine('rivincita');
         return;
     }
 
@@ -2068,11 +2064,12 @@ function rivincita() {
  * anche dall'altro lato, così i due scelgono di nuovo insieme.
  */
 function cambiaPersonaggi() {
+    // VS ONLINE: la selezione si apre solo quando vogliono tutti e due
     if (modalitaPartita === MODALITA.ONLINE && onlineStato.attivo) {
-        Rete.invia({ t: 'selezione' });
-        apriSelezione(MODALITA.ONLINE);
+        proponiSceltaFine('cambia');
         return;
     }
+
     apriSelezione(modalitaPartita);
 }
 

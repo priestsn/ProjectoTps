@@ -78,20 +78,21 @@ function disegnaAccount() {
 
     if (statoAccount.dentro) {
         contenitore.appendChild(moduloProfilo());
-        return;
+    } else {
+        const nota = accountCrea('div', 'account-nota',
+            'L\'account serve per punti, negozio, classifica e tornei. Per giocare in locale o contro la CPU non serve.');
+        contenitore.appendChild(nota);
+        contenitore.appendChild(moduloAccesso());
+        contenitore.appendChild(moduloIscrizione());
+
+        const stato = accountCrea('div', 'account-stato');
+        stato.id = 'accountStato';
+        contenitore.appendChild(stato);
     }
 
-    const nota = accountCrea('div', 'account-nota',
-        'L\'account serve per punti, negozio, classifica e tornei. Per giocare in locale o contro la CPU non serve.');
-    contenitore.appendChild(nota);
-    contenitore.appendChild(moduloAccesso());
-    contenitore.appendChild(moduloIscrizione());
-
-    const stato = accountCrea('div', 'account-stato');
-    stato.id = 'accountStato';
-    contenitore.appendChild(stato);
-
-    const indietro = accountCrea('button', 'account-bottone secondario', 'INDIETRO');
+    // Sempre presente: da dentro l'account serve a uscire dalla PAGINA, mentre
+    // "ESCI DALL'ACCOUNT" chiude la sessione. Sono due cose diverse.
+    const indietro = accountCrea('button', 'account-bottone secondario', 'TORNA AL MENU');
     indietro.addEventListener('click', () => apriMenu('principale'));
     contenitore.appendChild(indietro);
 }
@@ -197,7 +198,7 @@ function moduloProfilo() {
     const aggiorna = accountCrea('button', 'account-bottone secondario', 'AGGIORNA');
     aggiorna.addEventListener('click', () => aggiornaProfilo(true));
 
-    const esci = accountCrea('button', 'account-bottone secondario', 'ESCI');
+    const esci = accountCrea('button', 'account-bottone secondario', 'ESCI DALL\'ACCOUNT');
     esci.addEventListener('click', () => esciAccount());
 
     modulo.append(negozio, aggiorna, esci);

@@ -24,7 +24,8 @@ const onlineStato = {
     nomeAvversario: null, // nome dell'altro (account o ospite)
     fotogramma: null,     // ultimo stato ricevuto (solo ospite)
     contatoreInvio: 0,    // usato per mandare un fotogramma ogni due frame
-    fineMostrata: false   // il menu di fine partita è già comparso (solo ospite)
+    fineMostrata: false,  // il menu di fine partita è già comparso (solo ospite)
+    consensoFine: consensoIniziale()  // scelte dei due giocatori a fine partita
 };
 
 // Campi degli stati alterati, nell'ordine in cui viaggiano nel fotogramma
@@ -344,19 +345,28 @@ function gestisciMessaggioOnline(dati) {
             return;
         }
 
+        case 'sceltaFine': {
+            // L'avversario ha scelto: se coincide con la mia scelta si agisce
+            onlineStato.consensoFine = segnaSceltaFine(
+                onlineStato.consensoFine, 'altra', dati.scelta);
+            applicaConsensoFine();
+            return;
+        }
+
         case 'rivincita': {
-            // L'ospite ha chiesto la rivincita: riparte l'host, che rimanda 'avvia'
-            if (!onlineStato.ospite) {
-                inviaAvvioOnline();
-            }
+            // Vecchio client: chiedeva la rivincita e basta. Ora vale come una
+            // scelta, quindi l'host riparte solo se ha scelto anche lui.
+            onlineStato.consensoFine = segnaSceltaFine(
+                onlineStato.consensoFine, 'altra', 'rivincita');
+            applicaConsensoFine();
             return;
         }
 
         case 'selezione': {
-            // L'altro vuole cambiare personaggi: si riapre la selezione qui
-            if (statoCorrente !== STATI.SELEZIONE) {
-                apriSelezione(MODALITA.ONLINE);
-            }
+            // Vecchio client che vuole cambiare verdellinese: stessa regola
+            onlineStato.consensoFine = segnaSceltaFine(
+                onlineStato.consensoFine, 'altra', 'cambia');
+            applicaConsensoFine();
             return;
         }
 
@@ -401,6 +411,72 @@ function inviaAvvioOnline() {
     avviaPartitaOnline(false, idP1, idP2, canvas.width, canvas.height);
 }
 
+// ========================================
+// Fine partita: le scelte dei due giocatori
+// ==========================================
+// In VS ONLINE nessuno decide da solo: rivincita e cambio verdellinese si
+// fanno quando le due scelte coincidono. L'uscita al menu invece è libera.
+
+/**
+ * Registra la MIA scelta di fine partita, la manda all'avversario e guarda se
+ * adesso tutti e due vogliono la stessa cosa.
+ * `scelta` vale 'rivincita' | 'cambia' | 'esci'.
+ */
+function proponiSceltaFine(scelta) {
+    if (!onlineStato.attivo) return;
+
+    // Uscire non aspetta nessuno: si chiude e basta. L'altro riceve
+    // 'avversarioUscito' dal server e torna al menu.
+    if (!serveAccordo(scelta)) {
+        Rete.invia({ t: 'sceltaFine', scelta: scelta });
+        esciAlMenu();
+        return;
+    }
+
+    onlineStato.consensoFine = segnaSceltaFine(onlineStato.consensoFine, 'mia', scelta);
+    Rete.invia({ t: 'sceltaFine', scelta: scelta });
+
+    applicaConsensoFine();
+}
+
+/** Cosa fare adesso che conosco le due scelte. */
+function applicaConsensoFine() {
+    const esito = esitoFine(onlineStato.consensoFine);
+
+    if (esito === 'rivincita') {
+        // L'ospite non può far ripartire la partita: aspetta 'avvia' dall'host
+        if (onlineStato.ospite) {
+            mostraBadgeOnline('RIVINCITA ACCETTATA: ASPETTO L\'AVVERSARIO');
+            return;
+        }
+        onlineStato.consensoFine = consensoIniziale();
+        inviaAvvioOnline();
+        return;
+    }
+
+    if (esito === 'cambia') {
+        onlineStato.consensoFine = consensoIniziale();
+        apriSelezione(MODALITA.ONLINE);
+        return;
+    }
+
+    if (esito === 'esci') {
+        onlineStato.consensoFine = consensoIniziale();
+        esciAlMenu();
+        return;
+    }
+
+    // Attesa o disaccordo: si resta sul menu e si dice cosa manca
+    mostraBadgeOnline(testoStatoFine(onlineStato.consensoFine, onlineStato.nomeAvversario));
+    aggiornaMenuFinePartita();
+}
+
+/** Il consenso torna vuoto quando si ricomincia da capo. */
+function azzeraConsensoFine() {
+    onlineStato.consensoFine = consensoIniziale();
+    aggiornaMenuFinePartita();
+}
+
 /**
  * Avvia la partita in modalità online.
  * `ospite` decide chi simula: solo l'host.
@@ -411,6 +487,7 @@ function avviaPartitaOnline(ospite, idP1, idP2, larghezza, altezza) {
     onlineStato.fotogramma = null;
     onlineStato.contatoreInvio = 0;
     onlineStato.fineMostrata = false;
+    onlineStato.consensoFine = consensoIniziale();
 
     if (ospite) {
         // Stesse misure dell'host: le posizioni che arrivano sono pixel del

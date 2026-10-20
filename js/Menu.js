@@ -121,6 +121,37 @@ function disegnaMenu() {
     }
 
     disegnaPannelloGiocatore();
+
+    aggiornaMenuFinePartita();
+}
+
+/**
+ * In VS ONLINE le voci di fine partita dicono anche cosa ha scelto l'altro, e
+ * sotto il menu compare una riga di stato. Fuori dall'online non fa niente.
+ */
+function aggiornaMenuFinePartita() {
+    if (menuCorrente !== 'finePartita') return;
+
+    const online = modalitaPartita === MODALITA.ONLINE && onlineStato.attivo;
+    const consenso = online ? onlineStato.consensoFine : null;
+
+    const voci = VOCI_MENU.finePartita;
+    if (voci && voci.length >= 2) {
+        voci[0].testo = online ? etichettaFinePartita('rivincita', consenso) : 'RIVINCITA';
+        voci[1].testo = online ? etichettaFinePartita('cambia', consenso) : 'CAMBIA VERDELLINESI';
+    }
+
+    const riga = document.querySelector('#menuStatoFine');
+    if (!riga) return;
+
+    if (!online) {
+        riga.textContent = '';
+        riga.style.display = 'none';
+        return;
+    }
+
+    riga.textContent = testoStatoFine(consenso, onlineStato.nomeAvversario);
+    riga.style.display = 'block';
 }
 
 /** Menu principale: un blocco per colonna, con titolo e voci. */
@@ -408,6 +439,24 @@ function attivaFullscreen() {
  */
 function gestisciInputMenu(evento) {
     if (statoCorrente !== STATI.MENU && statoCorrente !== STATI.PAUSA) {
+        // Esc chiude le schermate informative e torna al menu principale:
+        // prima la tastiera era muta e da dentro l'account non si usciva.
+        if (evento.key === 'Escape') {
+            if (statoCorrente === STATI.ACCOUNT || statoCorrente === STATI.NEGOZIO ||
+                statoCorrente === STATI.CLASSIFICA || statoCorrente === STATI.AMICI ||
+                statoCorrente === STATI.CODA) {
+
+                if (statoCorrente === STATI.CODA && typeof annullaCoda === 'function') {
+                    annullaCoda();
+                }
+
+                if (statoCorrente === STATI.NEGOZIO && typeof chiudiNegoziante === 'function') {
+                    chiudiNegoziante();
+                }
+
+                apriMenu('principale');
+            }
+        }
         return;
     }
 
