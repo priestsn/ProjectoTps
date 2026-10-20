@@ -18,3 +18,6 @@ partite.jsonl
 
 # Artefatti di comfy-cli (scritti nella cartella corrente durante l install)
 requirements.compiled
+
+# Artefatti delle corse dello sciame di bot (rapporto e screenshot di una prova)
+bug_reports/swarm-*/
