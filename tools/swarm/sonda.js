@@ -15,6 +15,7 @@
         ultimoAttaccoVisto: 0,
         azioneInCorso: null,
         mancate: {},
+        colpiSenzaDanno: { quante: 0, quando: 0 },
         timerFermo: 0,
         ultimoCampione: null,
         ultimaFirma: {}
@@ -219,12 +220,17 @@
         if (azione === 'parata' && me && (me.inAria || me.stamina < 1)) ammessa = false;
         if (me && (me.stun || me.danno)) ammessa = false;
 
+        const io = typeof Player !== 'undefined' ? Player : null;
         sw.azioneInCorso = {
             azione: azione,
             quando: Date.now(),
             ammessa: ammessa,
             reazioneVista: false,
-            vitaPrima: (typeof vitaPrima === 'number') ? vitaPrima : null
+            vitaPrima: (typeof vitaPrima === 'number') ? vitaPrima : null,
+            // Il flag dell'impatto resta acceso da un attacco all'altro finché
+            // non ne parte uno nuovo: se al momento della pressione era già
+            // vero e dopo non cambia, quel "colpo" è il residuo di prima.
+            colpitoPrima: !!(io && io.attaccoHaColpito)
         };
 
         // Il campionamento normale è a 250 ms: una parata da 100 ms ci
@@ -310,6 +316,9 @@
         const io = typeof Player !== 'undefined' ? Player : null;
         const nemico = leggiLottatore(typeof Enemy !== 'undefined' ? Enemy : null);
         if (!io || !nemico || !io.attaccoHaColpito) return null;
+        // flag già acceso prima della pressione e mai cambiato: è l'attacco
+        // precedente, non questo
+        if (voce.colpitoPrima && io.attaccoHaColpito) return null;
         if (voce.vitaPrima !== null && nemico.vita < voce.vitaPrima) return null;
         if (nemico.stun) return null;
 
@@ -318,9 +327,21 @@
         const recenti = sw.campioni.filter(function (c) { return adesso - c.quando < 600; });
         if (recenti.some(function (c) { return c.p2 && (c.p2.parata || c.p2.danno); })) return null;
 
+        // Un colpo senza danno può essere un blocco normale del difensore, che
+        // dura pochi passi e può sfuggire al campionamento. Il difetto vero (il
+        // 43% di colpi persi di una volta) si manifesta a raffica: si segnala
+        // alla TERZA occorrenza in 30 secondi.
+        const ora = Date.now();
+        const prima = sw.colpiSenzaDanno || { quante: 0, quando: 0 };
+        const quante = (ora - prima.quando < 30000) ? prima.quante + 1 : 1;
+        sw.colpiSenzaDanno = { quante: quante, quando: ora };
+
+        if (quante < 3) return null;
+
+        sw.colpiSenzaDanno = { quante: 0, quando: 0 };
         return {
             firma: 'colpo-senza-danno',
-            messaggio: 'Il gioco ha registrato il colpo ma la vita dell\'avversario non è scesa (' +
+            messaggio: 'Tre colpi registrati dal gioco senza danno in 30 s (ultimo: ' +
                 voce.vitaPrima + ' -> ' + nemico.vita + ')',
             gravita: 'grave',
             contesto: sw.ultimoCampione
