@@ -158,9 +158,12 @@ La sezione `## Godibilità` compare in testa a ogni rapporto.
 Gira a cicli fino all'ora indicata, riscrive `rapporto-parziale.md` a ogni ciclo (se si interrompe, il
 misurato non si perde) e chiude con il rapporto completo della notte. Il numero di bot non è arbitrario:
 `node tools/swarm/capacita.js 8` misura i passi al secondo di N browser veri. Su questo PC (Ryzen 5 5600G,
-16 GB) **8 bot restano a 60 passi/s esatti**, con la memoria quasi esaurita: oltre si misura la contesa di
-CPU, non il gioco, e i numeri sulla godibilità diventano fuffa. Con cicli da 6 minuti si arriva comunque a
-centinaia di partite e a decine di sessioni diverse (seme e verdellinesi cambiano a ogni ciclo).
+16 GB) 8 browser **a vuoto** restano a 60 passi/s esatti, ma **con il giudice acceso e il pilotaggio a
+10 Hz** il tetto scende: a 7-8 bot compare `ritmo-basso` (41-47 passi/s) e ricompaiono falsi `azione-persa`
+perché la strumentazione in pagina perde colpi. La notte del 20/10 è quindi girata a **6 bot**, dove il
+ritmo tiene e le misure valgono. Oltre, si misura la contesa di CPU e i numeri sulla godibilità diventano
+fuffa. Con cicli da 6 minuti si arriva comunque a **centinaia di partite** e a decine di sessioni diverse
+(seme e verdellinesi cambiano a ogni ciclo).
 
 ## Gira da sola di notte
 
