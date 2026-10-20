@@ -1044,6 +1044,17 @@ canvas {
     text-align: center;
 }
 
+/* Riga di stato del menu di fine partita: cosa ha scelto l'avversario */
+.menu-stato-fine {
+    display: none;
+    max-width: 720px;
+    margin-top: 6px;
+    font-size: 15px;
+    letter-spacing: 1px;
+    color: #7dff7d;
+    text-align: center;
+}
+
 /* Scheda dell'avversario in VS ONLINE */
 .info-nome.avversario {
     color: #ff7a4a;
@@ -1578,6 +1589,75 @@ canvas {
     font-size: 18px;
     letter-spacing: 1px;
     color: #ffd34d;
+}
+
+/* ---------- Banco del negoziante ---------- */
+/* Sprite a sinistra, fumetto a destra. Le celle sono da 128 px (come gli
+   effetti) e vengono mostrate a 192 px: il foglio ha 14 fotogrammi in fila,
+   quindi la larghezza dello sfondo è 14 x 192 = 2688 px. */
+.negozio-banco {
+    display: grid;
+    grid-template-columns: 192px minmax(0, 1fr);
+    gap: 18px;
+    align-items: end;
+    width: 100%;
+    max-width: 900px;
+}
+
+.negozio-negoziante {
+    width: 192px;
+    height: 192px;
+    border-radius: 6px;
+    /* Pannello caldo e chiaro: lo sprite è scuro e su fondo scuro sparirebbe */
+    background-color: rgba(255, 236, 196, 0.13);
+    background-image: url('../assets/Negoziante/idle.png');
+    background-repeat: no-repeat;
+    background-size: 2688px 192px;
+    box-shadow: inset 0 0 0 1px rgba(255, 236, 196, 0.20);
+    image-rendering: pixelated;
+    animation: negoziante-idle 1.2s steps(14) infinite;
+}
+
+/* Mentre dice la frase si muove: foglio da 4 fotogrammi, 4 x 192 = 768 px */
+.negozio-negoziante.sta-parlando {
+    background-image: url('../assets/Negoziante/parla.png');
+    background-size: 768px 192px;
+    animation: negoziante-parla 0.5s steps(4) infinite;
+}
+
+@keyframes negoziante-idle {
+    from { background-position-x: 0; }
+    to   { background-position-x: -2688px; }
+}
+
+@keyframes negoziante-parla {
+    from { background-position-x: 0; }
+    to   { background-position-x: -768px; }
+}
+
+.negozio-fumetto {
+    position: relative;
+    padding: 12px 16px;
+    font-size: 17px;
+    line-height: 1.4;
+    color: #d8d8d8;
+    background-color: rgba(10, 10, 14, 0.85);
+    border: 1px solid #2f4a2f;
+    border-radius: 8px;
+}
+
+/* La punta del fumetto, verso il negoziante */
+.negozio-fumetto::before {
+    content: '';
+    position: absolute;
+    left: -7px;
+    bottom: 18px;
+    width: 12px;
+    height: 12px;
+    background-color: rgba(10, 10, 14, 0.85);
+    border-left: 1px solid #2f4a2f;
+    border-bottom: 1px solid #2f4a2f;
+    transform: rotate(45deg);
 }
 
 .negozio-griglia {

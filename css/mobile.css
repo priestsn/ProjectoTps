@@ -117,3 +117,45 @@
         display: flex;
     }
 }
+
+/* ---------- Banco del negoziante su telefono ---------- */
+/* Con il dito il negoziante sta sopra e il fumetto sotto: su uno schermo
+   orizzontale stretto due colonne affiancate si pestano i piedi. */
+@media (pointer: coarse) {
+    .negozio-banco {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        justify-items: center;
+    }
+
+    .negozio-negoziante {
+        width: 112px;
+        height: 112px;
+        background-size: 1568px 112px;   /* 14 fotogrammi x 112 px */
+    }
+
+    .negozio-negoziante.sta-parlando {
+        background-size: 448px 112px;    /* 4 fotogrammi x 112 px */
+    }
+
+    @keyframes negoziante-idle {
+        from { background-position-x: 0; }
+        to   { background-position-x: -1568px; }
+    }
+
+    @keyframes negoziante-parla {
+        from { background-position-x: 0; }
+        to   { background-position-x: -448px; }
+    }
+
+    .negozio-fumetto {
+        font-size: 15px;
+    }
+
+    .negozio-fumetto::before {
+        left: 50%;
+        bottom: auto;
+        top: -7px;
+        transform: translateX(-50%) rotate(45deg);
+    }
+}

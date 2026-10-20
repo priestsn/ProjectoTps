@@ -24,6 +24,48 @@ const CATALOGO_PREDEFINITO = [
 // Catalogo attivo: parte dalla copia di riserva, il server può aggiornarlo.
 let CATALOGO_NEGOZIO = CATALOGO_PREDEFINITO.map((voce) => Object.assign({}, voce));
 
+// ========================================
+// Negoziante
+// ==========================================
+// Una frase per visita: si sceglie quando si apre il negozio e resta quella
+// finché non si esce (niente timer che cambia il testo sotto gli occhi).
+// Lo sprite invece parla per un attimo e poi torna in attesa.
+
+let fraseNegozianteCorrente = null;
+let timerParlaNegoziante = null;
+
+/** Fa muovere la bocca del negoziante per un attimo, poi lo lascia in attesa. */
+function avviaParlaNegoziante() {
+    chiudiNegoziante();
+
+    const figura = document.querySelector('#negozianteFigura');
+    if (!figura) return;
+
+    figura.classList.add('sta-parlando');
+    timerParlaNegoziante = setTimeout(() => {
+        figura.classList.remove('sta-parlando');
+        timerParlaNegoziante = null;
+    }, 3200);
+}
+
+/** Ferma l'animazione del negoziante: si chiama uscendo dal negozio. */
+function chiudiNegoziante() {
+    if (timerParlaNegoziante) {
+        clearTimeout(timerParlaNegoziante);
+        timerParlaNegoziante = null;
+    }
+
+    const figura = document.querySelector('#negozianteFigura');
+    if (figura) figura.classList.remove('sta-parlando');
+}
+
+/** Sceglie la frase della visita e la ricorda (non si ripete due volte di fila). */
+function scegliFraseDellaVisita() {
+    if (typeof fraseDiversaDa !== 'function') return '';
+    fraseNegozianteCorrente = fraseDiversaDa(fraseNegozianteCorrente);
+    return fraseNegozianteCorrente;
+}
+
 /** Crea un elemento con classe e testo. */
 function negozioCrea(tag, classe, testo) {
     const elemento = document.createElement(tag);
@@ -46,6 +88,12 @@ async function apriNegozio() {
     }
 
     cambiaStato(STATI.NEGOZIO);
+
+    // La frase si sceglie UNA volta per visita, prima di disegnare: il
+    // negozio viene ridisegnato dopo il caricamento e dopo ogni acquisto, e
+    // senza questo la frase cambierebbe sotto gli occhi del giocatore.
+    scegliFraseDellaVisita();
+
     disegnaNegozio('Caricamento del negozio…');
     await caricaNegozio();
 }
@@ -91,6 +139,23 @@ function disegnaNegozio(messaggio, tipo) {
     contenitore.appendChild(negozioCrea('div', 'negozio-titolo', 'NEGOZIO DEI VERDELLINESI'));
     contenitore.appendChild(negozioCrea('div', 'negozio-punti', 'Punti disponibili: ' + statoAccount.punti));
 
+    // Banco del negoziante: figura a sinistra, fumetto a destra.
+    // È decorazione: se lo sprite non carica resta il riquadro col fumetto.
+    const banco = negozioCrea('div', 'negozio-banco');
+
+    const figura = negozioCrea('div', 'negozio-negoziante');
+    figura.id = 'negozianteFigura';
+    figura.setAttribute('role', 'img');
+    figura.setAttribute('aria-label', 'Il negoziante della bottega');
+
+    const fumetto = negozioCrea('div', 'negozio-fumetto', fraseNegozianteCorrente || '');
+    fumetto.id = 'negozianteFumetto';
+
+    banco.append(figura, fumetto);
+    contenitore.appendChild(banco);
+
+    avviaParlaNegoziante();
+
     const griglia = negozioCrea('div', 'negozio-griglia');
 
     for (const voce of CATALOGO_NEGOZIO) {
@@ -127,7 +192,10 @@ function disegnaNegozio(messaggio, tipo) {
     contenitore.appendChild(riga);
 
     const indietro = negozioCrea('button', 'negozio-bottone secondario', 'INDIETRO');
-    indietro.addEventListener('click', () => apriMenu('principale'));
+    indietro.addEventListener('click', () => {
+        chiudiNegoziante();
+        apriMenu('principale');
+    });
     contenitore.appendChild(indietro);
 }
 
