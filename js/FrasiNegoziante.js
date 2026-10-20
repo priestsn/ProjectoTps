@@ -10,30 +10,55 @@
 // File puro: si prova con node in tools/prova_negoziante.js.
 
 const FRASI_NEGOZIANTE = [
+    // --- il giocatore più forte mai visto ---
+    'Guissè è il miglior giocatore che questa bottega abbia mai visto.',
+    'Non lo dico io che Guissè è il più forte: lo dicono le sconfitte.',
     'Guissè non para gli attacchi. Li concede.',
     'Ho visto uno battere Guissè. Poi mi sono svegliato.',
     'Guissè ha imparato a leggere il buffer guardando me.',
     'Dicono che Guissè non abbia mai premuto due tasti insieme per sbaglio.',
-    'Il mio fornitore mi ha detto che Guissè paga sempre in punti.',
     'Guissè non corre: arriva.',
     'Una volta ho chiesto un consiglio a Guissè. Mi ha risposto con una parata perfetta.',
     'Guissè conta i tuoi fotogrammi di recupero. Li conta meglio di me.',
-    'Se Guissè ti offre una rivincita, chiedile prima cosa vuole in cambio.',
-    'Guissè non ha una ultimate preferita: le usa tutte, per educazione.',
-    'Nella mia bottega non vendo verdellinesi. Quelli li vende Guissè.',
-    'Guissè si è fermata un secondo, una volta. Era per farti sentire bravo.',
-    'Il prezzo giusto di un verdellinese lo sa Guissè. Io lo arrotondo.',
     'Guissè non sbaglia la parata: cambia idea prima di te.',
-    'Ho provato a vendere un alimentatore a Guissè. Mi ha chiesto la scheda tecnica.',
-    'Guissè non si arrabbia quando perde. Non le è mai capitato.',
+    'Guissè non ha un verdellinese preferito: li ha battuti tutti.',
+    'Quando vedi Guissè caricare, hai già sbagliato una mossa fa.',
+    'Guissè non ha una barra della stamina: ha una lista di cose da fare.',
+    'Guissè si è fermato un secondo, una volta. Era per farti sentire bravo.',
+    'Se Guissè ti offre una rivincita, chiedigli prima cosa vuole in cambio.',
     'La prima regola del mercato: non contrattare con Guissè.',
     'Guissè ha battuto la CPU difficile in due round. La CPU difficile era Guissè.',
-    'Dicono che Guissè abbia imparato a giocare leggendo un report bug.',
-    'Io vendo verdellinesi. Guissè vende illusioni.',
-    'Guissè non ha una barra della stamina: ha una lista di cose da fare.',
-    'Quando vedi Guissè caricare, hai già sbagliato una mossa fa.',
     'Una volta Guissè ha pareggiato. Dice che non vale e non se ne parla più.',
-    'Il mio banco apre alle otto. Guissè è aperta da sempre.'
+
+    // --- il ragazzone ---
+    'Guissè è un ragazzone grosso e nero. Le sue mani coprono mezzo schermo.',
+    'Guissè entra nella bottega e non serve chiedergli niente: te lo dice lui.',
+    'Ho visto Guissè ridere una volta. Ho ancora paura.',
+    'Guissè parla poco. Quando parla, di solito è per chiedere la rivincita.',
+
+    // --- l'igiene, lasciamo perdere ---
+    'Guissè puzza un po\'. Nessuno ha mai avuto il coraggio di dirglielo.',
+    'Guissè non si lava. Dice che l\'acqua gli toglie i riflessi.',
+    'Nel mio negozio c\'è un cartello: vietato sedersi accanto a Guissè.',
+    'Ho provato a vendergli un deodorante. Ha comprato una spada.',
+    'Guissè tiene il joystick a trenta centimetri dalla faccia. Per motivi suoi.',
+
+    // --- il lavoro e la scuola ---
+    'Guissè non ha un lavoro. Ha un record.',
+    'Guissè è stato bocciato tre volte. Poi ha smesso di contarci.',
+    'Dicono che a trent\'anni Guissè facesse ancora le superiori. Le faceva bene, però.',
+    'Il professore di Guissè gli ha chiesto l\'autografo. Sulla scheda di valutazione.',
+    'Guissè non è mai arrivato tardi a scuola. Non è mai arrivato proprio.',
+    'Guissè ha imparato le tabelline leggendo le statistiche dei verdellinesi.',
+    'La mamma di Guissè mi chiede sempre se ha trovato lavoro. Io le dico di no.',
+
+    // --- il negoziante che ci prova ---
+    'Io vendo verdellinesi. Guissè vende illusioni.',
+    'Nella mia bottega non vendo verdellinesi. Quelli li vende Guissè.',
+    'Il prezzo giusto di un verdellinese lo sa Guissè. Io lo arrotondo.',
+    'Ho provato a vendergli un alimentatore. Mi ha chiesto la scheda tecnica.',
+    'Il mio banco apre alle otto. Guissè è aperto da sempre.',
+    'I miei punti li spendo tutti qui. Guissè li vince tutti.'
 ];
 
 /**
