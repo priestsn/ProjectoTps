@@ -11,3 +11,7 @@ server/reports/
 
 # Stato di esecuzione del gioco online (account, sessioni, tornei, replay)
 dati/runtime/
+
+# Registri lasciati da una prova lanciata dalla radice del repo
+partite.jsonl
+*.jsonl
