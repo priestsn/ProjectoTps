@@ -133,6 +133,13 @@ node tools/swarm/spike_runtime.js      # 2 Chrome a 60 passi/s, tasti, cattura
 inietta difetti veri (`Enemy.health = 9999`, thread principale occupato 1,2 s) e verifica che le sonde
 scattino: senza quella prova, "nessun difetto" non significa nulla.
 
+## Gira da sola di notte
+
+C'è un job di cron (`Sciame UVSF7 notturno`, ogni giorno alle 3:30) che fa le tre corse — sciame con Jev,
+giro delle schermate con account, partita online — legge i `rapporto.md` e manda il riepilogo in chat.
+Fa solo corse e letture: non modifica il gioco, non fa commit, non fa push. Porte 8340-8342, così non
+litiga con un server di prova aperto a mano.
+
 ## Quanti bot su questo PC
 
 Misurato: **4 bot** in parallelo con Jev, 4 minuti, 0 anomalie gravi e un solo `ritmo-basso`
@@ -156,6 +163,7 @@ sonde**, e ognuna è stata corretta con una misura:
 | `azione-persa` sull'attacco | il colpo costa stamina (`statistiche.costoStamina`) e parte solo da terra: sotto soglia il gioco lo rifiuta e mostra "STAMINA". La sonda ora lo sa e la politica non prova più ad attaccare in quelle condizioni |
 | Jev: "testo illeggibile" nel timer | era la cattura a scala 0,6: i numeri diventavano una poltiglia di pixel. Il giudice riceve la pagina a **scala 1** |
 | Jev: "sprite enorme fuori scala" | è l'effetto dell'**ULTIMATE**, 128 px × 3,2 di proposito. Aggiunto alla taratura |
+| `colpo-senza-danno` | il flag `attaccoHaColpito` resta acceso dall'attacco precedente: se era già vero prima della pressione è un residuo. Misurato con `insegui_colpo.js`: **29 fendenti, 25 con danno, 0 sospetti**. Ora si segnala solo alla terza occorrenza in 30 s, perché un blocco normale del difensore può durare meno del campionamento |
 
 Il valore vero di queste corse è stato quindi trovare **dove le sonde mentono**: uno strumento che grida
 al lupo ogni due minuti non serve a nessuno. Adesso le corse escono pulite e le sonde sono provate con
