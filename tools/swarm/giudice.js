@@ -37,8 +37,13 @@ const NORMALE = "Contesto: è un picchiaduro 2D in pixel art, ambientato in una 
     "(STAMINA, PERFECT BLOCK, K.O., un avviso sui punti): sono messaggi voluti dal gioco, non errori. " +
     "È NORMALE anche l'effetto dell'ULTIMATE: è grosso di proposito, può coprire fino a un terzo dello " +
     "schermo con un'esplosione, un pugno o una zampata sgranata. Non è un difetto di scala. " +
-    "Un difetto è qualcosa che rompe la figura: un lottatore tagliato a metà o senza testa, due corpi " +
-    "fusi nello stesso punto, un elemento dell'interfaccia sopra i lottatori, un'immagine nera o vuota. ";
+    "Un difetto è qualcosa che rompe la figura: un lottatore da solo tagliato a metà o senza testa, " +
+    "un elemento dell'interfaccia sopra i lottatori, un'immagine nera o vuota. " +
+    // verificato la notte del 20/10: due lottatori a 146 px che si colpiscono
+    // hanno membra incrociate e armi sovrapposte, e il giudice le segnalava
+    // come sprite fusi
+    "Quando i due lottatori si scontrano le sagome si sovrappongono e le armi si incrociano: è il " +
+    "combattimento, non un difetto, anche se le membra sembrano confondersi. ";
 
 const DOMANDE = {
     difetto_visibile: {
