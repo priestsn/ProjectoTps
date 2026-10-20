@@ -21,6 +21,10 @@ const RADICE = path.resolve(__dirname, '..');
 /** Archivio dello stato: uno solo per processo, come il gioco. */
 const magazzino = new Magazzino(path.join(RADICE, 'dati', 'runtime'));
 
+// Guissè deve esistere prima di qualunque classifica o coda: è un giocatore
+// come gli altri, solo senza client (vedi server/bot.js).
+require('./bot.js').assicura(magazzino, account);
+
 const MASSIMO_CORPO = 16 * 1024;
 
 /** Scrive una risposta JSON. */

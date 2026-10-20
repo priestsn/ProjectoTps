@@ -153,10 +153,12 @@ async function main() {
             'elo ' + profiloAvanti.dati.elo + ' lega ' + profiloAvanti.dati.lega);
 
         const classifica = await get('/api/classifica');
+        // Il bot Guissè (Maestro, 2198) è in classifica per scelta: qui si
+        // guardano i due giocatori veri di questa prova.
+        const umani = classifica.dati.classifica.filter((voce) => voce.bot !== true);
         verifica('la classifica riporta la lega di ogni giocatore',
-            classifica.dati.classifica[0].lega === 'Argento' &&
-            classifica.dati.classifica[1].lega === 'Bronzo',
-            classifica.dati.classifica.map((voce) => voce.nick + ' ' + voce.lega).join(' | '));
+            umani[0].lega === 'Argento' && umani[1].lega === 'Bronzo',
+            umani.map((voce) => voce.nick + ' ' + voce.lega).join(' | '));
 
         // Protezione vera, dal server: ora LegaDue vince e LegaUno scende
         // dall'Argento. La prima discesa deve essere fermata dalla protezione.

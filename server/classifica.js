@@ -55,7 +55,8 @@ function classifica(magazzino, quante) {
             sconfitte: giocatore.sconfitte || 0,
             serie: giocatore.serie || 0,
             miglioreSerie: giocatore.miglioreSerie || 0,
-            provvisorio: eProvvisorio(giocatore)
+            provvisorio: eProvvisorio(giocatore),
+            bot: giocatore.bot === true
         }));
 
     return { classifica: ordinati, totale: tutti.length };

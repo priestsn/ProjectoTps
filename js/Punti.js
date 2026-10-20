@@ -11,6 +11,18 @@
 // Identificativo della partita aperta sul server, se ce n'è una.
 let partitaPunti = null;
 
+// True quando la partita ranked l'ha aperta il server perché l'avversario è il
+// bot Guissè: in quel caso l'esito va comunicato anche se la partita si gioca
+// in locale contro la CPU (la modalità è MODALITA.CPU, non ONLINE).
+let partitaPuntiDaBot = false;
+
+/** Registra la partita ranked contro Guissè, già aperta dal server. */
+function impostaPartitaBot(partitaId) {
+    partitaPunti = partitaId || null;
+    partitaPuntiInviata = false;
+    partitaPuntiDaBot = !!partitaId;
+}
+
 // Evita il doppio invio (fine per morte e fine per tempo arrivano vicine).
 let partitaPuntiInviata = false;
 
@@ -41,9 +53,17 @@ async function apriPartitaPunti() {
  */
 async function chiudiPartitaPunti(esito) {
     if (!partitaPunti || partitaPuntiInviata) return;
-    if (typeof modalitaPartita === 'undefined' || modalitaPartita !== MODALITA.ONLINE) return;
+
+    // Vale per il VS ONLINE e per la ranked contro Guissè, che si gioca in
+    // locale ma è una partita ranked vera aperta dal server.
+    const ammessa = partitaPuntiDaBot ||
+        (typeof modalitaPartita !== 'undefined' && modalitaPartita === MODALITA.ONLINE);
+    if (!ammessa) return;
 
     partitaPuntiInviata = true;
+    const daBot = partitaPuntiDaBot;
+    partitaPuntiDaBot = false;
+
     const identificativo = partitaPunti;
     partitaPunti = null;
 
@@ -57,6 +77,11 @@ async function chiudiPartitaPunti(esito) {
         } else if (!risultato.contata) {
             mostraAvviso('PUNTI DI OGGI ESAURITI: MASSIMO ' + risultato.limiteGiornaliero + ' PARTITE AL GIORNO', '#e0a020');
         }
+        if (daBot && risultato.elo !== undefined) {
+            statoAccount.elo = risultato.elo;
+            if (typeof aggiornaSchedaMenu === 'function') aggiornaSchedaMenu();
+        }
+
         if (statoAccount.dentro) {
             statoAccount.punti = risultato.punti;
         }

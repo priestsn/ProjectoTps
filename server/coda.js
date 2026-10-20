@@ -13,6 +13,8 @@
 const crypto = require('crypto');
 
 const ATTESA_MASSIMA_SECONDI = 120;
+// Dopo quanti secondi di coda si passa al bot Guissè (server/bot.js)
+const BOT_DOPO_SECONDI = 8;
 const FASCE = [
     { entroSecondi: 10, differenza: 300 },
     { entroSecondi: 20, differenza: 600 },
@@ -177,6 +179,39 @@ function rimettiInCoda(stato, io, magazzino) {
  * (campo `consegnato`), così il client non avvia due volte la stessa partita;
  * la voce resta nel file per poter ricevere il codice della stanza.
  */
+/**
+ * Apre una partita ranked contro Guissè e toglie il giocatore dalla coda.
+ * Restituisce { partitaId, avversario, elo } oppure null se non si può.
+ */
+function abbinaAlBot(magazzino, giocatore, stato) {
+    // require dentro la funzione: allo spegnimento dei moduli api.js -> coda.js
+    // -> partite.js -> bot.js l'ordine non è garantito.
+    const bot = require('./bot.js');
+    const partite = require('./partite.js');
+
+    const record = bot.assicura(magazzino);
+    const esito = partite.avviaPartita(magazzino, giocatore, {
+        modo: 'ranked',
+        avversario: record.nick
+    });
+
+    if (!esito || !esito.ok) return null;
+
+    togliDallaCoda(stato, giocatore.id);
+    stato.abbinamenti[giocatore.id] = {
+        creato: Date.now(),
+        consegnato: false,
+        ruolo: 'padrone',
+        avversario: record.nick,
+        bot: true,
+        eloAvversario: record.elo,
+        partitaId: esito.partitaId
+    };
+    magazzino.scrivi('coda.json', stato);
+
+    return { partitaId: esito.partitaId, avversario: record.nick, elo: record.elo };
+}
+
 function statoCoda(magazzino, giocatore) {
     const adesso = Date.now();
     const stato = leggiStato(magazzino);
@@ -192,6 +227,11 @@ function statoCoda(magazzino, giocatore) {
             stato: 'abbinato',
             ruolo: abbinamento.ruolo,
             avversario: abbinamento.avversario,
+            // `bot` deve viaggiare anche qui: se manca, il client tratta
+            // l'abbinamento con Guissè come una stanza fra umani e resta in
+            // attesa di un codice che non arriverà mai.
+            bot: abbinamento.bot === true,
+            eloAvversario: abbinamento.eloAvversario || null,
             partitaId: abbinamento.partitaId
         };
     }
@@ -204,6 +244,25 @@ function statoCoda(magazzino, giocatore) {
     }
 
     const attesa = attesaDi(mia, adesso);
+
+    // Nessun umano trovato da un po': si gioca contro Guissè. La partita
+    // ranked viene aperta qui sul server, quindi l'esito aggiorna l'ELO di
+    // entrambi esattamente come in una sfida fra due persone.
+    if (attesa >= BOT_DOPO_SECONDI) {
+        const abbinamento = abbinaAlBot(magazzino, giocatore, stato);
+        if (abbinamento) {
+            return {
+                ok: true,
+                stato: 'abbinato',
+                ruolo: 'padrone',
+                avversario: abbinamento.avversario,
+                bot: true,
+                eloAvversario: abbinamento.elo,
+                partitaId: abbinamento.partitaId
+            };
+        }
+    }
+
     return {
         ok: true,
         stato: 'inAttesa',

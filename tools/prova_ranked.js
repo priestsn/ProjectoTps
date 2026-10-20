@@ -151,14 +151,20 @@ async function main() {
             doppio.stato === 409 && profiloADopo.dati.elo === 1016, 'elo ' + profiloADopo.dati.elo);
 
         const classifica = await get('/api/classifica');
+        // Il bot Guissè sta in classifica per scelta: qui interessano gli umani.
+        const umani = classifica.dati.classifica.filter((voce) => voce.bot !== true);
+
         verifica('la classifica è pubblica e ordinata per ELO',
-            classifica.stato === 200 && classifica.dati.classifica.length === 2 &&
-            classifica.dati.classifica[0].nick === 'RankedUno' &&
-            classifica.dati.classifica[0].posizione === 1,
-            classifica.dati.classifica.map((voce) => voce.nick + ' ' + voce.elo).join(' | '));
+            classifica.stato === 200 && umani.length === 2 &&
+            umani[0].nick === 'RankedUno',
+            umani.map((voce) => voce.nick + ' ' + voce.elo).join(' | '));
+
+        verifica('il bot Guissè sta in classifica con 2198',
+            classifica.dati.classifica.some((voce) => voce.bot === true && voce.elo >= 2000),
+            classifica.dati.classifica.filter((voce) => voce.bot).map((v) => v.nick + ' ' + v.elo).join(' | '));
 
         verifica('chi ha giocato poco risulta provvisorio',
-            classifica.dati.classifica[0].provvisorio === true, 'provvisorio');
+            umani[0].provvisorio === true, 'provvisorio');
 
         // Dieci partite ranked: si esce dallo stato provvisorio.
         for (let giro = 0; giro < 10; giro++) {
@@ -174,9 +180,14 @@ async function main() {
                 .find((voce) => voce.nick === 'RankedUno').provvisorio === false,
             'ranked giocate ' + profiloFinale.dati.partiteRanked);
 
+        // Somma degli ELO dei soli giocatori veri: il bot ha un ELO suo (2198)
+        // che non fa parte della contabilità fra due umani.
+        const sommaUmani = classificaFinale.dati.classifica
+            .filter((voce) => voce.bot !== true)
+            .reduce((totale, voce) => totale + voce.elo, 0);
+
         verifica('la classifica resta a somma ELO costante',
-            classificaFinale.dati.classifica.reduce((totale, voce) => totale + voce.elo, 0) === 2000,
-            'somma ' + classificaFinale.dati.classifica.reduce((totale, voce) => totale + voce.elo, 0));
+            sommaUmani === 2000, 'somma ' + sommaUmani);
 
         const registro = fs.readFileSync(path.join(CARTELLA_STATO, 'partite.jsonl'), 'utf8')
             .split('\n').filter((riga) => riga.trim() !== '');

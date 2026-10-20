@@ -67,6 +67,13 @@ function disegnaClassifica(voci, messaggio, tipo) {
 
         const cellaNick = classificaCrea('span', 'classifica-nick');
         cellaNick.appendChild(document.createTextNode(voce.nick + (voce.provvisorio ? ' ·' : ' ')));
+
+        // Guissè è un bot: si vede in classifica come giocatore, ma è giusto dirlo
+        if (voce.bot) {
+            const etichettaBot = classificaCrea('span', 'bot-badge', 'BOT');
+            etichettaBot.title = 'Giocatore automatico: sfidalo dalla coda ranked';
+            cellaNick.appendChild(etichettaBot);
+        }
         const distintivo = classificaCrea('span', 'lega-badge piccolo', voce.lega || '');
         distintivo.style.color = voce.legaColore || '#9a9a9a';
         distintivo.style.borderColor = voce.legaColore || '#9a9a9a';

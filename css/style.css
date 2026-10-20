@@ -1044,6 +1044,18 @@ canvas {
     text-align: center;
 }
 
+/* Etichetta accanto al nick dei giocatori automatici in classifica */
+.bot-badge {
+    margin-left: 6px;
+    padding: 1px 5px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: #ffd34d;
+    border: 1px solid #6b5a1f;
+    border-radius: 3px;
+    vertical-align: middle;
+}
+
 /* Riga di stato del menu di fine partita: cosa ha scelto l'avversario */
 .menu-stato-fine {
     display: none;

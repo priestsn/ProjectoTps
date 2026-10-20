@@ -93,7 +93,8 @@ async function cercaPartitaRanked() {
     try {
         const dati = await api.chiama('/api/coda/entra', { corpo: {} });
         if (dati.stato === 'abbinato') {
-            gestisciAbbinamento(dati);
+            if (dati.bot) gestisciAbbinamentoBot(dati);
+            else gestisciAbbinamento(dati);
             return;
         }
         messaggioCoda('In coda (posizione ' + dati.posizione + ' di ' + dati.inCoda + '). Attendo…', 'attesa');
@@ -115,7 +116,8 @@ async function controllaCoda() {
         const dati = await api.chiama('/api/coda/stato');
 
         if (dati.stato === 'abbinato') {
-            gestisciAbbinamento(dati);
+            if (dati.bot) gestisciAbbinamentoBot(dati);
+            else gestisciAbbinamento(dati);
             return;
         }
 
@@ -132,6 +134,33 @@ async function controllaCoda() {
         fermaTimer();
         messaggioCoda(errore.message, 'errore');
     }
+}
+
+/**
+ * Abbinamento con Guissè: nessuna stanza da creare, la partita ranked l'ha già
+ * aperta il server. Qui si passa alla scelta del verdellinese e si segna che
+ * l'esito va comunicato (js/Punti.js, `impostaPartitaBot`).
+ */
+function gestisciAbbinamentoBot(dati) {
+    fermaTimer();
+    codaInAttesaDiCodice = false;
+    codaPartita = dati.partitaId;
+
+    const avversario = dati.avversario || 'Guissè';
+    const elo = dati.eloAvversario || 2198;
+
+    if (typeof impostaPartitaBot === 'function') {
+        impostaPartitaBot(dati.partitaId);
+    }
+
+    mostraBadgeOnline('CONTRO ' + avversario.toUpperCase() + ' · ' + elo);
+    messaggioCoda('Avversario: ' + avversario + ' (ELO ' + elo + '). Scegli il verdellinese.', 'ok');
+
+    // Un attimo di respiro per leggere il messaggio, poi la selezione con la
+    // difficoltà più alta del gioco: è lui.
+    setTimeout(() => {
+        if (typeof avviaSelezioneCPU === 'function') avviaSelezioneCPU('guisse');
+    }, 700);
 }
 
 /** L'abbinamento è arrivato: padrone crea la stanza, ospite aspetta il codice. */
